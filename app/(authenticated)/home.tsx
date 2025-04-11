@@ -26,7 +26,6 @@ const Home = () => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Atualiza localização em tempo real
   useEffect(() => {
     let subscription: Location.LocationSubscription;
 
@@ -98,18 +97,24 @@ const Home = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/RequestTravel')}>
             <Image source={require('../../assets/motorcycle.png')} style={styles.icon} />
-            <Text style={styles.actionText}>Viagem</Text>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={styles.actionText}>Viagem</Text>
+              <View style={styles.underline}></View>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/RequestDelivery')}>
             <Image source={require('../../assets/box.png')} style={styles.icon} />
-            <Text style={styles.actionText}>Entrega</Text>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={styles.actionText}>Entrega</Text>
+              <View style={styles.underline}></View>
+            </View>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.callButton}>
+        <TouchableOpacity style={styles.callButton} onPress={() => router.push('/RequestTravel')}>
           <Text style={styles.callText}>Peça seu Moto Táxi agora!</Text>
         </TouchableOpacity>
 
@@ -184,21 +189,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionsRow: {
+    top: -40,
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 12,
+    marginBottom: -20
   },
   actionButton: {
+    width: 180,
+    display: 'flex',
+    flexDirection: 'row',
     backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 3,
     flex: 1,
     marginHorizontal: 5,
     alignItems: 'center',
   },
   icon: {
-    width: 90,
-    height: 90,
+    width: 60,
+    height: 60,
     marginBottom: 5,
   },
   actionText: {
@@ -282,6 +292,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Righteous',
     fontSize: 16,
     color: '#000',
+  },
+  underline: {
+    height: 2,
+    width: '90%',
+    backgroundColor: '#fff',
+    marginTop: 5,
   },
 
 });

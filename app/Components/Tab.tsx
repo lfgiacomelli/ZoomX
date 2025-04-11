@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -6,10 +6,10 @@ export default function Tab() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const routes: { path: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { path: '/home', icon: 'home-outline' },
-    { path: '/travels', icon: 'car-outline' },
-    { path: '/profile', icon: 'person-outline' },
+  const routes: { path: string; icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
+    { path: '/home', icon: 'home-outline', text: 'Home' },
+    { path: '/LastActivities', icon: 'car-outline', text: 'Viagens' },
+    { path: '/profile', icon: 'person-outline', text: 'Perfil' },
   ];
 
   return (
@@ -28,6 +28,7 @@ export default function Tab() {
               size={28}
               color={isActive ? '#000' : '#999'}
             />
+            <Text style={{ color: isActive ? '#000' : '#999', fontFamily: 'Righteous' }}>{route.text}</Text>
           </TouchableOpacity>
         );
       })}
@@ -56,4 +57,5 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderTopColor: '#000',
   },
+
 });
