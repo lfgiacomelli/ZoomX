@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/adaptive-con.png",
+      "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000"
     },
@@ -20,7 +20,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/appIcon.png",
         "backgroundColor": "#000"
-      }
+      },
+      "package": "com.smithgg.authlocal"
     },
     "web": {
       "favicon": "./assets/appIcon.png"
@@ -28,6 +29,14 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "ded4843a-e544-4322-ba40-2a6c2ca01b12"
+      }
+    }
   }
 }

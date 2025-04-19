@@ -76,6 +76,9 @@ export default function Login() {
           <Text style={styles.buttonText}>LOGIN</Text>
         )}
       </TouchableOpacity>
+      <TouchableOpacity onPress={() =>router.replace('/(authenticated)/home')} style={{ marginBottom: 20 }}>
+        <Text style={styles.buttonText}>LOGIN COM BIOMETRIA</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/signin')}>
         <Text style={styles.register}>

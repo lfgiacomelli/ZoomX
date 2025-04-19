@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 12,
         gap: 8,
+        
     },
     logoutText: {
         fontFamily: 'Righteous',
