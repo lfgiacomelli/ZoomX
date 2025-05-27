@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Octicons } from '@expo/vector-icons';
+import Octicons from '@expo/vector-icons/Octicons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 export default function Profile() {

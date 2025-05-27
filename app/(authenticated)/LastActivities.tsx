@@ -3,24 +3,33 @@ import { useEffect, useState } from 'react';
 import Tab from '../Components/Tab';
 import useRighteousFont from '../../hooks/Font/index';
 import Header from '../Components/header';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Travels() {
   const fontLoaded = useRighteousFont();
-
   interface Atividade {
+    via_codigo: string;            // código da viagem (UUID)
+    via_funcionarioId: string;    // id do funcionário
+    via_solicitacaoId?: string;   // id da solicitação (opcional, se pode faltar)
+    via_usuarioId?: string;       // id do usuário (opcional)
+    via_origem: string;
+    via_destino: string;
+    via_formapagamento?: string;
+    via_observacoes?: string;
+    via_atendenteCodigo?: string;
     via_servico: string;
-    via_data: string | null;
-    via_origem?: string;
-    via_destino?: string;
-    via_valor?: number;
+    via_status: 'Pendente' | 'Aprovada' | 'Rejeitada';
+    via_data: string | Date;      // pode ser string ISO ou Date
+    via_valor: number;
   }
+
 
   const [data, setData] = useState<Atividade[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  const baseURL = 'https://super-duper-space-enigma-6j7g7jj46p92x44q-3000.app.github.dev';
+  const baseURL = 'https://backend-turma-a-2025.onrender.com';
   const URL = '/api/viagens';
 
   useEffect(() => {
@@ -29,19 +38,36 @@ export default function Travels() {
         UIManager.setLayoutAnimationEnabledExperimental(true);
     }
   }, []);
+  const capitalizeFirstLetter = (text: string) => {
+  if (!text) return '';
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
   const fetchData = async () => {
-    const route = `${baseURL}${URL}`;
+    setLoading(true);
     try {
+      const usuario = await AsyncStorage.getItem('usuario');
+      if (!usuario) throw new Error('Usuário não encontrado');
+
+      const usuarioId = JSON.parse(usuario).id;
+      if (!usuarioId) throw new Error('ID do usuário não encontrado');
+
+      const route = `${baseURL}/api/viagens/${usuarioId}`;
       const response = await fetch(route);
+      if (!response.ok) {
+        throw new Error(`Erro de API: ${response.status}`);
+      }
       const json = await response.json();
       setData(json);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao buscar dados:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+
 
   useEffect(() => {
     fetchData();
@@ -70,15 +96,15 @@ export default function Travels() {
           ) : (
             data.map((atividade, index) => {
               const isExpanded = expandedIndex === index;
-              const icone = atividade.via_servico === 'Moto Táxi'
+              const icone = atividade.via_servico === 'mototaxi'
                 ? require('../../assets/motorcycle.png')
                 : require('../../assets/box.png');
 
               const dataFormatada = atividade.via_data
                 ? new Intl.DateTimeFormat('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                  }).format(new Date(atividade.via_data))
+                  day: '2-digit',
+                  month: '2-digit',
+                }).format(new Date(atividade.via_data))
                 : '--/--';
 
               return (
@@ -91,14 +117,16 @@ export default function Travels() {
                   <Image source={icone} style={styles.icon} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>Serviço:</Text>
-                    <Text style={styles.text}>{atividade.via_servico || 'Indefinido'}</Text>
+                    <Text style={styles.text}>{capitalizeFirstLetter(atividade.via_servico) || 'Indefinido'}</Text>
+
                     {isExpanded && (
                       <>
                         <Text style={styles.detail}>Origem: {atividade.via_origem || 'N/A'}</Text>
                         <Text style={styles.detail}>Destino: {atividade.via_destino || 'N/A'}</Text>
-                        <Text style={styles.detail}>Valor: R$ {atividade.via_valor?.toFixed(2) || '0,00'}</Text>
+                        <Text style={styles.detail}>Valor: R$ {atividade.via_valor !== undefined && atividade.via_valor !== null ? Number(atividade.via_valor).toFixed(2) : '0,00'}</Text>
                       </>
                     )}
+
                   </View>
                   <View style={styles.dateContainer}>
                     <Text style={styles.label}>Data:</Text>

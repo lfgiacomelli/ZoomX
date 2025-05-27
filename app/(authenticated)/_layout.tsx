@@ -22,9 +22,6 @@ export default function AuthenticatedLayout() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Redirect href="/login" />;
-  }
 
   return (
     <Stack

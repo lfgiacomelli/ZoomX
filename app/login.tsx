@@ -1,168 +1,145 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import {
+  View,
+  TextInput,
+  Button,
+  StyleSheet,
+  Text,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import * as LocalAuthentication from 'expo-local-authentication';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import useRighteousFont from '../hooks/Font/index';
+
+const API_BASE_URL = 'https://backend-turma-a-2025.onrender.com';
 
 export default function Login() {
-  const router = useRouter();
+  const [usu_email, setEmail] = useState('');
+  const [usu_senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const fontLoaded = useRighteousFont();
+  const router = useRouter();
 
-  async function handleLogin() {
-    const isBiometricAvailable = await LocalAuthentication.isEnrolledAsync();
-
-    if (!isBiometricAvailable) {
-      return Alert.alert('Erro', 'Nenhuma biometria cadastrada.');
+  const handleLogin = async () => {
+    if (!usu_email.trim() || !usu_senha.trim()) {
+      Alert.alert('Erro', 'Preencha todos os campos.');
+      return;
     }
 
-    const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Autenticar com biometria',
-    });
+    setLoading(true);
 
-    if (result.success) {
-      setLoading(true);
-      await AsyncStorage.setItem('auth', 'true');
-      setTimeout(() => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/login`, {
+        usu_email,
+        usu_senha,
+      });
+
+      const data = response.data;
+
+      if (data.sucesso) {
+        if (data.token) {
+          await AsyncStorage.setItem('token', data.token);
+        } else {
+          await AsyncStorage.setItem('token', 'logado');
+        }
+
+        // Salvar dados do usuário logado
+        if (data.usuario) {
+          await AsyncStorage.setItem('id', data.usuario.id.toString());
+          await AsyncStorage.setItem('nome', data.usuario.nome);
+          await AsyncStorage.setItem('email', data.usuario.email);
+        }
+
+        // Navegar para a home autenticada
         router.replace('/(authenticated)/home');
-      }, 1000);
+      } else {
+        Alert.alert('Erro', data.mensagem || 'Credenciais inválidas.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          Alert.alert(
+            'Erro de Login',
+            error.response.data?.mensagem ||
+              `Erro ${error.response.status}: Não foi possível conectar ao servidor.`
+          );
+        } else if (error.request) {
+          Alert.alert(
+            'Erro de Rede',
+            'Não foi possível conectar ao servidor. Verifique sua conexão e o endereço da API.'
+          );
+        } else {
+          Alert.alert('Erro', error.message || 'Ocorreu um erro inesperado.');
+        }
+      } else {
+        Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+      }
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.logo}>
-        <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
+      <Text style={styles.title}>Login</Text>
 
-      <Text style={styles.title}>Faça login:</Text>
-      <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        value={usu_email}
+        onChangeText={setEmail}
+        placeholderTextColor="#888"
+        editable={!loading}
+      />
 
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="email" size={20} color="#aaa" style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Insira seu E-mail"
-          placeholderTextColor="#aaa"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Senha"
+        secureTextEntry
+        value={usu_senha}
+        onChangeText={setSenha}
+        placeholderTextColor="#888"
+        editable={!loading}
+      />
 
-      <View style={styles.inputContainer}>
-        <Ionicons name="lock-closed-outline" size={20} color="#aaa" style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Insira sua Senha"
-          placeholderTextColor="#aaa"
-          secureTextEntry={!passwordVisible}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-          <Ionicons name={passwordVisible ? 'eye-off' : 'eye'} size={20} color="#aaa" />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#000" />
-        ) : (
-          <Text style={styles.buttonText}>LOGIN</Text>
-        )}
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() =>router.replace('/(authenticated)/home')} style={{ marginBottom: 20 }}>
-        <Text style={styles.buttonText}>LOGIN COM BIOMETRIA</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push('/signin')}>
-        <Text style={styles.register}>
-          <Ionicons name="person-add" size={16} /> Não possui conta?{' '}
-          <Text style={styles.link}>Crie agora!</Text>
-        </Text>
-      </TouchableOpacity>
-    </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <Button title="Entrar" onPress={handleLogin} disabled={loading} />
+      )}
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-  },
-  logo: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: -30,
-    marginTop: -250,
-  },
-  logoImage: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 400,
-    height: 400,
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
-    fontSize: 40,
-    color: '#fff',
-    marginBottom: 4,
-    fontFamily: 'Righteous',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#aaa',
-    marginBottom: 30,
-    fontFamily: 'Righteous',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: '#aaa',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    width: '100%',
-    backgroundColor: '#111',
-  },
-  icon: {
-    marginRight: 5,
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 25,
+    textAlign: 'center',
+    color: '#333',
   },
   input: {
-    fontFamily: 'Righteous',
-    flex: 1,
-    color: '#fff',
-    height: 45,
-  },
-  button: {
-    backgroundColor: '#fff',
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#000',
-    fontFamily: 'Righteous',
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    backgroundColor: '#fff',
     fontSize: 16,
-  },
-  register: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-    fontFamily: 'Righteous',
-  },
-  link: {
-    textDecorationLine: 'underline',
-    fontFamily: 'Righteous',
   },
 });
