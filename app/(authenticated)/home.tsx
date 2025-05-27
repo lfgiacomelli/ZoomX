@@ -10,14 +10,16 @@ import {
   AccessibilityInfo,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
 import useRighteousFont from '../../hooks/Font/index';
+import { useRouter } from 'expo-router';
 import Header from '../Components/header';
 import Tab from '../Components/Tab';
 import Constants from 'expo-constants';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
+import AnunciosCarousel from '../Components/Anuncios';
+// import VerificarEmAndamento from '../Components/VerificarEmAndamento';
 
 const Home = () => {
   const router = useRouter();
@@ -60,6 +62,7 @@ const Home = () => {
       const status = await AccessibilityInfo.isScreenReaderEnabled();
       setStatusLeitor(status);
       console.log("Leitor de tela ativo?", status ? "Sim" : "Não");
+
     };
 
     checkStatus();
@@ -94,7 +97,7 @@ const Home = () => {
       <Header />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}
       >
         <View style={styles.actionsRow}>
           <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/RequestTravel')}>
@@ -131,7 +134,7 @@ const Home = () => {
             </View>
           </View>
         </ScrollView>
-
+        {/* <VerificarEmAndamento /> */}
         {location?.latitude && location?.longitude && (
           <View style={styles.mapContainer}>
             <Text style={styles.mapTitle}>Você está aqui!</Text>
@@ -158,7 +161,9 @@ const Home = () => {
             </MapView>
           </View>
         )}
-
+        <View style={{ marginHorizontal: -10 }}>
+          <AnunciosCarousel />
+        </View>
         <View style={styles.aboutBusiness}>
           <Text style={styles.aboutBusinessTitle}>Sobre a Empresa</Text>
           <Text style={styles.aboutBusinessText}>
@@ -168,8 +173,6 @@ const Home = () => {
             Estamos sempre prontos para atender você!
           </Text>
         </View>
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-        </ScrollView>
       </ScrollView>
       <Tab />
     </>
@@ -181,7 +184,7 @@ const styles = StyleSheet.create({
     paddingTop: Constants.statusBarHeight + 10,
     flex: 1,
     backgroundColor: '#f0f0f0',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
   },
   loading: {
     flex: 1,

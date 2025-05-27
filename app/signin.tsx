@@ -1,8 +1,9 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { FontAwesome, Feather, Ionicons } from '@expo/vector-icons';
 import useRighteousFont from '../hooks/Font/index';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignIn() {
   const fontLoaded = useRighteousFont();
@@ -23,14 +24,8 @@ export default function SignIn() {
     setForm({ ...form, [field]: value });
   };
 
-  const handleSubmit = () => {
-    console.log(form);
-    router.replace('/login');
-  };
-
   const formatarTelefone = (text: string) => {
     const numeros = text.replace(/\D/g, '');
-
     let telefoneFormatado = '';
 
     if (numeros.length <= 2) {
@@ -42,8 +37,46 @@ export default function SignIn() {
     } else {
       telefoneFormatado = `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
     }
-
     return telefoneFormatado;
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.email || !form.phone || !form.password) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+
+
+    try {
+      const response = await fetch('https://backend-turma-a-2025.onrender.com/api/usuarios', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          usu_nome: form.name,
+          usu_telefone: form.phone,
+          usu_email: form.email,
+          usu_senha: form.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.message || 'Erro ao criar usuário';
+        Alert.alert('Erro', errorMsg);
+        return;
+      }
+
+      await AsyncStorage.setItem('token', data.token);
+      Alert.alert('Sucesso', 'Conta criada com sucesso!');
+      router.replace('/(authenticated)/home'); // ou rota que desejar após login
+
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
+      console.error(error);
+    }
   };
 
   return (
@@ -69,6 +102,8 @@ export default function SignIn() {
         <TextInput
           placeholder="Insira seu E-mail"
           placeholderTextColor="#aaa"
+          keyboardType="email-address"
+          autoCapitalize="none"
           onChangeText={(text) => handleChange('email', text)}
           style={styles.input}
         />

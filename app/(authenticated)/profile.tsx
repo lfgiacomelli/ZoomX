@@ -18,6 +18,8 @@ import Entypo from '@expo/vector-icons/Entypo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Octicons from '@expo/vector-icons/Octicons';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import React, { useEffect, useState } from 'react';
+
 
 export default function Profile() {
     const router = useRouter();
@@ -27,12 +29,42 @@ export default function Profile() {
         await AsyncStorage.removeItem('userToken');
         router.replace('/login');
     };
-    const user = {
-        username: "Luís Felipe Giacomelli Rodrigues",
-        since: "28/10/2024",
-        email: 'lfgiacomellirodrigues@gmail.com',
-        phone: '18988179199',
-    }
+    const [userData, setUserData] = useState({
+        username: 'Usuário',
+        email: '',
+        since: 'Desconhecido',
+        telefone: 'Desconhecido',
+    });
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const nome = await AsyncStorage.getItem('nome');
+            const email = await AsyncStorage.getItem('email');
+            const telefone = await AsyncStorage.getItem('telefone');
+            const criado_em = await AsyncStorage.getItem('criado_em');
+
+            // Formatar data
+            let since = 'Desconhecido';
+            if (criado_em) {
+                const date = new Date(criado_em);
+                since = new Intl.DateTimeFormat('pt-BR', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                }).format(date);
+            }
+
+            setUserData({
+                username: nome || 'Usuário',
+                email: email || '',
+                telefone: telefone || 'Desconhecido',
+                since,
+            });
+        };
+
+        fetchUserData();
+    }, []);
+
     if (!fontLoaded) {
         return (
             <View style={styles.loading}>
@@ -47,10 +79,10 @@ export default function Profile() {
             <Header />
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.userNameContainer}>
-                    <Text style={styles.userName}>{user.username}</Text>
+                    <Text style={styles.userName}>{userData.username}</Text>
                 </View>
                 <View style={styles.userSinceContainer}>
-                    <Text style={styles.userSince}>Você é usuário desde: {user.since}</Text>
+                    <Text style={styles.userSince}>Você é usuário desde: {userData.since}</Text>
                 </View>
 
                 <View style={styles.row}>
@@ -200,7 +232,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 12,
         gap: 8,
-        
+
     },
     logoutText: {
         fontFamily: 'Righteous',

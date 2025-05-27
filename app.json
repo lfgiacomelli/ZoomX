@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "authlocal",
-    "slug": "authlocal",
-    "scheme": "authlocal",
+    "name": "zoomx",
+    "slug": "zoomx",
+    "scheme": "zoomx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/appIcon.png",
@@ -21,14 +21,15 @@
         "foregroundImage": "./assets/appIcon.png",
         "backgroundColor": "#000"
       },
-      "package": "com.smithgg.authlocal"
+      "package": "com.smithgg.zoomx"
     },
     "web": {
       "favicon": "./assets/appIcon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-asset"
     ],
     "extra": {
       "router": {

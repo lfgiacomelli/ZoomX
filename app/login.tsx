@@ -45,15 +45,16 @@ export default function Login() {
           await AsyncStorage.setItem('token', 'logado');
         }
 
-        // Salvar dados do usuário logado
         if (data.usuario) {
           await AsyncStorage.setItem('id', data.usuario.id.toString());
           await AsyncStorage.setItem('nome', data.usuario.nome);
           await AsyncStorage.setItem('email', data.usuario.email);
+          await AsyncStorage.setItem('telefone', data.usuario.telefone);
+          await AsyncStorage.setItem('criado_em', data.usuario.criado_em.toString());
         }
 
-        // Navegar para a home autenticada
         router.replace('/(authenticated)/home');
+        console.log('Login bem-sucedido:', data);
       } else {
         Alert.alert('Erro', data.mensagem || 'Credenciais inválidas.');
       }
@@ -63,7 +64,7 @@ export default function Login() {
           Alert.alert(
             'Erro de Login',
             error.response.data?.mensagem ||
-              `Erro ${error.response.status}: Não foi possível conectar ao servidor.`
+            `Erro ${error.response.status}: Não foi possível conectar ao servidor.`
           );
         } else if (error.request) {
           Alert.alert(
@@ -114,6 +115,11 @@ export default function Login() {
       ) : (
         <Button title="Entrar" onPress={handleLogin} disabled={loading} />
       )}
+      <Button
+        title="Criar Conta"
+        onPress={() => router.push('/signin')}
+        disabled={loading}
+      />
     </KeyboardAvoidingView>
   );
 }

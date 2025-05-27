@@ -4,14 +4,15 @@ import Tab from '../Components/Tab';
 import useRighteousFont from '../../hooks/Font/index';
 import Header from '../Components/header';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import Constants from 'expo-constants';
+import { router } from 'expo-router';
 export default function Travels() {
   const fontLoaded = useRighteousFont();
   interface Atividade {
-    via_codigo: string;            // código da viagem (UUID)
-    via_funcionarioId: string;    // id do funcionário
-    via_solicitacaoId?: string;   // id da solicitação (opcional, se pode faltar)
-    via_usuarioId?: string;       // id do usuário (opcional)
+    via_codigo: string;
+    via_funcionarioId: string;
+    via_solicitacaoId?: string;
+    via_usuarioId?: string;
     via_origem: string;
     via_destino: string;
     via_formapagamento?: string;
@@ -19,8 +20,8 @@ export default function Travels() {
     via_atendenteCodigo?: string;
     via_servico: string;
     via_status: 'Pendente' | 'Aprovada' | 'Rejeitada';
-    via_data: string | Date;      // pode ser string ISO ou Date
-    via_valor: number;
+    via_data: string | Date;
+    via_valor: number;    
   }
 
 
@@ -28,9 +29,7 @@ export default function Travels() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-
   const baseURL = 'https://backend-turma-a-2025.onrender.com';
-  const URL = '/api/viagens';
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -39,17 +38,14 @@ export default function Travels() {
     }
   }, []);
   const capitalizeFirstLetter = (text: string) => {
-  if (!text) return '';
-  return text.charAt(0).toUpperCase() + text.slice(1);
-};
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const usuario = await AsyncStorage.getItem('usuario');
-      if (!usuario) throw new Error('Usuário não encontrado');
-
-      const usuarioId = JSON.parse(usuario).id;
+      const usuarioId = await AsyncStorage.getItem('id');
       if (!usuarioId) throw new Error('ID do usuário não encontrado');
 
       const route = `${baseURL}/api/viagens/${usuarioId}`;
@@ -66,6 +62,7 @@ export default function Travels() {
       setLoading(false);
     }
   };
+
 
 
 
@@ -92,11 +89,16 @@ export default function Travels() {
           ) : error ? (
             <Text style={styles.error}>Erro: {error}</Text>
           ) : data.length === 0 ? (
-            <Text style={styles.empty}>Nenhuma atividade encontrada.</Text>
+            <><Image source={require('../../assets/empty.png')} style={styles.iconEmpty} />
+              <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
+              <TouchableOpacity style={styles.newRequest} onPress={() => {router.push('/RequestTravel')}}>
+                <Text style={styles.newRequestText}>Peça um mototáxi agora</Text>
+              </TouchableOpacity>
+            </>
           ) : (
             data.map((atividade, index) => {
               const isExpanded = expandedIndex === index;
-              const icone = atividade.via_servico === 'mototaxi'
+              const icone = atividade.via_servico === 'mototaxi' || atividade.via_servico === 'Moto táxi'
                 ? require('../../assets/motorcycle.png')
                 : require('../../assets/box.png');
 
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: Constants.statusBarHeight + 10,
     paddingBottom: 100,
   },
   title: {
@@ -209,10 +211,30 @@ const styles = StyleSheet.create({
     fontFamily: 'Righteous',
   },
   empty: {
-    fontSize: 16,
+    fontSize: 24,
     color: '#555',
     textAlign: 'center',
     marginVertical: 20,
     fontFamily: 'Righteous',
+  },
+  iconEmpty: {
+    width: 300,
+    height: 300,
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  newRequest: {
+    backgroundColor: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 21,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  newRequestText: {
+    fontFamily: 'Righteous',
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
   },
 });
