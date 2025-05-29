@@ -1,11 +1,22 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { useEffect, useState } from 'react';
-import Tab from '../Components/Tab';
-import useRighteousFont from '../../hooks/Font/index';
-import Header from '../Components/header';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
-import { router } from 'expo-router';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from "react-native";
+import { useEffect, useState } from "react";
+import Tab from "../Components/Tab";
+import useRighteousFont from "../../hooks/Font/index";
+import Header from "../Components/header";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+import { router } from "expo-router";
 export default function Travels() {
   const fontLoaded = useRighteousFont();
   interface Atividade {
@@ -19,34 +30,33 @@ export default function Travels() {
     via_observacoes?: string;
     via_atendenteCodigo?: string;
     via_servico: string;
-    via_status: 'Pendente' | 'Aprovada' | 'Rejeitada';
+    via_status: "Pendente" | "Aprovada" | "Rejeitada";
     via_data: string | Date;
     via_valor: number;
   }
-
 
   const [data, setData] = useState<Atividade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-  const baseURL = 'https://backend-turma-a-2025.onrender.com';
+  const baseURL = "https://backend-turma-a-2025.onrender.com";
 
   useEffect(() => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       UIManager.setLayoutAnimationEnabledExperimental &&
         UIManager.setLayoutAnimationEnabledExperimental(true);
     }
   }, []);
   const capitalizeFirstLetter = (text: string) => {
-    if (!text) return '';
+    if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const usuarioId = await AsyncStorage.getItem('id');
-      if (!usuarioId) throw new Error('ID do usuário não encontrado');
+      const usuarioId = await AsyncStorage.getItem("id");
+      if (!usuarioId) throw new Error("ID do usuário não encontrado");
 
       const route = `${baseURL}/api/viagens/${usuarioId}`;
       const response = await fetch(route);
@@ -56,15 +66,12 @@ export default function Travels() {
       const json = await response.json();
       setData(json);
     } catch (err: any) {
-      console.error('Erro ao buscar dados:', err);
+      console.error("Erro ao buscar dados:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
-
-
 
   useEffect(() => {
     fetchData();
@@ -72,7 +79,7 @@ export default function Travels() {
 
   const toggleExpand = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedIndex(prevIndex => (prevIndex === index ? null : index));
+    setExpandedIndex((prevIndex) => (prevIndex === index ? null : index));
   };
 
   if (!fontLoaded) return null;
@@ -85,29 +92,61 @@ export default function Travels() {
           <Text style={styles.title}>Últimas atividades</Text>
 
           {loading && !error ? (
-            <ActivityIndicator size="large" color="#000" />
+            <>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Righteous",
+                    fontSize: 18,
+                    color: "#000",
+                  }}
+                >
+                  Carregando atividades...
+                </Text>
+              </View>
+              <ActivityIndicator size="large" color="#000" />
+            </>
           ) : error ? (
             <Text style={styles.error}>Erro: {error}</Text>
           ) : data.length === 0 ? (
-            <><Image source={require('../../assets/empty.png')} style={styles.iconEmpty} />
+            <>
+              <Image
+                source={require("../../assets/empty.png")}
+                style={styles.iconEmpty}
+              />
               <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
-              <TouchableOpacity style={styles.newRequest} onPress={() => { router.push('/RequestTravel') }}>
-                <Text style={styles.newRequestText}>Peça um mototáxi agora</Text>
+              <TouchableOpacity
+                style={styles.newRequest}
+                onPress={() => {
+                  router.push("/RequestTravel");
+                }}
+              >
+                <Text style={styles.newRequestText}>
+                  Peça um mototáxi agora
+                </Text>
               </TouchableOpacity>
             </>
           ) : (
             data.map((atividade, index) => {
               const isExpanded = expandedIndex === index;
-              const icone = atividade.via_servico === 'mototaxi' || atividade.via_servico === 'Moto táxi'
-                ? require('../../assets/motorcycle.png')
-                : require('../../assets/box.png');
+              const icone =
+                atividade.via_servico === "mototaxi" ||
+                atividade.via_servico === "Moto táxi"
+                  ? require("../../assets/motorcycle.png")
+                  : require("../../assets/box.png");
 
               const dataFormatada = atividade.via_data
-                ? new Intl.DateTimeFormat('pt-BR', {
-                  day: '2-digit',
-                  month: '2-digit',
-                }).format(new Date(atividade.via_data))
-                : '--/--';
+                ? new Intl.DateTimeFormat("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                  }).format(new Date(atividade.via_data))
+                : "--/--";
 
               return (
                 <TouchableOpacity
@@ -119,26 +158,39 @@ export default function Travels() {
                   <Image source={icone} style={styles.icon} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>Serviço:</Text>
-                    <Text style={styles.text}>{capitalizeFirstLetter(atividade.via_servico) || 'Indefinido'}</Text>
+                    <Text style={styles.text}>
+                      {capitalizeFirstLetter(atividade.via_servico) ||
+                        "Indefinido"}
+                    </Text>
 
                     {isExpanded && (
                       <>
-                        <Text style={styles.detail}>Origem: {atividade.via_origem || 'N/A'}</Text>
-                        <Text style={styles.detail}>Destino: {atividade.via_destino || 'N/A'}</Text>
-                        <Text style={styles.detail}>Valor: R$ {atividade.via_valor !== undefined && atividade.via_valor !== null ? Number(atividade.via_valor).toFixed(2) : '0,00'}</Text>
+                        <Text style={styles.detail}>
+                          Origem: {atividade.via_origem || "N/A"}
+                        </Text>
+                        <Text style={styles.detail}>
+                          Destino: {atividade.via_destino || "N/A"}
+                        </Text>
+                        <Text style={styles.detail}>
+                          Valor: R${" "}
+                          {atividade.via_valor !== undefined &&
+                          atividade.via_valor !== null
+                            ? Number(atividade.via_valor).toFixed(2)
+                            : "0,00"}
+                        </Text>
                         <TouchableOpacity
-                          onPress={() => router.replace({
-                            pathname: '/TravelDetails/[id]',
-                            params: { id: atividade.via_codigo }
-                          })}
+                          onPress={() =>
+                            router.replace({
+                              pathname: "/TravelDetails/[id]",
+                              params: { id: atividade.via_codigo },
+                            })
+                          }
                           style={styles.newRequest}
                         >
                           <Text style={styles.newRequestText}>Detalhes</Text>
                         </TouchableOpacity>
-
                       </>
                     )}
-
                   </View>
                   <View style={styles.dateContainer}>
                     <Text style={styles.label}>Data:</Text>
@@ -150,7 +202,7 @@ export default function Travels() {
           )}
         </ScrollView>
         <Tab />
-      </View >
+      </View>
     </>
   );
 }
@@ -158,8 +210,8 @@ export default function Travels() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'space-between',
+    backgroundColor: "#fff",
+    justifyContent: "space-between",
   },
   container: {
     paddingHorizontal: 20,
@@ -168,14 +220,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     marginBottom: 16,
-    color: '#000',
+    color: "#000",
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#000",
     borderRadius: 21,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -189,62 +241,62 @@ const styles = StyleSheet.create({
   icon: {
     width: 69,
     height: 69,
-    resizeMode: 'contain',
+    resizeMode: "contain",
     marginRight: 16,
   },
   label: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 14,
-    color: '#aaa',
+    color: "#aaa",
   },
   text: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 24,
-    color: '#fff',
+    color: "#fff",
     marginTop: -2,
   },
   detail: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 14,
-    color: '#fff',
+    color: "#fff",
     marginTop: 4,
   },
   dateContainer: {
     marginLeft: 10,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   error: {
     fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginVertical: 20,
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
   },
   empty: {
     fontSize: 24,
-    color: '#555',
-    textAlign: 'center',
+    color: "#555",
+    textAlign: "center",
     marginVertical: 20,
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
   },
   iconEmpty: {
     width: 300,
     height: 300,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 10,
   },
   newRequest: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 21,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
   newRequestText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 18,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
   },
 });

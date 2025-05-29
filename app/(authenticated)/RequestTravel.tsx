@@ -1,20 +1,33 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   Alert,
   ActivityIndicator,
   StatusBar,
+  TouchableOpacity,
+  Image,
+  ScrollView,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import Header from "../Components/header";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { Picker } from "@react-native-picker/picker";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Keyboard } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type Coordinates = {
   latitude: number;
@@ -26,7 +39,10 @@ type RouteData = {
   distanceKm: number;
 };
 
-const calculateHaversineDistance = (coord1: Coordinates, coord2: Coordinates): number => {
+const calculateHaversineDistance = (
+  coord1: Coordinates,
+  coord2: Coordinates
+): number => {
   const R = 6371e3;
   const φ1 = (coord1.latitude * Math.PI) / 180;
   const φ2 = (coord2.latitude * Math.PI) / 180;
@@ -34,8 +50,7 @@ const calculateHaversineDistance = (coord1: Coordinates, coord2: Coordinates): n
   const Δλ = ((coord2.longitude - coord1.longitude) * Math.PI) / 180;
 
   const a =
-    Math.sin(Δφ / 2) ** 2 +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
@@ -121,7 +136,10 @@ export default function RotaScreen() {
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
+  const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
+  const [observacoes, setObservacoes] = useState<string>("");
 
   const initialRegion = {
     latitude: -21.8756,
@@ -130,6 +148,12 @@ export default function RotaScreen() {
     longitudeDelta: 0.1,
   };
   const [region, setRegion] = useState(initialRegion);
+
+  const snapPoints = useMemo(() => ["35%", "50%"], []);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    setIsBottomSheetActive(index >= 0);
+  }, []);
 
   const calcularRota = async () => {
     if (!startAddress.trim() || !endAddress.trim()) {
@@ -166,12 +190,17 @@ export default function RotaScreen() {
 
       setMarkers([origin, destination]);
 
-      const { coords, distanceKm } = await getRouteFromOSRM(origin, destination);
-      const calculatedPrice = 7 + distanceKm * 2;
+      const { coords, distanceKm } = await getRouteFromOSRM(
+        origin,
+        destination
+      );
+      const calculatedPrice = 5.8 + distanceKm * 1;
 
       setRouteCoords(coords);
       setDistance(distanceKm);
       setPrice(calculatedPrice);
+
+      bottomSheetRef.current?.expand();
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitToCoordinates(coords, {
@@ -183,7 +212,9 @@ export default function RotaScreen() {
       console.error("Route calculation error:", error);
       Alert.alert(
         "Erro",
-        error instanceof Error ? error.message : "Erro desconhecido ao calcular rota"
+        error instanceof Error
+          ? error.message
+          : "Erro desconhecido ao calcular rota"
       );
     } finally {
       setIsLoading(false);
@@ -221,6 +252,7 @@ export default function RotaScreen() {
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
+            sol_observacoes: observacoes,
           }),
         }
       );
@@ -235,8 +267,6 @@ export default function RotaScreen() {
         pathname: "/PendingRequest",
         params: { solicitacaoId: data.sol_codigo },
       });
-
-
     } catch (error) {
       console.error("Erro ao criar solicitação:", error);
       Alert.alert("Erro", "Não foi possível criar a solicitação.");
@@ -244,7 +274,6 @@ export default function RotaScreen() {
       setIsLoading(false);
     }
   };
-
 
   const resetForm = () => {
     setStartAddress("");
@@ -254,6 +283,7 @@ export default function RotaScreen() {
     setDistance(null);
     setPrice(null);
     setRegion(initialRegion);
+    bottomSheetRef.current?.close();
     if (mapRef.current) {
       mapRef.current.animateToRegion(initialRegion);
     }
@@ -275,6 +305,27 @@ export default function RotaScreen() {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, [endAddress]);
+  if (isBottomSheetActive && startAddress && endAddress ) {
+    Keyboard.dismiss();
+  }
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      if (isBottomSheetActive) {
+        bottomSheetRef.current?.close();
+      }
+    });
+
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      if (isBottomSheetActive) {
+        bottomSheetRef.current?.expand();
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [isBottomSheetActive]);
 
   return (
     <KeyboardAvoidingView
@@ -285,55 +336,37 @@ export default function RotaScreen() {
       <Header />
       <StatusBar barStyle="light-content" />
       <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Endereço de partida (ex: Rua A, 123)"
-          value={startAddress}
-          onChangeText={setStartAddress}
-          clearButtonMode="while-editing"
-          returnKeyType="next"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Endereço de destino (ex: Av. B, 456)"
-          value={endAddress}
-          onChangeText={setEndAddress}
-          clearButtonMode="while-editing"
-          returnKeyType="done"
-        />
-
-        <View style={styles.buttonContainer}>
-          <View style={{ width: 12 }} />
+        <View style={styles.iconColumn}>
+          <Ionicons name="location-outline" size={24} color="#000" />
+          <View style={styles.line} />
+          <Ionicons name="flag-outline" size={24} color="#000" />
         </View>
 
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#000" />
-            <Text style={styles.loadingText}>Calculando rota...</Text>
-          </View>
-        )}
-
-        {distance !== null && price !== null && (
-          <>
-            <View style={styles.resultContainer}>
-              <Text style={styles.resultText}>
-                Distância: <Text style={styles.highlight}>{distance.toFixed(2)} km</Text>
-              </Text>
-              <Text style={styles.resultText}>
-                Preço estimado: <Text style={styles.highlight}>R$ {price.toFixed(2)}</Text>
-              </Text>
-            </View>
-            <View style={{ marginTop: 12 }}>
-              <Button
-                title="Solicitar Moto Táxi"
-                onPress={handleSolicitar}
-                color="#32CD32"
-                disabled={isLoading}
-              />
-            </View>
-          </>
-        )}
+        <View style={styles.inputColumn}>
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de partida (ex: Rua A, 123)"
+            value={startAddress}
+            onChangeText={setStartAddress}
+            clearButtonMode="while-editing"
+            returnKeyType="next"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de destino (ex: Av. B, 456)"
+            value={endAddress}
+            onChangeText={setEndAddress}
+            clearButtonMode="while-editing"
+            returnKeyType="done"
+          />
+        </View>
       </View>
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={styles.loadingText}>Calculando rota...</Text>
+        </View>
+      )}
 
       <View style={styles.mapContainer}>
         <MapView
@@ -345,13 +378,17 @@ export default function RotaScreen() {
           showsMyLocationButton
         >
           {markers.map((marker, idx) => (
-
-          <Marker
-            key={idx}
-            coordinate={marker}
-            image={idx === 0 ? require('../../assets/destino.png') : require('../../assets/partida.png')}
-          />
-
+            <Marker key={idx} coordinate={marker}>
+              <Image
+                source={
+                  idx === 0
+                    ? require("../../assets/partida.png")
+                    : require("../../assets/destino.png")
+                }
+                style={{ width: 40, height: 40 }}
+                resizeMode="contain"
+              />
+            </Marker>
           ))}
           {routeCoords.length > 0 && (
             <Polyline
@@ -361,63 +398,287 @@ export default function RotaScreen() {
             />
           )}
         </MapView>
+        {routeCoords.length > 0 && !isBottomSheetActive && (
+          <TouchableOpacity
+            style={styles.floatingButton}
+            onPress={() => bottomSheetRef.current?.expand()}
+          >
+            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
+            <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
+          </TouchableOpacity>
+        )}
       </View>
+
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        onChange={handleSheetChanges}
+        enablePanDownToClose
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.handleIndicator}
+        detached={true}
+      >
+        <BottomSheetView style={styles.bottomSheetContent}>
+          {distance !== null && price !== null && (
+            <>
+              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Origem:</Text>
+                <Text style={styles.detailValue}>{startAddress}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Destino:</Text>
+                <Text style={styles.detailValue}>{endAddress}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Distância:</Text>
+                <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Preço:</Text>
+                <Text style={[styles.detailValue, styles.priceText]}>
+                  R$ {price.toFixed(2)}
+                </Text>
+              </View>
+
+              <View style={styles.pickerContainer}>
+                <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
+                <View style={styles.picker}>
+                  <Picker
+                    selectedValue={formaPagamento}
+                    onValueChange={(itemValue) => setFormaPagamento(itemValue)}
+                  >
+                    <Picker.Item label="Dinheiro" value="Dinheiro" />
+                    <Picker.Item
+                      label="Cartão de Crédito"
+                      value="Cartão de Crédito"
+                    />
+                    <Picker.Item
+                      label="Cartão de Débito"
+                      value="Cartão de Débito"
+                    />
+                    <Picker.Item label="PIX" value="PIX" />
+                  </Picker>
+                </View>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Observações (opcional)"
+                value={observacoes || ""}
+                onChangeText={setObservacoes}
+                clearButtonMode="while-editing"
+                returnKeyType="done"
+              />
+
+              <TouchableOpacity
+                style={styles.solicitarButton}
+                onPress={handleSolicitar}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.solicitarButtonText}>
+                    Solicitar Corrida
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+        </BottomSheetView>
+      </BottomSheet>
     </KeyboardAvoidingView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f0f0f0",
   },
   form: {
+    display: "flex",
+    flexDirection: "row",
     paddingHorizontal: 15,
     paddingTop: 15,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#f0f0f0",
+  },
+  iconColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  line: {
+    width: 2,
+    height: 30,
+    backgroundColor: "#000",
+    marginVertical: 4,
+  },
+  inputColumn: {
+    flexDirection: "column",
+    justifyContent: "center",
+    flex: 1,
   },
   input: {
+    width: "100%",
     height: 45,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 12,
     fontSize: 16,
     backgroundColor: "#fff",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    marginBottom: 12,
+    fontFamily: "Righteous",
+    color: "#000",
   },
   loadingContainer: {
-    flexDirection: "row",
+    textAlign: "center",
+    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    flexDirection: "column",
     marginBottom: 12,
   },
   loadingText: {
     marginLeft: 10,
     fontSize: 16,
-    color: "#555",
-  },
-  resultContainer: {
-    marginTop: 8,
-  },
-  resultText: {
-    fontSize: 16,
-    marginBottom: 6,
-  },
-  highlight: {
-    fontWeight: "bold",
-    color: "#1E90FF",
+    color: "#000",
+    fontFamily: "Righteous",
   },
   mapContainer: {
     flex: 1,
     borderTopWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
   },
   map: {
     flex: 1,
+  },
+  bottomSheetBackground: {
+    backgroundColor: "#f0f0f0",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderStartEndRadius: 0,
+    borderEndEndRadius: 0,
+    borderTopColor: "#ccc",
+  },
+  handleIndicator: {
+    backgroundColor: "#aaa",
+    width: 40,
+    height: 5,
+    alignSelf: "center",
+    marginVertical: 5,
+    borderRadius: 3,
+  },
+  bottomSheetContent: {
+    padding: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 22,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  detailLabel: {
+    fontSize: 16,
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  detailValue: {
+    fontSize: 16,
+    color: "#000",
+    textAlign: "right",
+    flexShrink: 1,
+    marginLeft: 10,
+    fontFamily: "Righteous",
+  },
+  priceText: {
+    color: "#2e7d32",
+    fontFamily: "Righteous",
+  },
+  pickerContainer: {
+    marginTop: 15,
+    marginBottom: 20,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    color: "#000",
+    marginBottom: 8,
+    fontFamily: "Righteous",
+  },
+  picker: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  solicitarButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    marginBottom: 20,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  solicitarButtonText: {
+    color: "#f0f0f0",
+    fontSize: 18,
+    fontFamily: "Righteous",
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#000",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  floatingButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Righteous",
+    marginRight: 8,
+  },
+  apagar: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+  },
+  apagarText: {
+    marginLeft: 5,
+    fontSize: 16,
+    color: "#000",
+    fontFamily: "Righteous",
   },
 });

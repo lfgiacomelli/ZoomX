@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { FontAwesome, Feather, Ionicons } from '@expo/vector-icons';
@@ -56,9 +56,11 @@ export default function SignIn() {
         body: JSON.stringify({
           usu_nome: form.name,
           usu_telefone: form.phone,
+          usu_ativo: true,
           usu_email: form.email,
           usu_senha: form.password,
           usu_created_at: new Date().toISOString(),
+          usu_updated_at: new Date().toISOString(),
         }),
 
       });
@@ -82,7 +84,7 @@ export default function SignIn() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.logo}>
         <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
       </View>
@@ -141,16 +143,17 @@ export default function SignIn() {
       <TouchableOpacity onPress={() => router.push('/login')}>
         <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop:130,
     flex: 1,
     backgroundColor: '#000',
-    paddingHorizontal: 30,
-    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   logo: {
     alignItems: 'center',
@@ -163,6 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 400,
     height: 400,
+    marginBottom: -50,
   },
   title: {
     fontFamily: 'Righteous',

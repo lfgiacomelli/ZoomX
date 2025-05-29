@@ -14,9 +14,7 @@ interface ViagemResponse {
 
 export default function VerificarAndamento() {
     const [usuarioId, setUsuarioId] = useState<string | null>(null);
-    const ultimaViagemNotificadaRef = useRef<string | null>(null);
 
-    // Configurar notificações
     useEffect(() => {
         (async () => {
             const { status } = await Notifications.getPermissionsAsync();
@@ -26,7 +24,7 @@ export default function VerificarAndamento() {
                     Alert.alert("Permissão necessária", "Ative as notificações para receber alertas de viagem.");
                 }
             }
-            
+
             Notifications.setNotificationHandler({
                 handleNotification: async () => ({
                     shouldShowAlert: true,
@@ -52,7 +50,7 @@ export default function VerificarAndamento() {
         pegarUsuarioId();
     }, []);
 
-    // Verificar status da viagem
+    // Verificar status da viagem e notificar apenas uma vez por viagem
     useEffect(() => {
         if (!usuarioId) return;
 
@@ -61,14 +59,14 @@ export default function VerificarAndamento() {
                 const response = await fetch(
                     `https://backend-turma-a-2025.onrender.com/api/viagens/andamento/${usuarioId}`
                 );
-                
+
                 if (!response.ok) {
                     console.error("Erro ao buscar status da viagem:", response.status);
                     return;
                 }
 
                 const data: ViagemResponse = await response.json();
-                
+
                 if (!data.sucesso || !data.viagem) {
                     console.log(data.mensagem || "Nenhuma viagem encontrada");
                     return;
@@ -76,33 +74,32 @@ export default function VerificarAndamento() {
 
                 const { via_codigo, via_status } = data.viagem;
 
-                if (
-                    via_status.toLowerCase() === 'finalizada' &&
-                    via_codigo !== ultimaViagemNotificadaRef.current
-                ) {
-                    // Atualiza a referência para evitar notificações repetidas
-                    ultimaViagemNotificadaRef.current = via_codigo;
+                if (via_status.toLowerCase() === 'finalizada') {
+                    const ultimaNotificada = await AsyncStorage.getItem("ultimaViagemNotificada");
 
-                    // Envia a notificação
-                    await Notifications.scheduleNotificationAsync({
-                        content: {
-                            title: "Viagem finalizada!",
-                            body: "Sua viagem foi finalizada. Por favor, avalie a corrida para nos ajudar a melhorar.",
-                            data: { viagemId: via_codigo },
-                            sound: 'default',
-                        },
-                        trigger: null, // Envia imediatamente
-                    });
+                    if (ultimaNotificada !== via_codigo) {
+                        // Envia a notificação
+                        await Notifications.scheduleNotificationAsync({
+                            content: {
+                                title: "Viagem finalizada!",
+                                body: "Sua viagem foi finalizada. Por favor, avalie a corrida para nos ajudar a melhorar.",
+                                data: { viagemId: via_codigo },
+                                sound: 'default',
+                            },
+                            trigger: null,
+                        });
 
-                    console.log("Notificação enviada para viagem finalizada:", via_codigo);
+                        console.log("Notificação enviada para viagem:", via_codigo);
+
+                        // Salva ID da última notificada
+                        await AsyncStorage.setItem("ultimaViagemNotificada", via_codigo);
+                    }
                 }
-
             } catch (error) {
                 console.error("Erro na verificação do status da viagem:", error);
             }
         }
 
-        // Verifica imediatamente e depois a cada 30 segundos
         verificarStatus();
         const intervalo = setInterval(verificarStatus, 30000);
 
