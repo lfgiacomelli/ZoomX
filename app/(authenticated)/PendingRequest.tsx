@@ -1,8 +1,19 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Image, ScrollView, Modal } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Modal,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Audio } from 'expo-av';
+import { Audio } from "expo-av";
 import Header from "../Components/header";
+import * as Notifications from "expo-notifications";
 
 type Solicitacao = {
   sol_codigo: number;
@@ -33,15 +44,13 @@ export default function PendingRequest() {
   const [mototaxista, setMototaxista] = useState<any>(null);
   const [showRecusaModal, setShowRecusaModal] = useState(false);
 
-
-
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     async function loadSound() {
       const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/notificacao.mp3')
+        require("../../assets/notificacao.mp3")
       );
       setSound(sound);
     }
@@ -76,12 +85,18 @@ export default function PendingRequest() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`);
-      if (!response.ok) throw new Error(`Erro ao buscar solicitação: ${response.status}`);
+      const response = await fetch(
+        `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`
+      );
+      if (!response.ok)
+        throw new Error(`Erro ao buscar solicitação: ${response.status}`);
 
       const data = await response.json();
 
-      if (previousStatus.current && previousStatus.current !== data.sol_status) {
+      if (
+        previousStatus.current &&
+        previousStatus.current !== data.sol_status
+      ) {
         playSound();
       }
 
@@ -95,10 +110,14 @@ export default function PendingRequest() {
         try {
           const solicitacaoId = data.sol_codigo;
 
-          const responseFuncionario = await fetch(`https://backend-turma-a-2025.onrender.com/api/viagens/solicitacao/${solicitacaoId}/funcionario`);
+          const responseFuncionario = await fetch(
+            `https://backend-turma-a-2025.onrender.com/api/viagens/solicitacao/${solicitacaoId}/funcionario`
+          );
 
           if (!responseFuncionario.ok) {
-            throw new Error(`Erro ao buscar informações do funcionário: ${responseFuncionario.status}`);
+            throw new Error(
+              `Erro ao buscar informações do funcionário: ${responseFuncionario.status}`
+            );
           }
 
           const responseJson = await responseFuncionario.json();
@@ -106,6 +125,16 @@ export default function PendingRequest() {
           setMototaxista(funcionario);
           setShowModal(true);
 
+          setTimeout(async () => {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: "Sua corrida foi aceita!",
+                body: `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`,
+                data: { solicitacaoId },
+              },
+              trigger: null,
+            });
+          }, 3000);
         } catch (error) {
           console.error("Erro ao buscar informações do funcionário:", error);
           Alert.alert(
@@ -114,15 +143,21 @@ export default function PendingRequest() {
             [{ text: "OK" }]
           );
         }
-
-      }
-      else if (data.sol_status === "recusada") {
+      } else if (data.sol_status === "recusada") {
         if (intervalRef.current) clearInterval(intervalRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
         setShowRecusaModal(true);
+
+        setTimeout(async () => {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Solicitação recusada",
+              body: "Infelizmente sua solicitação foi recusada.",
+            },
+            trigger: null,
+          });
+        }, 3000);
       }
-
-
     } catch (err: any) {
       setError(err.message || "Erro desconhecido");
     } finally {
@@ -132,15 +167,19 @@ export default function PendingRequest() {
 
   const handleCancel = async () => {
     try {
-      const response = await fetch(`https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error(`Erro ao cancelar solicitação: ${response.status}`);
+      const response = await fetch(
+        `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok)
+        throw new Error(`Erro ao cancelar solicitação: ${response.status}`);
 
       Alert.alert(
         "Solicitação Cancelada",
         "Sua solicitação foi cancelada com sucesso",
-        [{ text: "OK", onPress: () => router.push("/home") }]
+        [{ text: "OK", onPress: () => router.push("/Home") }]
       );
     } catch (err: any) {
       Alert.alert("Erro", err.message || "Erro ao cancelar solicitação");
@@ -174,7 +213,7 @@ export default function PendingRequest() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   if (error) {
@@ -199,7 +238,8 @@ export default function PendingRequest() {
   if (!solicitacao) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.noRequestText}>Nenhuma solicitação encontrada.</Text>
+        <ActivityIndicator size="large" color="#000" />
+        <Text style={styles.loadingText}>Carregando solicitação...</Text>
       </View>
     );
   }
@@ -215,14 +255,14 @@ export default function PendingRequest() {
             style={styles.atendenteImage}
           />
           <Text style={styles.message}>
-            Sua solicitação está sendo analisada. Aguarde a confirmação do atendente.
+            Sua solicitação está sendo analisada. Aguarde a confirmação do
+            atendente.
           </Text>
           <View style={styles.timerContainer}>
             <Text style={styles.timerLabel}>Tempo para cancelamento:</Text>
-            <Text style={[
-              styles.timerValue,
-              timeLeft < 60 && styles.warningTime
-            ]}>
+            <Text
+              style={[styles.timerValue, timeLeft < 60 && styles.warningTime]}
+            >
               {formatTime(timeLeft)}
             </Text>
           </View>
@@ -240,7 +280,9 @@ export default function PendingRequest() {
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Distância:</Text>
-              <Text style={styles.detailValue}>{solicitacao.sol_distancia} km</Text>
+              <Text style={styles.detailValue}>
+                {solicitacao.sol_distancia} km
+              </Text>
             </View>
 
             <View style={styles.detailRow}>
@@ -255,29 +297,37 @@ export default function PendingRequest() {
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Status:</Text>
-              <Text style={[
-                styles.detailValue,
-                solicitacao.sol_status === "Pendente" ? styles.pendingStatus : styles.acceptedStatus
-              ]}>
+              <Text
+                style={[
+                  styles.detailValue,
+                  solicitacao.sol_status === "Pendente"
+                    ? styles.pendingStatus
+                    : styles.acceptedStatus,
+                ]}
+              >
                 {solicitacao.sol_status}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Data:</Text>
-              <Text style={styles.detailValue}>{new Date(solicitacao.sol_data).toLocaleString()}</Text>
+              <Text style={styles.detailValue}>
+                {new Date(solicitacao.sol_data).toLocaleString()}
+              </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Pagamento:</Text>
-              <Text style={styles.detailValue}>{solicitacao.sol_formapagamento}</Text>
+              <Text style={styles.detailValue}>
+                {solicitacao.sol_formapagamento}
+              </Text>
             </View>
           </View>
 
           <TouchableOpacity
             style={[
               styles.actionButton,
-              cancelDisabled && styles.disabledButton
+              cancelDisabled && styles.disabledButton,
             ]}
             onPress={handleCancel}
             disabled={cancelDisabled}
@@ -295,12 +345,17 @@ export default function PendingRequest() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Image source={require("../../assets/aceito.png")} style={{ width: 100, height: 100, marginBottom: 20 }} />
+              <Image
+                source={require("../../assets/aceito.png")}
+                style={{ width: 100, height: 100, marginBottom: 20 }}
+              />
               <Text style={styles.modalTitle}>Corrida Aceita!</Text>
               <Text style={styles.modalText}>
                 Seu mototaxista está a caminho!Aguarde no local indicado{"\n\n"}
-                <Text style={styles.bold}>Nome:</Text> {mototaxista?.fun_nome}{"\n"}
-                <Text style={styles.bold}>Moto:</Text> {mototaxista?.mot_modelo}{"\n"}
+                <Text style={styles.bold}>Nome:</Text> {mototaxista?.fun_nome}
+                {"\n"}
+                <Text style={styles.bold}>Moto:</Text> {mototaxista?.mot_modelo}
+                {"\n"}
                 <Text style={styles.bold}>Placa:</Text> {mototaxista?.mot_placa}
               </Text>
 
@@ -308,7 +363,7 @@ export default function PendingRequest() {
                 style={styles.modalButton}
                 onPress={() => {
                   setShowModal(false);
-                  router.push("/home");
+                  router.push("/Home");
                 }}
               >
                 <Text style={styles.modalButtonText}>OK</Text>
@@ -324,19 +379,28 @@ export default function PendingRequest() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Image source={require("../../assets/recusado.png")} style={{ width: 100, height: 100, marginBottom: 20 }} />
+              <Image
+                source={require("../../assets/recusado.png")}
+                style={{ width: 100, height: 100, marginBottom: 20 }}
+              />
               <Text style={styles.modalTitle}>Solicitação Recusada</Text>
               <Text style={styles.modalText}>
                 Infelizmente, sua solicitação foi recusada.{"\n\n"}
                 Veja possíveis motivos e tente novamente.
               </Text>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
                 <TouchableOpacity
                   style={[styles.modalButton, { flex: 1, marginRight: 5 }]}
                   onPress={() => {
                     setShowRecusaModal(false);
-                    router.push("/home");
+                    router.push("/Home");
                   }}
                 >
                   <Text style={styles.modalButtonText}>OK</Text>
@@ -352,14 +416,10 @@ export default function PendingRequest() {
                   <Text style={styles.modalButtonText}>Ver Motivos</Text>
                 </TouchableOpacity>
               </View>
-
             </View>
           </View>
         </Modal>
-
-
       </ScrollView>
-
     </View>
   );
 }
@@ -367,7 +427,7 @@ export default function PendingRequest() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
   },
   container: {
     padding: 20,
@@ -375,16 +435,16 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
     padding: 20,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -393,156 +453,155 @@ const styles = StyleSheet.create({
   atendenteImage: {
     width: 180,
     height: 180,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 20,
     borderRadius: 90,
     borderWidth: 3,
-    borderColor: '#000',
+    borderColor: "#000",
   },
   timerContainer: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   timerLabel: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     marginBottom: 5,
   },
   timerValue: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 24,
-    color: '#000',
+    color: "#000",
   },
   warningTime: {
-    color: '#FF3B30',
+    color: "#FF3B30",
   },
   detailsContainer: {
     marginBottom: 20,
   },
   detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   detailLabel: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     flex: 1,
   },
   detailValue: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#555',
+    color: "#555",
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   pendingStatus: {
-    color: '#FF9500',
-    fontWeight: 'bold',
+    color: "#FF9500",
+    fontWeight: "bold",
   },
   acceptedStatus: {
-    color: '#34C759',
-    fontWeight: 'bold',
+    color: "#34C759",
+    fontWeight: "bold",
   },
   actionButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
   disabledButton: {
-    backgroundColor: '#AEAEB2',
+    backgroundColor: "#AEAEB2",
   },
   actionButtonText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 18,
-    color: '#fff',
+    color: "#fff",
   },
   loadingText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 18,
-    color: '#000',
+    color: "#000",
     marginTop: 20,
   },
   errorText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 18,
-    color: '#FF3B30',
+    color: "#FF3B30",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   noRequestText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 18,
-    color: '#000',
+    color: "#000",
   },
   retryButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     padding: 14,
     borderRadius: 8,
-    alignItems: 'center',
-    width: '70%',
+    alignItems: "center",
+    width: "70%",
   },
   retryButtonText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
   message: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
+    color: "#333",
+    textAlign: "center",
     marginBottom: 20,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    width: '85%',
-    backgroundColor: '#fff',
+    width: "85%",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 20,
-    color: '#000',
+    color: "#000",
     marginBottom: 10,
   },
   modalText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
+    color: "#333",
+    textAlign: "center",
     marginBottom: 20,
   },
   bold: {
-    fontWeight: 'bold',
-    fontFamily: 'Righteous',
+    fontWeight: "bold",
+    fontFamily: "Righteous",
   },
   modalButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 8,
   },
   modalButtonText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
-
 });

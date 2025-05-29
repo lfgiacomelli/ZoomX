@@ -118,6 +118,9 @@ export default function Profile() {
                         <Text style={styles.iconText}>Informações</Text>
                     </TouchableOpacity>
                 </View>
+                <TouchableOpacity style={styles.iconBox} onPress={() => router.push('/MyReviews')}>
+                    <Text style={styles.iconText}>Minhas Avaliações</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <MaterialCommunityIcons name="logout" size={22} color="#fff" />

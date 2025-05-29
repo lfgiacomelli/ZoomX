@@ -58,7 +58,9 @@ export default function SignIn() {
           usu_telefone: form.phone,
           usu_email: form.email,
           usu_senha: form.password,
+          usu_created_at: new Date().toISOString(),
         }),
+
       });
 
       const data = await response.json();
@@ -71,7 +73,7 @@ export default function SignIn() {
 
       await AsyncStorage.setItem('token', data.token);
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      router.replace('/(authenticated)/home'); // ou rota que desejar após login
+      router.replace('/(authenticated)/home');
 
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível conectar ao servidor.');

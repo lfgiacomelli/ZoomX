@@ -21,7 +21,7 @@ export default function Travels() {
     via_servico: string;
     via_status: 'Pendente' | 'Aprovada' | 'Rejeitada';
     via_data: string | Date;
-    via_valor: number;    
+    via_valor: number;
   }
 
 
@@ -91,7 +91,7 @@ export default function Travels() {
           ) : data.length === 0 ? (
             <><Image source={require('../../assets/empty.png')} style={styles.iconEmpty} />
               <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
-              <TouchableOpacity style={styles.newRequest} onPress={() => {router.push('/RequestTravel')}}>
+              <TouchableOpacity style={styles.newRequest} onPress={() => { router.push('/RequestTravel') }}>
                 <Text style={styles.newRequestText}>Peça um mototáxi agora</Text>
               </TouchableOpacity>
             </>
@@ -126,6 +126,16 @@ export default function Travels() {
                         <Text style={styles.detail}>Origem: {atividade.via_origem || 'N/A'}</Text>
                         <Text style={styles.detail}>Destino: {atividade.via_destino || 'N/A'}</Text>
                         <Text style={styles.detail}>Valor: R$ {atividade.via_valor !== undefined && atividade.via_valor !== null ? Number(atividade.via_valor).toFixed(2) : '0,00'}</Text>
+                        <TouchableOpacity
+                          onPress={() => router.replace({
+                            pathname: '/TravelDetails/[id]',
+                            params: { id: atividade.via_codigo }
+                          })}
+                          style={styles.newRequest}
+                        >
+                          <Text style={styles.newRequestText}>Detalhes</Text>
+                        </TouchableOpacity>
+
                       </>
                     )}
 
@@ -140,7 +150,7 @@ export default function Travels() {
           )}
         </ScrollView>
         <Tab />
-      </View>
+      </View >
     </>
   );
 }

@@ -8,7 +8,7 @@ export default function AuthenticatedLayout() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = await AsyncStorage.getItem('auth');
+      const token = await AsyncStorage.getItem('token');
       setIsAuthenticated(!!token);
     };
     checkAuth();

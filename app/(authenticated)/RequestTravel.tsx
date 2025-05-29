@@ -26,9 +26,8 @@ type RouteData = {
   distanceKm: number;
 };
 
-// Calcula distância entre duas coordenadas usando fórmula de Haversine
 const calculateHaversineDistance = (coord1: Coordinates, coord2: Coordinates): number => {
-  const R = 6371e3; // raio da Terra em metros
+  const R = 6371e3;
   const φ1 = (coord1.latitude * Math.PI) / 180;
   const φ2 = (coord2.latitude * Math.PI) / 180;
   const Δφ = ((coord2.latitude - coord1.latitude) * Math.PI) / 180;
@@ -39,10 +38,9 @@ const calculateHaversineDistance = (coord1: Coordinates, coord2: Coordinates): n
     Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return R * c; // distância em metros
+  return R * c;
 };
 
-// Converte endereço em coordenadas via API OpenCageData
 const getCoordsFromAddress = async (address: string): Promise<Coordinates> => {
   if (!address.trim()) throw new Error("Endereço não pode estar vazio");
 
@@ -76,7 +74,6 @@ const getCoordsFromAddress = async (address: string): Promise<Coordinates> => {
   }
 };
 
-// Busca rota via OSRM API
 const getRouteFromOSRM = async (
   origin: Coordinates,
   destination: Coordinates
@@ -221,7 +218,6 @@ export default function RotaScreen() {
             sol_distancia: distance,
             sol_valor: price,
             sol_servico: "Moto táxi",
-            // sol_status: "Pendente", // não precisa enviar se o backend seta como padrão
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
@@ -237,7 +233,7 @@ export default function RotaScreen() {
 
       router.push({
         pathname: "/PendingRequest",
-        params: { solicitacaoId: data.sol_codigo }, // Changed 'id' to 'solicitacaoId'
+        params: { solicitacaoId: data.sol_codigo },
       });
 
 
@@ -308,12 +304,11 @@ export default function RotaScreen() {
 
         <View style={styles.buttonContainer}>
           <View style={{ width: 12 }} />
-          <Button title="Resetar" onPress={resetForm} color="#888" />
         </View>
 
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#1E90FF" />
+            <ActivityIndicator size="large" color="#000" />
             <Text style={styles.loadingText}>Calculando rota...</Text>
           </View>
         )}
@@ -350,11 +345,13 @@ export default function RotaScreen() {
           showsMyLocationButton
         >
           {markers.map((marker, idx) => (
-            <Marker
-              key={idx}
-              coordinate={marker}
-              pinColor={idx === 0 ? "green" : "red"}
-            />
+
+          <Marker
+            key={idx}
+            coordinate={marker}
+            image={idx === 0 ? require('../../assets/destino.png') : require('../../assets/partida.png')}
+          />
+
           ))}
           {routeCoords.length > 0 && (
             <Polyline

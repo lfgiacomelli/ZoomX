@@ -8,33 +8,51 @@ import {
   StatusBar,
   ScrollView,
   AccessibilityInfo,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import useRighteousFont from '../../hooks/Font/index';
-import { useRouter } from 'expo-router';
-import Header from '../Components/header';
-import Tab from '../Components/Tab';
-import Constants from 'expo-constants';
-import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
-import AnunciosCarousel from '../Components/Anuncios';
-// import VerificarEmAndamento from '../Components/VerificarEmAndamento';
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import useRighteousFont from "../../hooks/Font/index";
+import { useRouter } from "expo-router";
+import Header from "../Components/header";
+import Tab from "../Components/Tab";
+import Constants from "expo-constants";
+import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
+import AnunciosCarousel from "../Components/Anuncios";
+import * as Notifications from "expo-notifications";
+import VerificarAndamento from "../Components/VerificarEmAndamento";
 
 const Home = () => {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
   const [statusLeitor, setStatusLeitor] = useState(false);
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
 
+        if (data.via_codigo) {
+          router.push(`/AvaliarViagem/${data.via_codigo}`);
+        }
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
   useEffect(() => {
     let subscription: Location.LocationSubscription;
 
     const startWatching = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permissão negada para acessar localização');
+      if (status !== "granted") {
+        setErrorMsg("Permissão negada para acessar localização");
         return;
       }
 
@@ -62,13 +80,12 @@ const Home = () => {
       const status = await AccessibilityInfo.isScreenReaderEnabled();
       setStatusLeitor(status);
       console.log("Leitor de tela ativo?", status ? "Sim" : "Não");
-
     };
 
     checkStatus();
 
     const subscription = AccessibilityInfo.addEventListener(
-      'screenReaderChanged',
+      "screenReaderChanged",
       (isEnabled) => {
         setStatusLeitor(isEnabled);
         console.log("Leitor de tela mudou:", isEnabled ? "Ativo" : "Inativo");
@@ -77,11 +94,6 @@ const Home = () => {
 
     return () => subscription.remove();
   }, []);
-
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('auth');
-    router.replace('/login');
-  };
 
   if (!fontLoaded) {
     return (
@@ -93,31 +105,48 @@ const Home = () => {
 
   return (
     <>
+      <VerificarAndamento />
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <Header />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/RequestTravel')}>
-            <Image source={require('../../assets/motorcycle.png')} style={styles.icon} />
-            <View style={{ flex: 1, alignItems: 'center' }}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push("/RequestTravel")}
+          >
+            <Image
+              source={require("../../assets/motorcycle.png")}
+              style={styles.icon}
+            />
+            <View style={{ flex: 1, alignItems: "center" }}>
               <Text style={styles.actionText}>Viagem</Text>
               <View style={styles.underline}></View>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/RequestDelivery')}>
-            <Image source={require('../../assets/box.png')} style={styles.icon} />
-            <View style={{ flex: 1, alignItems: 'center' }}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push("/RequestDelivery")}
+          >
+            <Image
+              source={require("../../assets/box.png")}
+              style={styles.icon}
+            />
+            <View style={{ flex: 1, alignItems: "center" }}>
               <Text style={styles.actionText}>Entrega</Text>
               <View style={styles.underline}></View>
             </View>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.callButton} onPress={() => router.push('/RequestTravel')}>
+        <TouchableOpacity
+          style={styles.callButton}
+          onPress={() => router.push("/RequestTravel")}
+        >
           <Text style={styles.callText}>Peça seu Moto Táxi agora!</Text>
         </TouchableOpacity>
 
@@ -167,7 +196,8 @@ const Home = () => {
         <View style={styles.aboutBusiness}>
           <Text style={styles.aboutBusinessTitle}>Sobre a Empresa</Text>
           <Text style={styles.aboutBusinessText}>
-            Nossa empresa oferece serviços de transporte e entrega com segurança e agilidade.
+            Nossa empresa oferece serviços de transporte e entrega com segurança
+            e agilidade.
           </Text>
           <Text style={styles.aboutBusinessText}>
             Estamos sempre prontos para atender você!
@@ -183,31 +213,31 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: Constants.statusBarHeight + 10,
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     paddingHorizontal: 10,
   },
   loading: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   actionsRow: {
     top: -40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginVertical: 12,
-    marginBottom: -20
+    marginBottom: -20,
   },
   actionButton: {
     width: 180,
-    display: 'flex',
-    flexDirection: 'row',
-    backgroundColor: '#000',
+    display: "flex",
+    flexDirection: "row",
+    backgroundColor: "#000",
     borderRadius: 16,
     padding: 3,
     flex: 1,
     marginHorizontal: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   icon: {
     width: 60,
@@ -215,94 +245,92 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   actionText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
   },
   callButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     borderRadius: 12,
     paddingVertical: 14,
     marginVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   callText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
   },
   optionsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
     paddingHorizontal: 5,
   },
   optionBox: {
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: "#000",
     borderRadius: 12,
     padding: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     height: 60,
     width: 200,
     marginRight: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   optionText: {
-    fontFamily: 'Righteous',
-    color: '#000',
-    textAlign: 'center',
+    fontFamily: "Righteous",
+    color: "#000",
+    textAlign: "center",
     fontSize: 20,
   },
   mapContainer: {
-
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: "#000",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     padding: 10,
     marginBottom: 20,
   },
   mapTitle: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     marginBottom: 8,
     fontSize: 19,
-    color: '#000',
+    color: "#000",
   },
   map: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: 16,
   },
   aboutBusiness: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
   },
   aboutBusinessTitle: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 22,
-    color: '#000',
+    color: "#000",
     marginBottom: 8,
   },
   aboutBusinessText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   underline: {
     height: 2,
-    width: '90%',
-    backgroundColor: '#fff',
+    width: "90%",
+    backgroundColor: "#fff",
     marginTop: 5,
   },
-
 });
 
 export default Home;

@@ -7,7 +7,7 @@ export default function Tab() {
   const pathname = usePathname();
 
   const routes: { path: string; icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
-    { path: '/home', icon: 'home-outline', text: 'Home' },
+    { path: '/Home', icon: 'home-outline', text: 'Home' },
     { path: '/LastActivities', icon: 'car-outline', text: 'Viagens' },
     { path: '/profile', icon: 'person-outline', text: 'Perfil' },
   ];

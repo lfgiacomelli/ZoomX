@@ -9,7 +9,7 @@ export default function AboutApp() {
     const router = useRouter();
     const fontLoaded = useRighteousFont();
 
-    if (!fontLoaded) return null;
+    if (!fontLoaded) return null;  
 
     return (
         <>

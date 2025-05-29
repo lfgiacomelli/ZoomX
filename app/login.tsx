@@ -53,7 +53,7 @@ export default function Login() {
           await AsyncStorage.setItem('criado_em', data.usuario.criado_em.toString());
         }
 
-        router.replace('/(authenticated)/home');
+        router.replace('/(authenticated)/Home');
         console.log('Login bem-sucedido:', data);
       } else {
         Alert.alert('Erro', data.mensagem || 'Credenciais inválidas.');

@@ -1,131 +1,113 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type Viagem = {
-  via_codigo?: number;
-  via_status: string;
-  via_origem?: string;
-  via_destino?: string;
-  via_data_inicio?: string;
-};
-
-export default function VerificarEmAndamento() {
-  const [viagem, setViagem] = useState<Viagem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [mensagem, setMensagem] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadUsuCodigoAndFetch() {
-      try {
-        setLoading(true);
-        setError(null);
-        setMensagem(null);
-
-        const id = await AsyncStorage.getItem('id');
-        if (!id) {
-          setError('Usuário não logado.');
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch(`https://backend-turma-a-2025.onrender.com/api/viagens/andamento/${id}`);
-        const data = await response.json();
-
-        if (!response.ok || data.sucesso === false) {
-          if (data.mensagem) {
-            setMensagem(data.mensagem);
-          } else {
-            setError('Erro ao buscar viagem em andamento.');
-          }
-          setViagem(null);
-          setLoading(false);
-          return;
-        }
-
-        setViagem(data.viagem || { via_status: data.status });
-      } catch (err: any) {
-        setError(err.message || 'Erro desconhecido');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadUsuCodigoAndFetch();
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#000" />
-        <Text style={styles.text}>Carregando viagem em andamento...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centered}>
-        <Text style={[styles.text, { color: 'red' }]}>Erro: {error}</Text>
-      </View>
-    );
-  }
-
-  if (mensagem) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.text}>{mensagem}</Text>
-      </View>
-    );
-  }
-
-  if (!viagem) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.text}>Nenhuma viagem em andamento no momento.</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Viagem em andamento</Text>
-      <Text style={styles.info}>Status: {viagem.via_status}</Text>
-    </View>
-  );
+interface ViagemResponse {
+    sucesso: boolean;
+    viagem?: {
+        via_codigo: string;
+        via_status: string;
+    };
+    mensagem?: string;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    padding: 20,
-    margin: 15,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  text: {
-    fontSize: 16,
-    fontFamily: 'Righteous',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    fontFamily: 'Righteous',
-  },
-  info: {
-    fontSize: 16,
-    marginVertical: 4,
-    fontFamily: 'Righteous',
-  },
-});
+export default function VerificarAndamento() {
+    const [usuarioId, setUsuarioId] = useState<string | null>(null);
+    const ultimaViagemNotificadaRef = useRef<string | null>(null);
+
+    // Configurar notificações
+    useEffect(() => {
+        (async () => {
+            const { status } = await Notifications.getPermissionsAsync();
+            if (status !== "granted") {
+                const { status: newStatus } = await Notifications.requestPermissionsAsync();
+                if (newStatus !== "granted") {
+                    Alert.alert("Permissão necessária", "Ative as notificações para receber alertas de viagem.");
+                }
+            }
+            
+            Notifications.setNotificationHandler({
+                handleNotification: async () => ({
+                    shouldShowAlert: true,
+                    shouldPlaySound: true,
+                    shouldSetBadge: true,
+                    shouldShowBanner: true,
+                    shouldShowList: true,
+                }),
+            });
+        })();
+    }, []);
+
+    // Pegar ID do usuário
+    useEffect(() => {
+        async function pegarUsuarioId() {
+            try {
+                const id = await AsyncStorage.getItem("id");
+                if (id) setUsuarioId(id);
+            } catch (error) {
+                console.error("Erro ao acessar AsyncStorage:", error);
+            }
+        }
+        pegarUsuarioId();
+    }, []);
+
+    // Verificar status da viagem
+    useEffect(() => {
+        if (!usuarioId) return;
+
+        async function verificarStatus() {
+            try {
+                const response = await fetch(
+                    `https://backend-turma-a-2025.onrender.com/api/viagens/andamento/${usuarioId}`
+                );
+                
+                if (!response.ok) {
+                    console.error("Erro ao buscar status da viagem:", response.status);
+                    return;
+                }
+
+                const data: ViagemResponse = await response.json();
+                
+                if (!data.sucesso || !data.viagem) {
+                    console.log(data.mensagem || "Nenhuma viagem encontrada");
+                    return;
+                }
+
+                const { via_codigo, via_status } = data.viagem;
+
+                if (
+                    via_status.toLowerCase() === 'finalizada' &&
+                    via_codigo !== ultimaViagemNotificadaRef.current
+                ) {
+                    // Atualiza a referência para evitar notificações repetidas
+                    ultimaViagemNotificadaRef.current = via_codigo;
+
+                    // Envia a notificação
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "Viagem finalizada!",
+                            body: "Sua viagem foi finalizada. Por favor, avalie a corrida para nos ajudar a melhorar.",
+                            data: { viagemId: via_codigo },
+                            sound: 'default',
+                        },
+                        trigger: null, // Envia imediatamente
+                    });
+
+                    console.log("Notificação enviada para viagem finalizada:", via_codigo);
+                }
+
+            } catch (error) {
+                console.error("Erro na verificação do status da viagem:", error);
+            }
+        }
+
+        // Verifica imediatamente e depois a cada 30 segundos
+        verificarStatus();
+        const intervalo = setInterval(verificarStatus, 30000);
+
+        return () => clearInterval(intervalo);
+    }, [usuarioId]);
+
+    return null;
+}
