@@ -247,7 +247,7 @@ export default function RotaScreen() {
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Moto táxi",
+            sol_servico: "Entrega",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,

@@ -22,35 +22,78 @@ import { useEffect, useState } from "react";
 import AnunciosCarousel from "../Components/Anuncios";
 import * as Notifications from "expo-notifications";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import NetInfo from "@react-native-community/netinfo";
 
 const Home = () => {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
-  const [statusLeitor, setStatusLeitor] = useState(false);
   const [userFirstName, setUserFirstName] = useState("Usuário");
+  const [statusLeitor, setStatusLeitor] = useState(false);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isMobileData, setIsMobileData] = useState(false);
 
   const getFirstNameFromStorage = async () => {
     try {
       const fullName = await AsyncStorage.getItem("nome");
-
       if (fullName) {
-        const nameParts = fullName.trim().split(" ");
-        const firstName = nameParts[0];
+        const firstName = fullName.trim().split(" ")[0];
         setUserFirstName(firstName);
       }
     } catch (error) {
       console.error("Erro ao buscar o nome:", error);
     }
   };
+
+  const startWatchingLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Permissão negada para acessar localização");
+      return;
+    }
+
+    await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 10,
+      },
+      (newLocation) => {
+        setLocation(newLocation.coords);
+      }
+    );
+  };
+
   useEffect(() => {
     getFirstNameFromStorage();
-  }, []);
+    startWatchingLocation();
 
-  const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const handleNotification = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      if (data.via_codigo) {
+        router.push(`/AvaliarViagem/${data.via_codigo}`);
+      }
+    });
+
+    const checkScreenReader = async () => {
+      const status = await AccessibilityInfo.isScreenReaderEnabled();
+      setStatusLeitor(status);
+    };
+
+    checkScreenReader();
+
+    const screenReaderSubscription = AccessibilityInfo.addEventListener("screenReaderChanged", setStatusLeitor);
+
+    const netInfoUnsubscribe = NetInfo.addEventListener((state) => {
+      setIsMobileData(state.type === "cellular");
+    });
+
+    return () => {
+      handleNotification.remove();
+      screenReaderSubscription.remove();
+      netInfoUnsubscribe();
+    };
+  }, []);
 
   const services = [
     {
@@ -87,82 +130,17 @@ const Home = () => {
     },
   ];
 
-  const benefits: {
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    text: string;
-  }[] = [
+  const benefits: { icon: React.ComponentProps<typeof Ionicons>["name"]; text: string }[] = [
     { icon: "shield-checkmark", text: "Motoristas verificados" },
     { icon: "time", text: "Atendimento 24 horas" },
     { icon: "cash", text: "Preços acessíveis" },
     { icon: "location", text: "Cobertura em toda a região" },
   ];
 
-  useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const data = response.notification.request.content.data;
-        if (data.via_codigo) {
-          router.push(`/AvaliarViagem/${data.via_codigo}`);
-        }
-      }
-    );
-
-    return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
-    let subscription: Location.LocationSubscription;
-
-    const startWatching = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setErrorMsg("Permissão negada para acessar localização");
-        return;
-      }
-
-      subscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 5000,
-          distanceInterval: 10,
-        },
-        (newLocation) => {
-          setLocation(newLocation.coords);
-        }
-      );
-    };
-
-    startWatching();
-
-    return () => {
-      if (subscription) subscription.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      const status = await AccessibilityInfo.isScreenReaderEnabled();
-      setStatusLeitor(status);
-    };
-
-    checkStatus();
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "screenReaderChanged",
-      (isEnabled) => {
-        setStatusLeitor(isEnabled);
-      }
-    );
-
-    return () => subscription.remove();
-  }, []);
   if (!fontLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <Image
-          source={require("../../assets/logo.png")}
-          style={styles.loadingLogo}
-        />
+        <Image source={require("../../assets/logo.png")} style={styles.loadingLogo} />
         <Text style={styles.loadingText}>Preparando tudo para você...</Text>
         <ActivityIndicator size="large" color="#000" />
       </View>
@@ -180,7 +158,13 @@ const Home = () => {
       >
         <View style={styles.headerSection}>
           <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
+          {isMobileData && (
+            <Text style={styles.welcomeSubtitle}>
+              Você está usando dados móveis1
+            </Text>
+          )}
         </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>O que você precisa?</Text>
           <View style={styles.servicesGrid}>
@@ -324,9 +308,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingVertical: 24,
     paddingHorizontal: 8,
   },

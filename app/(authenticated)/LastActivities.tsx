@@ -10,13 +10,14 @@ import {
   Platform,
   UIManager,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Tab from "../Components/Tab";
 import useRighteousFont from "../../hooks/Font/index";
 import Header from "../Components/header";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import LottieView from "lottie-react-native";
 export default function Travels() {
   const fontLoaded = useRighteousFont();
   interface Atividade {
@@ -34,7 +35,7 @@ export default function Travels() {
     via_data: string | Date;
     via_valor: number;
   }
-
+  const animationRef = useRef(null);
   const [data, setData] = useState<Atividade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +114,24 @@ export default function Travels() {
               <ActivityIndicator size="large" color="#000" />
             </>
           ) : error ? (
-            <Text style={styles.error}>Erro: {error}</Text>
+            <>
+              <LottieView
+                ref={animationRef}
+                source={require("../../assets/error_animation.json")}
+                autoPlay
+                loop={true}
+                style={{ width: 220, height: 220, alignSelf: "center" }}
+              />
+
+              <Text style={styles.errorTitle}>Erro ao carregar dados</Text>
+              <Text style={styles.errorMessage}>
+                Ocorreu um problema ao buscar suas atividades. Verifique sua
+                conexão com a internet e tente novamente.
+              </Text>
+              <TouchableOpacity onPress={fetchData} style={styles.newRequest}>
+                <Text style={styles.newRequestText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </>
           ) : data.length === 0 ? (
             <>
               <Image
@@ -136,8 +154,7 @@ export default function Travels() {
             data.map((atividade, index) => {
               const isExpanded = expandedIndex === index;
               const icone =
-                atividade.via_servico === "mototaxi" ||
-                atividade.via_servico === "Moto Táxi" || atividade.via_servico === "Mototáxi"
+                atividade.via_servico === "Mototáxi"
                   ? require("../../assets/motorcycle.png")
                   : require("../../assets/box.png");
 
@@ -298,5 +315,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#fff",
     textAlign: "center",
+  },
+  iconError: {
+    width: 220,
+    height: 220,
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontFamily: "Righteous",
+    color: "#000",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  errorMessage: {
+    fontSize: 16,
+    fontFamily: "Righteous",
+    color: "#777",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
 });

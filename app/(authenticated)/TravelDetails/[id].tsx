@@ -222,7 +222,7 @@ export default function TravelDetails() {
           <View style={styles.infoRow}>
             <Text style={styles.label}>Serviço</Text>
             <Text style={styles.value}>
-              {viagem.via_servico == "entrega" ? "Entrega" : "Mototáxi"}
+              {viagem.via_servico}
             </Text>
           </View>
           <View style={styles.separator} />

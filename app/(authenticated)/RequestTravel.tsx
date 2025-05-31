@@ -325,7 +325,6 @@ export default function RotaScreen() {
       hideSubscription.remove();
     };
   }, [isBottomSheetActive]);
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -362,6 +361,8 @@ export default function RotaScreen() {
       </View>
       {isLoading && (
         <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={styles.loadingText}>Calculando rota...</Text>
         </View>
       )}
 
@@ -655,18 +656,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.7)", // branco com 70% de opacidade
+    width: 40, // largura fixa para formar círculo
+    height: 40, // altura igual à largura
+    borderRadius: 20, // metade da largura/altura para círculo perfeito
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-  },
-  apagarText: {
-    marginLeft: 5,
-    fontSize: 16,
-    color: "#000",
-    fontFamily: "Righteous",
   },
 });

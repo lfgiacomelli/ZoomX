@@ -130,11 +130,11 @@ export default function PendingRequest() {
             await Notifications.scheduleNotificationAsync({
               content: {
                 title:
-                  data.sol_servico === "entrega" || data.sol_servico === "Entrega"
+                 data.sol_servico === "Entrega"
                     ? "Sua entrega foi aceita!"
                     : "Sua corrida foi aceita!",
                 body:
-                  data.sol_servico === "entrega" || data.sol_servico === "Entrega"
+                  data.sol_servico === "Entrega"
                     ? `${funcionario.fun_nome} será seu entregador! Aguarde no local indicado.${"\n\n"} Veículo: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`
                     : `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`,
                 data: { solicitacaoId },
@@ -361,7 +361,7 @@ export default function PendingRequest() {
               <LottieView
                 ref={animationRef}
                 source={
-                  solicitacao?.sol_servico === "entrega"
+                  solicitacao?.sol_servico === "Entrega"
                     ? require("../../assets/box_animation.json")
                     : require("../../assets/motor_animation.json")
                 }
@@ -371,13 +371,13 @@ export default function PendingRequest() {
               />
 
               <Text style={styles.modalTitle}>
-                {solicitacao?.sol_servico === "entrega" || solicitacao?.sol_servico === 'Entrega'
+                {solicitacao?.sol_servico === 'Entrega'
                   ? "Entrega Aceita!"
                   : "Corrida Aceita!"}
               </Text>
 
               <Text style={styles.modalText}>
-                {solicitacao?.sol_servico === "entrega"
+                {solicitacao?.sol_servico === "Entrega"
                   ? "Seu entregador está a caminho! Aguarde no local indicado"
                   : "Seu mototaxista está a caminho! Aguarde no local indicado"}
                 {"\n\n"}
