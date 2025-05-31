@@ -26,10 +26,14 @@ import NetInfo from "@react-native-community/netinfo";
 
 const Home = () => {
   const router = useRouter();
+  const [helpVisible, setHelpVisible] = useState(false);
   const fontLoaded = useRighteousFont();
   const [userFirstName, setUserFirstName] = useState("Usuário");
   const [statusLeitor, setStatusLeitor] = useState(false);
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isMobileData, setIsMobileData] = useState(false);
 
@@ -68,12 +72,13 @@ const Home = () => {
     getFirstNameFromStorage();
     startWatchingLocation();
 
-    const handleNotification = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
-      if (data.via_codigo) {
-        router.push(`/AvaliarViagem/${data.via_codigo}`);
-      }
-    });
+    const handleNotification =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        const data = response.notification.request.content.data;
+        if (data.via_codigo) {
+          router.push(`/AvaliarViagem/${data.via_codigo}`);
+        }
+      });
 
     const checkScreenReader = async () => {
       const status = await AccessibilityInfo.isScreenReaderEnabled();
@@ -82,7 +87,10 @@ const Home = () => {
 
     checkScreenReader();
 
-    const screenReaderSubscription = AccessibilityInfo.addEventListener("screenReaderChanged", setStatusLeitor);
+    const screenReaderSubscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      setStatusLeitor
+    );
 
     const netInfoUnsubscribe = NetInfo.addEventListener((state) => {
       setIsMobileData(state.type === "cellular");
@@ -130,7 +138,10 @@ const Home = () => {
     },
   ];
 
-  const benefits: { icon: React.ComponentProps<typeof Ionicons>["name"]; text: string }[] = [
+  const benefits: {
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    text: string;
+  }[] = [
     { icon: "shield-checkmark", text: "Motoristas verificados" },
     { icon: "time", text: "Atendimento 24 horas" },
     { icon: "cash", text: "Preços acessíveis" },
@@ -140,7 +151,10 @@ const Home = () => {
   if (!fontLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <Image source={require("../../assets/logo.png")} style={styles.loadingLogo} />
+        <Image
+          source={require("../../assets/logo.png")}
+          style={styles.loadingLogo}
+        />
         <Text style={styles.loadingText}>Preparando tudo para você...</Text>
         <ActivityIndicator size="large" color="#000" />
       </View>

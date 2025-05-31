@@ -251,6 +251,7 @@ export default function RotaScreen() {
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
+            sol_observacoes: 'Pedido via App'
           }),
         }
       );

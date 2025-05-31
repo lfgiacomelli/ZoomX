@@ -19,13 +19,20 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Profile() {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("userToken");
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("id");
+    await AsyncStorage.removeItem("nome");
+    await AsyncStorage.removeItem("email");
+    await AsyncStorage.removeItem("telefone");
+    await AsyncStorage.removeItem("criado_em");
+    console.log("Usuário deslogado com sucesso");
     router.replace("/login");
   };
   const [userData, setUserData] = useState({
@@ -114,7 +121,7 @@ export default function Profile() {
 
         <View style={styles.row}>
           <TouchableOpacity
-            style={styles.iconBox}
+            style={styles.boxButton}
             onPress={() => router.push("/LastActivities")}
           >
             <Image
@@ -125,7 +132,7 @@ export default function Profile() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.iconBox}
+            style={styles.boxButton}
             onPress={() => router.push("/Guidelines")}
           >
             <Image
@@ -134,9 +141,21 @@ export default function Profile() {
             />
             <Text style={styles.iconText}>Diretrizes</Text>
           </TouchableOpacity>
+        </View>
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.boxButton}
+            onPress={() => router.push("/MyReviews")}
+          >
+            <Image
+              source={require("../../assets/avaliacao_icon.png")}
+              style={styles.icon}
+            />
+            <Text style={styles.iconText}>Avaliações</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.iconBox}
+            style={styles.boxButton}
             onPress={() => router.push("/UpdateInfo")}
           >
             <Image
@@ -146,13 +165,6 @@ export default function Profile() {
             <Text style={styles.iconText}>Informações</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.iconBox}
-          onPress={() => router.push("/MyReviews")}
-        >
-          <Text style={styles.iconText}>Minhas Avaliações</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <MaterialCommunityIcons name="logout" size={22} color="#fff" />
           <Text style={styles.logoutText}>Encerrar Sessão</Text>

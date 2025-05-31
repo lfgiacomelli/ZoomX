@@ -105,6 +105,7 @@ export default function PendingRequest() {
       setSolicitacao(data);
 
       if (data.sol_status === "aceita") {
+        playSound();
         if (intervalRef.current) clearInterval(intervalRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
 
@@ -205,6 +206,7 @@ export default function PendingRequest() {
         }
         return prevTime - 1;
       });
+      
     }, 1000);
 
     intervalRef.current = setInterval(() => {

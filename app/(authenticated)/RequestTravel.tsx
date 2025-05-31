@@ -248,11 +248,11 @@ export default function RotaScreen() {
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Moto Táxi",
+            sol_servico: "Mototáxi",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
-            sol_observacoes: observacoes,
+            sol_observacoes: "Pedido via App",
           }),
         }
       );

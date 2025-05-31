@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { FontAwesome, Feather, Ionicons } from '@expo/vector-icons';
@@ -8,12 +8,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function SignIn() {
   const fontLoaded = useRighteousFont();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
+    usu_nome: '',
+    usu_email: '',
+    usu_telefone: '',
+    usu_senha: '',
   });
 
   if (!fontLoaded) {
@@ -40,12 +41,28 @@ export default function SignIn() {
     return telefoneFormatado;
   };
 
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   const handleSubmit = async () => {
-    if (!form.name || !form.email || !form.phone || !form.password) {
+    if (!form.usu_nome || !form.usu_email || !form.usu_telefone || !form.usu_senha) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
+    if (!validateEmail(form.usu_email)) {
+      Alert.alert('Erro', 'Por favor, insira um e-mail válido');
+      return;
+    }
+
+    if (form.usu_senha.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch('https://backend-turma-a-2025.onrender.com/api/usuarios', {
@@ -54,125 +71,147 @@ export default function SignIn() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          usu_nome: form.name,
-          usu_telefone: form.phone,
+          usu_nome: form.usu_nome,
+          usu_telefone: form.usu_telefone.replace(/\D/g, ''), 
           usu_ativo: true,
-          usu_email: form.email,
-          usu_senha: form.password,
+          usu_email: form.usu_email,
+          usu_senha: form.usu_senha,
           usu_created_at: new Date().toISOString(),
           usu_updated_at: new Date().toISOString(),
         }),
-
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMsg = data.message || 'Erro ao criar usuário';
+        let errorMsg = data.message || 'Erro ao criar usuário';
+        if (data.errors) {
+          errorMsg += '\n' + data.errors.map((err: any) => err.message).join('\n');
+        }
         Alert.alert('Erro', errorMsg);
         return;
       }
 
-      await AsyncStorage.setItem('token', data.token);
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      router.replace('/(authenticated)/home');
+      await AsyncStorage.setItem('token', data.token || 'logado');
+      await AsyncStorage.setItem('id', data.usuario.id.toString());
+      await AsyncStorage.setItem('nome', data.usuario.nome);
+      await AsyncStorage.setItem('email', data.usuario.email);
+      await AsyncStorage.setItem('telefone', data.usuario.telefone);
+      await AsyncStorage.setItem('criado_em', data.usuario.criado_em.toString());
+      console.log('Usuário criado com sucesso:', data);
+      router.replace('/(authenticated)/Home');
 
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
-      console.error(error);
+    } catch (error: any) {
+      console.error('Erro completo:', error);
+      Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.logo}>
-        <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
+    <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <View style={styles.container}>
+        <View style={styles.logo}>
+          <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
+        </View>
+        <Text style={styles.title}>Crie sua conta:</Text>
+        <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+
+        <View style={styles.inputWrapper}>
+          <FontAwesome name="user" size={20} color="#fff" />
+          <TextInput
+            placeholder="Insira seu Nome Completo"
+            placeholderTextColor="#aaa"
+            onChangeText={(text) => handleChange('usu_nome', text)}
+            style={styles.input}
+            value={form.usu_nome}
+          />
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <Feather name="mail" size={20} color="#fff" />
+          <TextInput
+            placeholder="Insira seu E-mail"
+            placeholderTextColor="#aaa"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            onChangeText={(text) => handleChange('usu_email', text)}
+            style={styles.input}
+            value={form.usu_email}
+          />
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <Feather name="phone" size={20} color="#fff" />
+          <TextInput
+            placeholder="Insira seu Telefone"
+            placeholderTextColor="#aaa"
+            keyboardType="phone-pad"
+            value={form.usu_telefone}
+            onChangeText={(text) => handleChange('usu_telefone', formatarTelefone(text))}
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <Ionicons name="lock-closed-outline" size={20} color="#fff" />
+          <TextInput
+            placeholder="Insira sua Senha (mínimo 6 caracteres)"
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            onChangeText={(text) => handleChange('usu_senha', text)}
+            style={styles.input}
+            value={form.usu_senha}
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={styles.buttonText}>Criar Conta</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push('/login')}>
+          <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={styles.title}>Crie sua conta:</Text>
-      <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
-
-      <View style={styles.inputWrapper}>
-        <FontAwesome name="user" size={20} color="#fff" />
-        <TextInput
-          placeholder="Insira seu Nome Completo"
-          placeholderTextColor="#aaa"
-          onChangeText={(text) => handleChange('name', text)}
-          style={styles.input}
-        />
-      </View>
-
-      <View style={styles.inputWrapper}>
-        <Feather name="mail" size={20} color="#fff" />
-        <TextInput
-          placeholder="Insira seu E-mail"
-          placeholderTextColor="#aaa"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          onChangeText={(text) => handleChange('email', text)}
-          style={styles.input}
-        />
-      </View>
-
-      <View style={styles.inputWrapper}>
-        <Feather name="phone" size={20} color="#fff" />
-        <TextInput
-          placeholder="Insira seu Telefone"
-          placeholderTextColor="#aaa"
-          keyboardType="numeric"
-          value={form.phone}
-          onChangeText={(text) => handleChange('phone', formatarTelefone(text))}
-          style={styles.input}
-        />
-      </View>
-
-      <View style={styles.inputWrapper}>
-        <Ionicons name="eye-outline" size={20} color="#fff" />
-        <TextInput
-          placeholder="Insira sua Senha"
-          placeholderTextColor="#aaa"
-          secureTextEntry
-          onChangeText={(text) => handleChange('password', text)}
-          style={styles.input}
-        />
-      </View>
-
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Criar Conta</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push('/login')}>
-        <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+  },
   container: {
-    paddingTop:130,
     flex: 1,
     backgroundColor: '#000',
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 40,
+    paddingTop: 60,
   },
   logo: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: -30,
-    marginTop: -185,
+    marginBottom: 20,
   },
   logoImage: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 400,
-    height: 400,
-    marginBottom: -50,
+    width: 250,
+    height: 250,
   },
   title: {
     fontFamily: 'Righteous',
     fontSize: 24,
     color: '#fff',
     textAlign: 'center',
+    marginBottom: 5,
   },
   subtitle: {
     color: '#fff',
@@ -196,6 +235,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Righteous',
     marginLeft: 10,
+    minHeight: 20,
   },
   button: {
     backgroundColor: '#fff',
@@ -203,6 +243,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 15,
+    justifyContent: 'center',
+    minHeight: 50,
   },
   buttonText: {
     color: '#000',
@@ -215,5 +257,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textDecorationLine: 'underline',
     fontFamily: 'Righteous',
+    marginTop: 10,
   },
 });

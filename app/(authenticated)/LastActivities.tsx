@@ -101,6 +101,13 @@ export default function Travels() {
                   alignItems: "center",
                 }}
               >
+                <LottieView
+                  ref={animationRef}
+                  source={require("../../assets/loading_animation.json")}
+                  autoPlay
+                  loop={true}
+                  style={{ width: 220, height: 220, alignSelf: "center" }}
+                />
                 <Text
                   style={{
                     fontFamily: "Righteous",
@@ -111,7 +118,6 @@ export default function Travels() {
                   Carregando atividades...
                 </Text>
               </View>
-              <ActivityIndicator size="large" color="#000" />
             </>
           ) : error ? (
             <>
@@ -311,6 +317,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   newRequestText: {
+    textDecorationLine: 'underline',
     fontFamily: "Righteous",
     fontSize: 18,
     color: "#fff",

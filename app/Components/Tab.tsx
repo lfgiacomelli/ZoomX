@@ -8,8 +8,9 @@ export default function Tab() {
 
   const routes: { path: string; icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
     { path: '/Home', icon: 'home-outline', text: 'Home' },
-    { path: '/LastActivities', icon: 'car-outline', text: 'Viagens' },
+    { path: '/LastActivities', icon: 'file-tray-sharp', text: 'Atividades' },
     { path: '/profile', icon: 'person-outline', text: 'Perfil' },
+    {path: '/Configuration', icon: 'settings-outline', text: 'Configurações' },
   ];
 
   return (
@@ -25,10 +26,10 @@ export default function Tab() {
           >
             <Ionicons
               name={route.icon}
-              size={28}
+              size={24}
               color={isActive ? '#000' : '#999'}
             />
-            <Text style={{ color: isActive ? '#000' : '#999', fontFamily: 'Righteous' }}>{route.text}</Text>
+            <Text style={{ color: isActive ? '#000' : '#999', fontFamily: 'Righteous', fontSize: 13 }}>{route.text}</Text>
           </TouchableOpacity>
         );
       })}
