@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
 import Header from "../Components/header";
 import * as Notifications from "expo-notifications";
+import LottieView from "lottie-react-native";
 
 type Solicitacao = {
   sol_codigo: number;
@@ -46,7 +47,7 @@ export default function PendingRequest() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+  const animationRef = useRef(null);
   useEffect(() => {
     async function loadSound() {
       const { sound } = await Audio.Sound.createAsync(
@@ -128,8 +129,14 @@ export default function PendingRequest() {
           setTimeout(async () => {
             await Notifications.scheduleNotificationAsync({
               content: {
-                title: "Sua corrida foi aceita!",
-                body: `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`,
+                title:
+                  data.sol_servico === "entrega" || data.sol_servico === "Entrega"
+                    ? "Sua entrega foi aceita!"
+                    : "Sua corrida foi aceita!",
+                body:
+                  data.sol_servico === "entrega" || data.sol_servico === "Entrega"
+                    ? `${funcionario.fun_nome} será seu entregador! Aguarde no local indicado.${"\n\n"} Veículo: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`
+                    : `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`,
                 data: { solicitacaoId },
               },
               trigger: null,
@@ -260,6 +267,12 @@ export default function PendingRequest() {
           </Text>
           <View style={styles.timerContainer}>
             <Text style={styles.timerLabel}>Tempo para cancelamento:</Text>
+            <LottieView
+              source={require("../../assets/timer_animation.json")}
+              autoPlay
+              loop
+              style={{ width: 50, height: 50, marginBottom: 10 }}
+            />
             <Text
               style={[styles.timerValue, timeLeft < 60 && styles.warningTime]}
             >
@@ -345,16 +358,37 @@ export default function PendingRequest() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Image
-                source={require("../../assets/aceito.png")}
-                style={{ width: 100, height: 100, marginBottom: 20 }}
+              <LottieView
+                ref={animationRef}
+                source={
+                  solicitacao?.sol_servico === "entrega"
+                    ? require("../../assets/box_animation.json")
+                    : require("../../assets/motor_animation.json")
+                }
+                autoPlay
+                loop
+                style={styles.lottie}
               />
-              <Text style={styles.modalTitle}>Corrida Aceita!</Text>
+
+              <Text style={styles.modalTitle}>
+                {solicitacao?.sol_servico === "entrega" || solicitacao?.sol_servico === 'Entrega'
+                  ? "Entrega Aceita!"
+                  : "Corrida Aceita!"}
+              </Text>
+
               <Text style={styles.modalText}>
-                Seu mototaxista está a caminho!Aguarde no local indicado{"\n\n"}
+                {solicitacao?.sol_servico === "entrega"
+                  ? "Seu entregador está a caminho! Aguarde no local indicado"
+                  : "Seu mototaxista está a caminho! Aguarde no local indicado"}
+                {"\n\n"}
                 <Text style={styles.bold}>Nome:</Text> {mototaxista?.fun_nome}
                 {"\n"}
-                <Text style={styles.bold}>Moto:</Text> {mototaxista?.mot_modelo}
+                <Text style={styles.bold}>
+                  {solicitacao?.sol_servico === "entrega"
+                    ? "Veículo:"
+                    : "Moto:"}
+                </Text>{" "}
+                {mototaxista?.mot_modelo}
                 {"\n"}
                 <Text style={styles.bold}>Placa:</Text> {mototaxista?.mot_placa}
               </Text>
@@ -505,11 +539,11 @@ const styles = StyleSheet.create({
   },
   pendingStatus: {
     color: "#FF9500",
-    fontWeight: "bold",
+    fontFamily: "Righteous",
   },
   acceptedStatus: {
     color: "#34C759",
-    fontWeight: "bold",
+    fontFamily: "Righteous",
   },
   actionButton: {
     backgroundColor: "#000",
@@ -590,7 +624,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   bold: {
-    fontWeight: "bold",
     fontFamily: "Righteous",
   },
   modalButton: {
@@ -603,5 +636,10 @@ const styles = StyleSheet.create({
     fontFamily: "Righteous",
     fontSize: 16,
     color: "#fff",
+  },
+  lottie: {
+    width: 230,
+    height: 230,
+    marginBottom: 10,
   },
 });

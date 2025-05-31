@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   StatusBar,
+  Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -77,13 +78,18 @@ const MyReviews = () => {
 
         {avaliacoes.length === 0 ? (
           <View style={styles.emptyContainer}>
+            <Image
+              source={require("../../assets/empty_reviews.png")}
+              style={{ width: 300, height: 300, marginTop: -110 }}
+            />
             <Text style={styles.emptyTitle}>Nenhuma avaliação encontrada</Text>
             <Text style={styles.emptyText}>
               Você ainda não avaliou nenhuma viagem
             </Text>
           </View>
         ) : (
-          <FlatList showsVerticalScrollIndicator={false}
+          <FlatList
+            showsVerticalScrollIndicator={false}
             data={avaliacoes}
             keyExtractor={(item) => item.ava_codigo}
             renderItem={({ item }) => (

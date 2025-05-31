@@ -248,7 +248,7 @@ export default function RotaScreen() {
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Moto táxi",
+            sol_servico: "Moto Táxi",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
@@ -305,7 +305,7 @@ export default function RotaScreen() {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, [endAddress]);
-  if (isBottomSheetActive && startAddress && endAddress ) {
+  if (isBottomSheetActive && startAddress && endAddress) {
     Keyboard.dismiss();
   }
   useEffect(() => {
@@ -320,7 +320,6 @@ export default function RotaScreen() {
         bottomSheetRef.current?.expand();
       }
     });
-
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
@@ -363,8 +362,6 @@ export default function RotaScreen() {
       </View>
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
-          <Text style={styles.loadingText}>Calculando rota...</Text>
         </View>
       )}
 
@@ -393,7 +390,7 @@ export default function RotaScreen() {
           {routeCoords.length > 0 && (
             <Polyline
               coordinates={routeCoords}
-              strokeColor="#1E90FF"
+              strokeColor="#000"
               strokeWidth={4}
             />
           )}
@@ -465,15 +462,6 @@ export default function RotaScreen() {
                   </Picker>
                 </View>
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Observações (opcional)"
-                value={observacoes || ""}
-                onChangeText={setObservacoes}
-                clearButtonMode="while-editing"
-                returnKeyType="done"
-              />
-
               <TouchableOpacity
                 style={styles.solicitarButton}
                 onPress={handleSolicitar}

@@ -137,7 +137,7 @@ export default function Travels() {
               const isExpanded = expandedIndex === index;
               const icone =
                 atividade.via_servico === "mototaxi" ||
-                atividade.via_servico === "Moto táxi"
+                atividade.via_servico === "Moto Táxi" || atividade.via_servico === "Mototáxi"
                   ? require("../../assets/motorcycle.png")
                   : require("../../assets/box.png");
 

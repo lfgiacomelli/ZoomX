@@ -170,6 +170,9 @@ export default function TravelDetails() {
   if (loading) {
     return (
       <View style={styles.center}>
+        <Text style={{ fontFamily: "Righteous", fontSize: 18, color: "#000" }}>
+          Carregando detalhes da viagem...
+        </Text>
         <ActivityIndicator size="large" color="#000" />
       </View>
     );

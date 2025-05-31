@@ -27,13 +27,31 @@ const Home = () => {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
   const [statusLeitor, setStatusLeitor] = useState(false);
+  const [userFirstName, setUserFirstName] = useState("Usuário");
+
+  const getFirstNameFromStorage = async () => {
+    try {
+      const fullName = await AsyncStorage.getItem("nome");
+
+      if (fullName) {
+        const nameParts = fullName.trim().split(" ");
+        const firstName = nameParts[0];
+        setUserFirstName(firstName);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar o nome:", error);
+    }
+  };
+  useEffect(() => {
+    getFirstNameFromStorage();
+  }, []);
+
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Dados de serviços
   const services = [
     {
       id: 1,
@@ -69,7 +87,6 @@ const Home = () => {
     },
   ];
 
-  // Dados de vantagens
   const benefits: {
     icon: React.ComponentProps<typeof Ionicons>["name"];
     text: string;
@@ -139,7 +156,6 @@ const Home = () => {
 
     return () => subscription.remove();
   }, []);
-
   if (!fontLoaded) {
     return (
       <View style={styles.loadingContainer}>
@@ -148,7 +164,7 @@ const Home = () => {
           style={styles.loadingLogo}
         />
         <Text style={styles.loadingText}>Preparando tudo para você...</Text>
-        <ActivityIndicator size="large" color="#FF6B00" />
+        <ActivityIndicator size="large" color="#000" />
       </View>
     );
   }
@@ -160,7 +176,11 @@ const Home = () => {
       <ScrollView
         style={styles.container}
         contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerSection}>
+          <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
+        </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>O que você precisa?</Text>
           <View style={styles.servicesGrid}>
@@ -196,7 +216,10 @@ const Home = () => {
           accessibilityLabel="Solicitar Moto Táxi"
           accessibilityHint="Clique para solicitar um moto táxi agora"
         >
-          <Image source={require("../../assets/motorcycle.png")} style={styles.serviceIcon} />
+          <Image
+            source={require("../../assets/motorcycle.png")}
+            style={styles.serviceIcon}
+          />
           <Text style={styles.mainActionText}>SOLICITAR AGORA</Text>
         </TouchableOpacity>
 
@@ -214,7 +237,6 @@ const Home = () => {
           </View>
         </View>
 
-        {/* Seção de localização */}
         {location?.latitude && location?.longitude && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -291,8 +313,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   loadingLogo: {
-    width: 120,
-    height: 120,
+    width: 300,
+    height: 300,
     marginBottom: 20,
   },
   loadingText: {
@@ -302,8 +324,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 24,
     paddingHorizontal: 8,
+  },
+  horaAtual: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000",
   },
   welcomeTitle: {
     fontFamily: "Righteous",
