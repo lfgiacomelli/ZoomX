@@ -1,0 +1,281 @@
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+
+type Viagem = {
+  via_codigo: Number;
+  via_data: string;
+  via_servico: string;
+  via_status: string;
+  via_observacoes: string;
+  via_origem: string;
+  via_destino: string;
+  via_valor: string;
+  via_formapagamento: string;
+  sol_distancia: Number;
+  usu_codigo: Number;
+};
+
+export default function LastActivity() {
+  const [data, setData] = useState<Viagem | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const router = useRouter();
+
+  const baseURL = "https://backend-turma-a-2025.onrender.com";
+
+  const fetchData = async () => {
+    try {
+      const usuarioId = await AsyncStorage.getItem("id");
+      if (!usuarioId) throw new Error("ID do usuário não encontrado");
+
+      const response = await fetch(
+        `${baseURL}/api/viagens/andamento/${usuarioId}`
+      );
+      if (!response.ok) throw new Error(`Erro de API: ${response.status}`);
+
+      const json = await response.json();
+
+      if (json.sucesso && json.viagem) {
+        setData(json.viagem);
+      } else {
+        setError("Nenhuma viagem em andamento encontrada.");
+      }
+    } catch (err: any) {
+      console.error("Erro ao buscar dados:", err);
+      setError(err.message || "Erro ao carregar dados");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSolicitarNovamente = async () => {
+    if (!data) {
+      Alert.alert("Erro", "Nenhuma viagem disponível para solicitar.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const userId = await AsyncStorage.getItem("id");
+      if (!userId) {
+        Alert.alert("Erro", "Usuário não autenticado.");
+        return;
+      }
+
+      const response = await fetch(`${baseURL}/api/solicitacoes/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sol_origem: data.via_origem,
+          sol_destino: data.via_destino,
+          sol_distancia: Number(data.sol_distancia),
+          sol_valor: Number(data.via_valor),
+          sol_servico: "Mototáxi",
+          usu_codigo: Number(userId),
+          sol_data: new Date().toISOString(),
+          sol_formapagamento: data.via_formapagamento || "Dinheiro",
+          sol_observacoes: "Solicitado novamente via histórico do App",
+        }),
+      });
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.message || "Erro ao criar solicitação");
+      }
+
+      router.push(`/PendingRequest?solicitacaoId=${json.sol_codigo}`);
+    } catch (error) {
+      console.error("Erro ao criar solicitação:", error);
+      Alert.alert("Erro", "Não foi possível criar a solicitação.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={styles.loadingText}>
+            Carregando sua última viagem...
+          </Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      );
+    }
+
+    if (!data) {
+      return;
+    }
+
+    return (
+      <View style={styles.contentContainer}>
+        <View style={styles.infoContainer}>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Origem:</Text>
+            <Text style={styles.infoValue}>{data.via_origem}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Destino:</Text>
+            <Text style={styles.infoValue}>{data.via_destino}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Valor:</Text>
+            <Text style={styles.infoValue}>
+              R$ {Number(data.via_valor).toFixed(2)}
+            </Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Pagamento:</Text>
+            <Text style={styles.infoValue}>
+              {data.via_formapagamento || "Dinheiro"}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, isSubmitting && styles.buttonDisabled]}
+          onPress={handleSolicitarNovamente}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={styles.buttonText}>Solicitar Novamente</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.screenTitle}>Última Viagem</Text>
+      {renderContent()}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+  },
+  screenTitle: {
+    fontSize: 24,
+    fontFamily: "Righteous",
+    color: "#000000",
+    marginBottom: 24,
+    textAlign: "left",
+  },
+  contentContainer: {
+    marginTop: 16,
+  },
+  infoContainer: {
+    marginBottom: 24,
+  },
+  infoItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  infoLabel: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000000",
+    opacity: 0.7,
+  },
+  infoValue: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000000",
+  },
+  button: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000000",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  loadingText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000000",
+    marginTop: 16,
+    opacity: 0.7,
+  },
+  errorContainer: {
+    padding: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
+  },
+  errorText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000000",
+    textAlign: "center",
+  },
+  emptyContainer: {
+    padding: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
+  },
+  emptyText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000000",
+    textAlign: "center",
+    opacity: 0.7,
+  },
+});

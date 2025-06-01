@@ -23,6 +23,7 @@ import AnunciosCarousel from "../Components/Anuncios";
 import * as Notifications from "expo-notifications";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
+import LastActivity from "../Components/LastActivity";
 
 const Home = () => {
   const router = useRouter();
@@ -36,7 +37,6 @@ const Home = () => {
   } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isMobileData, setIsMobileData] = useState(false);
-
   const getFirstNameFromStorage = async () => {
     try {
       const fullName = await AsyncStorage.getItem("nome");
@@ -106,7 +106,7 @@ const Home = () => {
   const services = [
     {
       id: 1,
-      title: "Moto Táxi",
+      title: "Mototáxi",
       icon: require("../../assets/motorcycle.png"),
       description: "Viagens rápidas pela cidade",
       action: () => router.push("/RequestTravel"),
@@ -174,7 +174,7 @@ const Home = () => {
           <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
           {isMobileData && (
             <Text style={styles.welcomeSubtitle}>
-              Você está usando dados móveis1
+              Você está usando dados móveis
             </Text>
           )}
         </View>
@@ -211,8 +211,8 @@ const Home = () => {
           style={styles.mainActionButton}
           onPress={() => router.push("/RequestTravel")}
           accessible={true}
-          accessibilityLabel="Solicitar Moto Táxi"
-          accessibilityHint="Clique para solicitar um moto táxi agora"
+          accessibilityLabel="Solicitar Mototáxi"
+          accessibilityHint="Clique para solicitar um mototáxi agora"
         >
           <Image
             source={require("../../assets/motorcycle.png")}
@@ -234,7 +234,7 @@ const Home = () => {
             ))}
           </View>
         </View>
-
+        <LastActivity />
         {location?.latitude && location?.longitude && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -293,6 +293,13 @@ const Home = () => {
           <AnunciosCarousel />
         </View>
       </ScrollView>
+      {/* <TouchableOpacity
+        style={styles.solicitarButton}
+        onPress={() => router.push("/RequestTravel")}
+      >
+        <MaterialIcons name="keyboard-arrow-up" size={22} color="white" />
+        <Text style={styles.solicitarButtonText}>Solicitar Mototáxi</Text>
+      </TouchableOpacity> */}
       <Tab />
     </>
   );
@@ -496,6 +503,29 @@ const styles = StyleSheet.create({
   adsSection: {
     marginBottom: 24,
   },
+  // solicitarButton: {
+  //   width: 200,
+  //   position: "absolute",
+  //   bottom: 100,
+  //   right: 20,
+  //   backgroundColor: "#000",
+  //   borderRadius: 50,
+  //   padding: 16,
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  //   shadowColor: "#000",
+  //   shadowOffset: { width: 0, height: 2 },
+  //   shadowOpacity: 0.2,
+  //   shadowRadius: 4,
+  //   elevation: 4,
+  //   flexDirection: "row",
+  // },
+  // solicitarButtonText: {
+  //   color: "#fff",
+  //   fontFamily: "Righteous",
+  //   fontSize: 16,
+  //   marginTop: 4,
+  // },
 });
 
 export default Home;
