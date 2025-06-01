@@ -211,7 +211,7 @@ export default function PendingRequest() {
 
     intervalRef.current = setInterval(() => {
       fetchSolicitacao();
-    }, 10000);
+    }, 5000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);

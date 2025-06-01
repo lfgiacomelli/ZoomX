@@ -24,6 +24,9 @@ import * as Notifications from "expo-notifications";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import LastActivity from "../Components/LastActivity";
+import Services from "../Components/Services";
+import Benefits from "../Components/Benefits";
+import Help from "../Components/Help";
 
 const Home = () => {
   const router = useRouter();
@@ -103,51 +106,7 @@ const Home = () => {
     };
   }, []);
 
-  const services = [
-    {
-      id: 1,
-      title: "Mototáxi",
-      icon: require("../../assets/motorcycle.png"),
-      description: "Viagens rápidas pela cidade",
-      action: () => router.push("/RequestTravel"),
-      color: "#FF6B00",
-    },
-    {
-      id: 2,
-      title: "Entregas",
-      icon: require("../../assets/box.png"),
-      description: "Envie seus pacotes com segurança",
-      action: () => router.push("/RequestDelivery"),
-      color: "#00A859",
-    },
-    {
-      id: 3,
-      title: "Encomendas",
-      icon: require("../../assets/box.png"),
-      description: "Receba suas compras em casa",
-      action: () => router.push("/RequestDelivery"),
-      color: "#2D9CDB",
-    },
-    {
-      id: 4,
-      title: "Urgências",
-      icon: require("../../assets/emergency.png"),
-      description: "Transporte rápido para emergências",
-      action: () => router.push("/RequestTravel"),
-      color: "#EB5757",
-    },
-  ];
-
-  const benefits: {
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    text: string;
-  }[] = [
-    { icon: "shield-checkmark", text: "Motoristas verificados" },
-    { icon: "time", text: "Atendimento 24 horas" },
-    { icon: "cash", text: "Preços acessíveis" },
-    { icon: "location", text: "Cobertura em toda a região" },
-  ];
-
+  
   if (!fontLoaded) {
     return (
       <View style={styles.loadingContainer}>
@@ -171,77 +130,39 @@ const Home = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => router.push("/profile")}
+              accessible={true}
+              accessibilityLabel="Perfil"
+              accessibilityHint="Clique para acessar seu perfil"
+            >
+              <Ionicons name="person-circle-outline" size={30} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
           {isMobileData && (
             <Text style={styles.welcomeSubtitle}>
               Você está usando dados móveis
             </Text>
           )}
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>O que você precisa?</Text>
-          <View style={styles.servicesGrid}>
-            {services.map((service) => (
-              <TouchableOpacity
-                key={service.id}
-                style={[styles.serviceCard, { borderTopColor: service.color }]}
-                onPress={service.action}
-                accessible={true}
-                accessibilityLabel={service.title}
-                accessibilityHint={`Clique para solicitar serviço de ${service.title}`}
-              >
-                <View style={styles.serviceIconContainer}>
-                  <Image
-                    source={service.icon}
-                    style={styles.serviceIcon}
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text style={styles.serviceTitle}>{service.title}</Text>
-                <Text style={styles.serviceDescription}>
-                  {service.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.mainActionButton}
-          onPress={() => router.push("/RequestTravel")}
-          accessible={true}
-          accessibilityLabel="Solicitar Mototáxi"
-          accessibilityHint="Clique para solicitar um mototáxi agora"
-        >
-          <Image
-            source={require("../../assets/motorcycle.png")}
-            style={styles.serviceIcon}
-          />
-          <Text style={styles.mainActionText}>SOLICITAR AGORA</Text>
-        </TouchableOpacity>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Nossas Vantagens</Text>
-          <View style={styles.benefitsGrid}>
-            {benefits.map((benefit, index) => (
-              <View key={index} style={styles.benefitCard}>
-                <View style={styles.benefitIconContainer}>
-                  <Ionicons name={benefit.icon} size={20} color="#000" />
-                </View>
-                <Text style={styles.benefitText}>{benefit.text}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <Services />
+        
         <LastActivity />
+        <Benefits />
         {location?.latitude && location?.longitude && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Sua Localização</Text>
-              <TouchableOpacity onPress={() => router.push("/Mapa")}>
-                <Text style={styles.seeMore}>Ver mapa completo</Text>
-              </TouchableOpacity>
             </View>
             <View style={styles.mapContainer}>
               <MapView
@@ -267,38 +188,16 @@ const Home = () => {
             </View>
           </View>
         )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Precisa de ajuda?</Text>
-          <View style={styles.contactOptions}>
-            <TouchableOpacity
-              style={[styles.contactButton, { backgroundColor: "#000" }]}
-              onPress={() => Linking.openURL("tel:+5511999999999")}
-            >
-              <Ionicons name="call" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>Ligar para suporte</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.contactButton, { backgroundColor: "#000" }]}
-              onPress={() => router.push("/Configuration")}
-            >
-              <Ionicons name="help-circle" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>Central de ajuda</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
+        <Help />
         <View style={styles.adsSection}>
           <Text style={styles.sectionTitle}>Dicas e Promoções</Text>
           <AnunciosCarousel />
         </View>
       </ScrollView>
       {/* <TouchableOpacity
-        style={styles.solicitarButton}
-        onPress={() => router.push("/RequestTravel")}
-      >
+        style={styles.solicitarButton} onPress={() => router.push("/RequestTravel")}>
         <MaterialIcons name="keyboard-arrow-up" size={22} color="white" />
-        <Text style={styles.solicitarButtonText}>Solicitar Mototáxi</Text>
+        <Text style={styles.solicitarButtonText}>SolicitaO r Mototáxi</Text>
       </TouchableOpacity> */}
       <Tab />
     </>
@@ -310,6 +209,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f8f8",
     paddingHorizontal: 16,
+  },
+  serviceIcon: {
+    width: 40,
+    height: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -329,14 +232,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerSection: {
-    alignItems: "flex-start",
-    paddingVertical: 24,
-    paddingHorizontal: 8,
-  },
-  horaAtual: {
-    fontFamily: "Righteous",
-    fontSize: 16,
-    color: "#000",
+    paddingHorizontal: 16,
+    paddingTop: StatusBar.currentHeight || 24,
+    paddingBottom: 12,
+    backgroundColor: "#f0f0f0",
   },
   welcomeTitle: {
     fontFamily: "Righteous",
@@ -373,103 +272,6 @@ const styles = StyleSheet.create({
     color: "#000",
     marginBottom: 16,
   },
-  seeMore: {
-    fontFamily: "Righteous",
-    fontSize: 14,
-    color: "#000",
-  },
-  servicesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  serviceCard: {
-    width: "48%",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderTopWidth: 4,
-    borderColor: "#f8f8f8",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  serviceIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#f8f8f8",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  serviceIcon: {
-    width: 40,
-    height: 40,
-  },
-  serviceTitle: {
-    fontFamily: "Righteous",
-    fontSize: 16,
-    color: "#000",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  serviceDescription: {
-    fontFamily: "Righteous",
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  mainActionButton: {
-    backgroundColor: "#000",
-    borderRadius: 12,
-    paddingVertical: 18,
-    marginVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  mainActionText: {
-    color: "#fff",
-    fontSize: 18,
-    fontFamily: "Righteous",
-    marginLeft: 12,
-  },
-  benefitsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  benefitCard: {
-    width: "48%",
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  benefitIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 107, 0, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  benefitText: {
-    fontFamily: "Righteous",
-    fontSize: 14,
-    color: "#333",
-    flex: 1,
-  },
   mapContainer: {
     height: 200,
     borderRadius: 12,
@@ -481,25 +283,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  contactOptions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  contactButton: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 4,
-  },
-  contactButtonText: {
-    color: "#fff",
-    fontFamily: "Righteous",
-    fontSize: 12,
-    marginLeft: 8,
-  },
+
   adsSection: {
     marginBottom: 24,
   },
@@ -526,6 +310,16 @@ const styles = StyleSheet.create({
   //   fontSize: 16,
   //   marginTop: 4,
   // },
+  profileButton: {
+    backgroundColor: "#000",
+    borderRadius: 50,
+    padding: 8,
+    marginLeft: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  
 });
 
 export default Home;

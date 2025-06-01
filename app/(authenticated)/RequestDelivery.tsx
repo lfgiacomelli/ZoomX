@@ -28,6 +28,7 @@ import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
 
 type Coordinates = {
   latitude: number;
@@ -127,6 +128,7 @@ const getRouteFromOSRM = async (
 };
 
 export default function RotaScreen() {
+  const animationRef = useRef(null);
   const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
@@ -139,6 +141,12 @@ export default function RotaScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
+  const [peso, setPeso] = useState("");
+  const [comprimento, setComprimento] = useState("");
+  const [altura, setAltura] = useState("");
+  const [largura, setLargura] = useState("");
+  const [showInputs, setShowInputs] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
   const initialRegion = {
     latitude: -21.8756,
@@ -193,11 +201,19 @@ export default function RotaScreen() {
         origin,
         destination
       );
-      const calculatedPrice = 5 + distanceKm * 0.5;
+      const hora = new Date().getHours();
+      let calculatedPrice = 0;
+
+      if (hora < 6 || hora >= 22) {
+        calculatedPrice = 5.6 + distanceKm * 0.85;
+      } else {
+        calculatedPrice = 5 + distanceKm * 0.5;
+      }
 
       setRouteCoords(coords);
       setDistance(distanceKm);
       setPrice(calculatedPrice);
+      setShowInputs(false);
 
       bottomSheetRef.current?.expand();
 
@@ -251,7 +267,11 @@ export default function RotaScreen() {
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
-            sol_observacoes: 'Pedido via App'
+            sol_peso: parseFloat(peso),
+            sol_comprimento: parseFloat(comprimento),
+            sol_altura: parseFloat(altura),
+            sol_largura: parseFloat(largura),
+            sol_observacoes: "Pedido via App",
           }),
         }
       );
@@ -274,23 +294,30 @@ export default function RotaScreen() {
     }
   };
 
-  const resetForm = () => {
-    setStartAddress("");
-    setEndAddress("");
-    setRouteCoords([]);
-    setMarkers([]);
-    setDistance(null);
-    setPrice(null);
-    setRegion(initialRegion);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setShowInputs(true);
     bottomSheetRef.current?.close();
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(initialRegion);
-    }
   };
 
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleSaveEdit = async () => {
+    setIsEditing(false);
+    await calcularRota();
+  };
   useEffect(() => {
-    if (!endAddress.trim()) return;
+    if (isEditing) return;
+
+    const todosCamposPreenchidos =
+      startAddress.trim() &&
+      endAddress.trim() &&
+      comprimento.trim() &&
+      peso.trim() &&
+      altura.trim() &&
+      largura.trim();
+
+    if (!todosCamposPreenchidos || !showInputs) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -301,12 +328,25 @@ export default function RotaScreen() {
     }, 1000);
 
     return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
-  }, [endAddress]);
+  }, [
+    largura,
+    startAddress,
+    endAddress,
+    comprimento,
+    peso,
+    altura,
+    showInputs,
+    isEditing,
+  ]);
+
   if (isBottomSheetActive && startAddress && endAddress) {
     Keyboard.dismiss();
   }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -315,35 +355,79 @@ export default function RotaScreen() {
     >
       <Header />
       <StatusBar barStyle="light-content" />
-      <View style={styles.form}>
-        <View style={styles.iconColumn}>
-          <Ionicons name="location-outline" size={24} color="#000" />
-          <View style={styles.line} />
-          <Ionicons name="flag-outline" size={24} color="#000" />
-        </View>
 
-        <View style={styles.inputColumn}>
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de partida (ex: Rua A, 123)"
-            value={startAddress}
-            onChangeText={setStartAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="next"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de destino (ex: Av. B, 456)"
-            value={endAddress}
-            onChangeText={setEndAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="done"
-          />
+      {showInputs && (
+        <View style={styles.form}>
+          <View style={styles.inputColumn}>
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de retirada (ex: Rua A, 123)"
+              value={startAddress}
+              onChangeText={setStartAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de entrega (ex: Av. B, 456)"
+              value={endAddress}
+              onChangeText={setEndAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="done"
+            />
+            <View style={styles.row}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 5 }]}
+                placeholder="Peso (kg)"
+                value={peso}
+                onChangeText={setPeso}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.input, { flex: 1, marginLeft: 5 }]}
+                placeholder="Comprimento (cm)"
+                value={comprimento}
+                onChangeText={setComprimento}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.row}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 5 }]}
+                placeholder="Altura (cm)"
+                value={altura}
+                onChangeText={setAltura}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.input, { flex: 1, marginLeft: 5 }]}
+                placeholder="Largura (cm)"
+                value={largura}
+                onChangeText={setLargura}
+                keyboardType="numeric"
+              />
+            </View>
+            {isEditing && (
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveEdit}
+              >
+                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      )}
+
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
+          <LottieView
+            source={require("../../assets/loading_box.json")}
+            ref={animationRef}
+            autoPlay
+            loop
+            style={{ width: 50, height: 50 }}
+          />
           <Text style={styles.loadingText}>Calculando rota...</Text>
         </View>
       )}
@@ -373,7 +457,7 @@ export default function RotaScreen() {
           {routeCoords.length > 0 && (
             <Polyline
               coordinates={routeCoords}
-              strokeColor="#1E90FF"
+              strokeColor="#000"
               strokeWidth={4}
             />
           )}
@@ -383,7 +467,7 @@ export default function RotaScreen() {
             style={styles.floatingButton}
             onPress={() => bottomSheetRef.current?.expand()}
           >
-            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
+            <Text style={styles.floatingButtonText}>Ver detalhes</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
           </TouchableOpacity>
         )}
@@ -402,7 +486,12 @@ export default function RotaScreen() {
         <BottomSheetView style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (
             <>
-              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+              <View style={styles.headerRow}>
+                <Text style={styles.bottomSheetTitle}>Detalhes da Entrega</Text>
+                <TouchableOpacity onPress={handleEdit}>
+                  <MaterialIcons name="edit" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Origem:</Text>
@@ -413,7 +502,16 @@ export default function RotaScreen() {
                 <Text style={styles.detailLabel}>Destino:</Text>
                 <Text style={styles.detailValue}>{endAddress}</Text>
               </View>
-
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Peso:</Text>
+                <Text style={styles.detailValue}>{peso} kg</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Dimensões:</Text>
+                <Text style={styles.detailValue}>
+                  {comprimento} x {altura} x {largura} cm
+                </Text>
+              </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Distância:</Text>
                 <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
@@ -456,7 +554,7 @@ export default function RotaScreen() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.solicitarButtonText}>
-                    Solicitar Corrida
+                    Solicitar Entrega
                   </Text>
                 )}
               </TouchableOpacity>
@@ -467,6 +565,7 @@ export default function RotaScreen() {
     </KeyboardAvoidingView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -534,6 +633,11 @@ const styles = StyleSheet.create({
   },
   bottomSheetBackground: {
     backgroundColor: "#f0f0f0",
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderLeftColor: "#ccc",
+    borderRightColor: "#ccc",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderStartEndRadius: 0,
@@ -551,10 +655,14 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     padding: 20,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
   bottomSheetTitle: {
     fontSize: 22,
-    marginBottom: 20,
-    textAlign: "center",
     color: "#000",
     fontFamily: "Righteous",
   },
@@ -635,5 +743,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Righteous",
     marginRight: 8,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  saveButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Righteous",
   },
 });

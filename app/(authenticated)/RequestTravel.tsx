@@ -28,7 +28,8 @@ import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Battery from 'expo-battery';
+import * as Battery from "expo-battery";
+import LottieView from "lottie-react-native";
 
 type Coordinates = {
   latitude: number;
@@ -141,6 +142,8 @@ export default function RotaScreen() {
   const router = useRouter();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
   const [observacoes, setObservacoes] = useState<string>("");
+  const animationRef = useRef(null);
+  const [suggestedAddress, setSuggestedAddress] = useState("");
 
   const initialRegion = {
     latitude: -21.8756,
@@ -233,6 +236,12 @@ export default function RotaScreen() {
     if (distance === null || price === null) {
       Alert.alert("Erro", "Calcule a rota antes de solicitar.");
       return;
+    }
+    try {
+      await AsyncStorage.setItem("startAddress", startAddress);
+      console.log("Endereço de partida salvo:", startAddress);
+    } catch (error) {
+      console.error("Erro ao salvar endereço:", error);
     }
 
     try {
@@ -333,6 +342,22 @@ export default function RotaScreen() {
       hideSubscription.remove();
     };
   }, [isBottomSheetActive]);
+  useEffect(() => {
+    const loadSuggestedAddress = async () => {
+      try {
+        const address = await AsyncStorage.getItem("startAddress");
+        if (address) setSuggestedAddress(address);
+      } catch (error) {
+        console.error("Erro ao carregar endereço salvo:", error);
+      }
+    };
+
+    loadSuggestedAddress();
+  }, []);
+
+  const handleUseSuggested = () => {
+    setStartAddress(suggestedAddress);
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -357,6 +382,20 @@ export default function RotaScreen() {
             clearButtonMode="while-editing"
             returnKeyType="next"
           />
+          {suggestedAddress && startAddress !== suggestedAddress && (
+            <TouchableOpacity
+              style={styles.suggestionBox}
+              onPress={handleUseSuggested}
+            >
+              <View style={styles.column}>
+                <Text style={styles.suggestionTitle}>
+                  Usar esse endereço novamente:
+                </Text>
+                <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
+              </View>
+              <Ionicons name="arrow-up-outline" size={24} color="#000" />
+            </TouchableOpacity>
+          )}
           <TextInput
             style={styles.input}
             placeholder="Endereço de destino (ex: Av. B, 456)"
@@ -369,7 +408,13 @@ export default function RotaScreen() {
       </View>
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
+          <LottieView
+            ref={animationRef}
+            source={require("../../assets/loading_motorcycle.json")}
+            autoPlay
+            loop
+            style={{ width: 50, height: 50 }}
+          />
           <Text style={styles.loadingText}>Calculando rota...</Text>
         </View>
       )}
@@ -414,7 +459,6 @@ export default function RotaScreen() {
           </TouchableOpacity>
         )}
       </View>
-
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
@@ -664,13 +708,49 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.7)", // branco com 70% de opacidade
-    width: 40, // largura fixa para formar círculo
-    height: 40, // altura igual à largura
-    borderRadius: 20, // metade da largura/altura para círculo perfeito
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
+  },
+  suggestionBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#f9f9f9",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginBottom: 12,
+  },
+
+  column: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+  },
+
+  suggestionTitle: {
+    fontFamily: "Righteous",
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 2,
+  },
+
+  suggestionAddress: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#222",
   },
 });
