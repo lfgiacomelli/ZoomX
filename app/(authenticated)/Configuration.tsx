@@ -97,7 +97,7 @@ export default function SettingsScreen() {
         <Text style={styles.title}>Configurações do APP</Text>
 
         <View style={styles.row}>
-          <TouchableOpacity style={styles.whiteButton}>
+          <TouchableOpacity style={styles.whiteButton} onPress={() =>router.push('/Support')}>
             <FontAwesome6 name="users-gear" size={24} color="black" />
             <Text style={styles.whiteButtonText}>Suporte</Text>
           </TouchableOpacity>

@@ -8,6 +8,8 @@ import {
   Image,
   ScrollView,
   Linking,
+  Modal,
+  Pressable
 } from "react-native";
 import Tab from "../Components/Tab";
 import useRighteousFont from "../../hooks/Font";
@@ -24,23 +26,34 @@ import { Ionicons } from "@expo/vector-icons";
 export default function Profile() {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("id");
-    await AsyncStorage.removeItem("nome");
-    await AsyncStorage.removeItem("email");
-    await AsyncStorage.removeItem("telefone");
-    await AsyncStorage.removeItem("criado_em");
-    console.log("Usuário deslogado com sucesso");
-    router.replace("/login");
+    setIsLoggingOut(true);
+    try {
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("id");
+      await AsyncStorage.removeItem("nome");
+      await AsyncStorage.removeItem("email");
+      await AsyncStorage.removeItem("telefone");
+      await AsyncStorage.removeItem("criado_em");
+      console.log("Usuário deslogado com sucesso");
+      router.replace("/login");
+    } catch (error) {
+      console.error("Erro ao deslogar:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
+
   const [userData, setUserData] = useState({
     username: "Usuário",
     email: "",
     since: "Desconhecido",
     telefone: "Desconhecido",
   });
+
   const fetchUsuario = async () => {
     try {
       const userId = await AsyncStorage.getItem("id");
@@ -67,6 +80,7 @@ export default function Profile() {
       console.error("Erro ao buscar dados do usuário:", error);
     }
   };
+
   useEffect(() => {
     fetchUsuario();
   }, []);
@@ -165,12 +179,53 @@ export default function Profile() {
             <Text style={styles.iconText}>Informações</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={() => setShowLogoutModal(true)}
+        >
           <MaterialCommunityIcons name="logout" size={22} color="#fff" />
           <Text style={styles.logoutText}>Encerrar Sessão</Text>
         </TouchableOpacity>
       </ScrollView>
       <Tab />
+
+      {/* Modal de Confirmação de Logout */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showLogoutModal}
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Confirmar Logout</Text>
+            <Text style={styles.modalMessage}>
+              Tem certeza que deseja sair? Nos vemos em breve!
+            </Text>
+            
+            <View style={styles.modalButtonsContainer}>
+              <Pressable
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </Pressable>
+              
+              <Pressable
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>Sair</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -244,17 +299,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
   },
-  iconBox: {
-    backgroundColor: "#fff",
-    width: 110,
-    height: 96,
-    marginHorizontal: 5,
-    marginTop: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 3,
-  },
   icon: {
     width: 40,
     height: 40,
@@ -267,7 +311,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   logoutButton: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 20,
     left: 16,
     right: 16,
@@ -300,5 +344,63 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     elevation: 2,
     alignSelf: "center",
+  },
+  // Estilos do Modal
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 32,
+  },
+  modalTitle: {
+    fontFamily: 'Righteous',
+    fontSize: 20,
+    color: '#000',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontFamily: 'Righteous',
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  confirmButton: {
+    backgroundColor: '#DB2E05',
+  },
+  cancelButtonText: {
+    fontFamily: 'Righteous',
+    fontSize: 16,
+    color: '#000',
+  },
+  confirmButtonText: {
+    fontFamily: 'Righteous',
+    fontSize: 16,
+    color: '#fff',
   },
 });

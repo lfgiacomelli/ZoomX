@@ -28,6 +28,7 @@ import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Battery from 'expo-battery';
 
 type Coordinates = {
   latitude: number;
@@ -194,7 +195,14 @@ export default function RotaScreen() {
         origin,
         destination
       );
-      const calculatedPrice = 5.8 + distanceKm * 1;
+      const hora = new Date().getHours();
+      let calculatedPrice = 0;
+
+      if (hora < 6 || hora >= 22) {
+        calculatedPrice = 6.2 + distanceKm * 1;
+      } else {
+        calculatedPrice = 5.8 + distanceKm * 0.8;
+      }
 
       setRouteCoords(coords);
       setDistance(distanceKm);

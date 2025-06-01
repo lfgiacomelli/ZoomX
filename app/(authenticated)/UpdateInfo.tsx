@@ -167,7 +167,7 @@ export default function EditProfile() {
           )}
         </TouchableOpacity>
       </View>
-      <Modal visible={modalVisible} transparent={true} animationType="slide">
+      <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
             <LottieView

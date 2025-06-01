@@ -159,6 +159,12 @@ export default function LastActivity() {
               {data.via_formapagamento || "Dinheiro"}
             </Text>
           </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Serviço:</Text>
+            <Text style={styles.infoValue}>
+                {data.via_servico || "Mototáxi"}
+            </Text>
+          </View>
         </View>
 
         <TouchableOpacity

@@ -353,7 +353,7 @@ export default function PendingRequest() {
           </TouchableOpacity>
         </View>
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={showModal}
           onRequestClose={() => setShowModal(false)}
@@ -408,7 +408,7 @@ export default function PendingRequest() {
           </View>
         </Modal>
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={showRecusaModal}
           onRequestClose={() => setShowRecusaModal(false)}
