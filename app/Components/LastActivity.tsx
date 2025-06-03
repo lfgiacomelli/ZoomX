@@ -51,7 +51,6 @@ export default function LastActivity() {
         setError("Nenhuma viagem em andamento encontrada.");
       }
     } catch (err: any) {
-      console.error("Erro ao buscar dados:", err);
       setError(err.message || "Erro ao carregar dados");
     } finally {
       setLoading(false);
@@ -122,11 +121,7 @@ export default function LastActivity() {
     }
 
     if (error) {
-      return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      );
+      return;
     }
 
     if (!data) {
@@ -135,6 +130,8 @@ export default function LastActivity() {
 
     return (
       <View style={styles.contentContainer}>
+      <Text style={styles.screenTitle}>Última Viagem</Text>
+
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Origem:</Text>
@@ -184,7 +181,6 @@ export default function LastActivity() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.screenTitle}>Última Viagem</Text>
       {renderContent()}
     </View>
   );

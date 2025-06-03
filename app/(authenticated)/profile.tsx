@@ -38,6 +38,7 @@ export default function Profile() {
       await AsyncStorage.removeItem("email");
       await AsyncStorage.removeItem("telefone");
       await AsyncStorage.removeItem("criado_em");
+      await AsyncStorage.removeItem('startAddress')
       console.log("Usuário deslogado com sucesso");
       router.replace("/login");
     } catch (error) {
