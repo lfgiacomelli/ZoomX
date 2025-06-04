@@ -27,6 +27,7 @@ import LastActivity from "../Components/LastActivity";
 import Services from "../Components/Services";
 import Benefits from "../Components/Benefits";
 import Help from "../Components/Help";
+import PendingTravel from "../Components/PendingTravel";
 
 const Home = () => {
   const router = useRouter();
@@ -106,7 +107,6 @@ const Home = () => {
     };
   }, []);
 
-  
   if (!fontLoaded) {
     return (
       <View style={styles.loadingContainer}>
@@ -156,9 +156,10 @@ const Home = () => {
           )}
         </View>
         <Services />
-        
-        <LastActivity />
+        <PendingTravel />
+
         <Benefits />
+        <LastActivity />
         {location?.latitude && location?.longitude && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -318,8 +319,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  
 });
 
 export default Home;

@@ -15,6 +15,7 @@ import { Audio } from "expo-av";
 import Header from "../Components/header";
 import * as Notifications from "expo-notifications";
 import LottieView from "lottie-react-native";
+import * as Haptics from "expo-haptics";
 
 type Solicitacao = {
   sol_codigo: number;
@@ -105,7 +106,7 @@ export default function PendingRequest() {
       setSolicitacao(data);
 
       if (data.sol_status === "aceita") {
-        playSound();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         if (intervalRef.current) clearInterval(intervalRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
 
@@ -131,7 +132,7 @@ export default function PendingRequest() {
             await Notifications.scheduleNotificationAsync({
               content: {
                 title:
-                 data.sol_servico === "Entrega"
+                  data.sol_servico === "Entrega"
                     ? "Sua entrega foi aceita!"
                     : "Sua corrida foi aceita!",
                 body:
@@ -206,7 +207,6 @@ export default function PendingRequest() {
         }
         return prevTime - 1;
       });
-      
     }, 1000);
 
     intervalRef.current = setInterval(() => {
@@ -373,7 +373,7 @@ export default function PendingRequest() {
               />
 
               <Text style={styles.modalTitle}>
-                {solicitacao?.sol_servico === 'Entrega'
+                {solicitacao?.sol_servico === "Entrega"
                   ? "Entrega Aceita!"
                   : "Corrida Aceita!"}
               </Text>

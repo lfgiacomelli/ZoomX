@@ -358,6 +358,7 @@ export default function RotaScreen() {
   const handleUseSuggested = () => {
     setStartAddress(suggestedAddress);
   };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -456,6 +457,14 @@ export default function RotaScreen() {
           >
             <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
+          </TouchableOpacity>
+        )}
+        {!isBottomSheetActive && !startAddress && !endAddress && (
+          <TouchableOpacity
+            style={styles.comeBack}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
@@ -751,6 +760,18 @@ const styles = StyleSheet.create({
   suggestionAddress: {
     fontFamily: "Righteous",
     fontSize: 16,
-    color: "#222",
+  },
+  comeBack: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "#000",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
   },
 });

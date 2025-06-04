@@ -471,6 +471,14 @@ export default function RotaScreen() {
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
           </TouchableOpacity>
         )}
+        {!isBottomSheetActive && !startAddress && !endAddress && (
+          <TouchableOpacity
+            style={styles.comeBack}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <BottomSheet
@@ -761,5 +769,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontFamily: "Righteous",
+  },
+  comeBack: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "#000",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
   },
 });

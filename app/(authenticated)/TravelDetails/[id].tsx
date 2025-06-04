@@ -151,11 +151,9 @@ export default function TravelDetails() {
 
   const shareRecibo = async () => {
     try {
-      // Gerar o PDF
       const html = generateReciboHTML();
       const { uri } = await Print.printToFileAsync({ html });
 
-      // Compartilhar o PDF
       await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
         dialogTitle: "Compartilhar Recibo",
@@ -221,9 +219,7 @@ export default function TravelDetails() {
           <View style={styles.separator} />
           <View style={styles.infoRow}>
             <Text style={styles.label}>Serviço</Text>
-            <Text style={styles.value}>
-              {viagem.via_servico}
-            </Text>
+            <Text style={styles.value}>{viagem.via_servico}</Text>
           </View>
           <View style={styles.separator} />
 
@@ -268,10 +264,18 @@ export default function TravelDetails() {
             </Text>
           </View>
         </View>
-
-        <TouchableOpacity style={styles.shareButton} onPress={shareRecibo}>
-          <Text style={styles.shareButtonText}>Compartilhar Recibo</Text>
-        </TouchableOpacity>
+        {viagem.via_status.toLowerCase() === "finalizada" && (
+          <TouchableOpacity style={styles.shareButton} onPress={shareRecibo}>
+            <Text style={styles.shareButtonText}>Compartilhar Recibo</Text>
+          </TouchableOpacity>
+        )}
+        {viagem.via_status.toLowerCase() === "em andamento" && (
+          <View style={styles.shareButton}>
+            <Text style={styles.shareButtonText}>
+              Aguarde a finalização da viagem.
+            </Text>
+          </View>
+        )}
       </ScrollView>
       <Tab />
     </>
