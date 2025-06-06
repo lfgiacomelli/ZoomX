@@ -22,10 +22,10 @@ export default function Services() {
     },
     {
       id: 3,
-      title: "Encomendas",
-      icon: require("../../assets/box.png"),
-      description: "Receba suas compras em casa",
-      action: () => router.push("/RequestDelivery"),
+      title: "Compras",
+      icon: require("../../assets/shopping.png"),
+      description: "Faça suas compras sem sair de casa",
+      action: () => router.push("/RequestMarket"),
       color: "#2D9CDB",
     },
     {
@@ -37,6 +37,11 @@ export default function Services() {
       color: "#EB5757",
     },
   ];
+  const hora = new Date().getHours();
+  if (hora < 8 || hora > 20) {
+    services.splice(2, 1);
+    services.splice(2, 1);
+  }
 
   return (
     <View style={styles.section}>
@@ -63,19 +68,19 @@ export default function Services() {
           </TouchableOpacity>
         ))}
       </View>
-       <TouchableOpacity
-          style={styles.mainActionButton}
-          onPress={() => router.push("/RequestTravel")}
-          accessible={true}
-          accessibilityLabel="Solicitar Mototáxi"
-          accessibilityHint="Clique para solicitar um mototáxi agora"
-        >
-          <Image
-            source={require("../../assets/motorcycle.png")}
-            style={styles.serviceIcon}
-          />
-          <Text style={styles.mainActionText}>SOLICITAR AGORA</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.mainActionButton}
+        onPress={() => router.push("/RequestTravel")}
+        accessible={true}
+        accessibilityLabel="Solicitar Mototáxi"
+        accessibilityHint="Clique para solicitar um mototáxi agora"
+      >
+        <Image
+          source={require("../../assets/motorcycle.png")}
+          style={styles.serviceIcon}
+        />
+        <Text style={styles.mainActionText}>SOLICITAR AGORA</Text>
+      </TouchableOpacity>
     </View>
   );
 }

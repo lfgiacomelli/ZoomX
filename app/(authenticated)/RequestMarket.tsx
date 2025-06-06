@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Modal,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import Header from "../Components/header";
@@ -28,7 +29,6 @@ import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Battery from "expo-battery";
 import LottieView from "lottie-react-native";
 
 type Coordinates = {
@@ -128,23 +128,26 @@ const getRouteFromOSRM = async (
   }
 };
 
-export default function RequestTravel() {
-  const [startAddress, setStartAddress] = useState("");
+export default function RequestMarket() {
+  const animationRef = useRef(null);
+  const [supermarketAddress, setSupermarketAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
   const [markers, setMarkers] = useState<Coordinates[]>([]);
   const [distance, setDistance] = useState<number | null>(null);
+  const [tempo, setTempo] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
-  const [observacoes, setObservacoes] = useState<string>("");
-  const animationRef = useRef(null);
-  const [suggestedAddress, setSuggestedAddress] = useState("");
-  const [tempo, setTempo] = useState<number | null>(null);
+  const [showInputs, setShowInputs] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [observacoes, setObservacoes] = useState("");
+  const [valorEstimado, setValorEstimado] = useState("");
+  const [modalMessage, setModalMessage] = useState(false);
 
   const initialRegion = {
     latitude: -21.8756,
@@ -161,12 +164,8 @@ export default function RequestTravel() {
   }, []);
 
   const calcularRota = async () => {
-    if (!startAddress.trim() || !endAddress.trim()) {
-      Alert.alert("Erro", "Por favor, preencha ambos os endereços.");
-      return;
-    }
-    if (startAddress.toLowerCase() === endAddress.toLowerCase()) {
-      Alert.alert("Erro", "Os endereços de partida e destino são iguais.");
+    if (!valorEstimado.trim()) {
+      Alert.alert("Erro", "Por favor, preencha o valor estimado.");
       return;
     }
 
@@ -177,10 +176,14 @@ export default function RequestTravel() {
     setPrice(null);
 
     try {
-      const [origin, destination] = await Promise.all([
-        getCoordsFromAddress(startAddress),
-        getCoordsFromAddress(endAddress),
-      ]);
+      const origin = supermarketAddress.trim()
+        ? await getCoordsFromAddress(supermarketAddress)
+        : {
+            latitude: -21.8756,
+            longitude: -51.8437,
+          };
+
+      const destination = await getCoordsFromAddress(endAddress);
 
       const distanceBetween = calculateHaversineDistance(origin, destination);
 
@@ -199,19 +202,18 @@ export default function RequestTravel() {
         origin,
         destination
       );
-      const tempo = distanceKm * 2;
-      const hora = new Date().getHours();
       let calculatedPrice = 0;
+      const tempoDeCompra = 15;
+      const tempo = tempoDeCompra + distanceKm * 2;
+      calculatedPrice = 3.9 + (distanceKm * 0.54) ;
 
-      if (hora < 6 || hora >= 22) {
-        calculatedPrice = 6.2 + distanceKm * 1;
-      } else {
-        calculatedPrice = 5.8 + distanceKm * 0.8;
-      }
+      const valorCompra = parseFloat(valorEstimado) || 0;
+      const totalPrice = calculatedPrice + valorCompra;
 
       setRouteCoords(coords);
       setDistance(distanceKm);
-      setPrice(calculatedPrice);
+      setPrice(totalPrice);
+      setShowInputs(false);
       setTempo(tempo);
 
       bottomSheetRef.current?.expand();
@@ -240,12 +242,6 @@ export default function RequestTravel() {
       Alert.alert("Erro", "Calcule a rota antes de solicitar.");
       return;
     }
-    try {
-      await AsyncStorage.setItem("startAddress", startAddress);
-      console.log("Endereço de partida salvo:", startAddress);
-    } catch (error) {
-      console.error("Erro ao salvar endereço:", error);
-    }
 
     try {
       const userId = await AsyncStorage.getItem("id");
@@ -264,19 +260,23 @@ export default function RequestTravel() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            sol_origem: startAddress,
+            sol_origem: supermarketAddress.trim()
+              ? supermarketAddress
+              : "Sem preferência de supermercado",
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Mototáxi",
+            sol_servico: "Compras",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
-            sol_observacoes: "Pedido via App",
+            sol_observacoes: `Itens a comprar: ${observacoes}\nValor estimado de compras: R$ ${parseFloat(valorEstimado) || 0}`,
           }),
         }
       );
-
+      if (supermarketAddress.trim() === "") {
+        setModalMessage(true);
+      }
       const data = await response.json();
 
       if (!response.ok) {
@@ -295,23 +295,26 @@ export default function RequestTravel() {
     }
   };
 
-  const resetForm = () => {
-    setStartAddress("");
-    setEndAddress("");
-    setRouteCoords([]);
-    setMarkers([]);
-    setDistance(null);
-    setPrice(null);
-    setRegion(initialRegion);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setShowInputs(true);
     bottomSheetRef.current?.close();
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(initialRegion);
-    }
   };
 
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleSaveEdit = async () => {
+    setIsEditing(false);
+    await calcularRota();
+  };
+
   useEffect(() => {
-    if (!endAddress.trim()) return;
+    if (isEditing) return;
+
+    const camposObrigatoriosPreenchidos =
+      valorEstimado && valorEstimado.trim() !== "";
+
+    if (!camposObrigatoriosPreenchidos || !showInputs) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -322,45 +325,15 @@ export default function RequestTravel() {
     }, 1000);
 
     return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
-  }, [endAddress]);
-  if (isBottomSheetActive && startAddress && endAddress) {
+  }, [valorEstimado, showInputs, isEditing]);
+
+  if (isBottomSheetActive && (supermarketAddress || endAddress)) {
     Keyboard.dismiss();
   }
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      if (isBottomSheetActive) {
-        bottomSheetRef.current?.close();
-      }
-    });
-
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      if (isBottomSheetActive) {
-        bottomSheetRef.current?.expand();
-      }
-    });
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [isBottomSheetActive]);
-  useEffect(() => {
-    const loadSuggestedAddress = async () => {
-      try {
-        const address = await AsyncStorage.getItem("startAddress");
-        if (address) setSuggestedAddress(address);
-      } catch (error) {
-        console.error("Erro ao carregar endereço salvo:", error);
-      }
-    };
-
-    loadSuggestedAddress();
-  }, []);
-
-  const handleUseSuggested = () => {
-    setStartAddress(suggestedAddress);
-  };
 
   return (
     <KeyboardAvoidingView
@@ -370,51 +343,58 @@ export default function RequestTravel() {
     >
       <Header />
       <StatusBar barStyle="light-content" />
-      <View style={styles.form}>
-        <View style={styles.iconColumn}>
-          <Ionicons name="location-outline" size={24} color="#000" />
-          <View style={styles.line} />
-          <Ionicons name="flag-outline" size={24} color="#000" />
-        </View>
 
-        <View style={styles.inputColumn}>
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de partida (ex: Rua A, 123)"
-            value={startAddress}
-            onChangeText={setStartAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="next"
-          />
-          {suggestedAddress && startAddress !== suggestedAddress && (
-            <TouchableOpacity
-              style={styles.suggestionBox}
-              onPress={handleUseSuggested}
-            >
-              <View style={styles.column}>
-                <Text style={styles.suggestionTitle}>
-                  Usar esse endereço novamente:
-                </Text>
-                <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
-              </View>
-              <Ionicons name="arrow-up-outline" size={24} color="#000" />
-            </TouchableOpacity>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de destino (ex: Av. B, 456)"
-            value={endAddress}
-            onChangeText={setEndAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="done"
-          />
+      {showInputs && (
+        <View style={styles.form}>
+          <View style={styles.inputColumn}>
+            <TextInput
+              style={styles.input}
+              placeholder="Supermercado (opcional)"
+              value={supermarketAddress}
+              onChangeText={setSupermarketAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de entrega (obrigatório)"
+              value={endAddress}
+              onChangeText={setEndAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="done"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Itens e quantidades (ex: 2x Leite, 1x Pão)"
+              value={observacoes}
+              onChangeText={setObservacoes}
+              multiline
+              numberOfLines={3}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Valor estimado das compras (R$)"
+              value={valorEstimado}
+              onChangeText={setValorEstimado}
+              keyboardType="numeric"
+            />
+            {isEditing && (
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveEdit}
+              >
+                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      )}
+
       {isLoading && (
         <View style={styles.loadingContainer}>
           <LottieView
+            source={require("../../assets/loading_box.json")}
             ref={animationRef}
-            source={require("../../assets/loading_motorcycle.json")}
             autoPlay
             loop
             style={{ width: 50, height: 50 }}
@@ -452,17 +432,18 @@ export default function RequestTravel() {
               strokeWidth={4}
             />
           )}
+          
         </MapView>
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity
             style={styles.floatingButton}
             onPress={() => bottomSheetRef.current?.expand()}
           >
-            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
+            <Text style={styles.floatingButtonText}>Ver detalhes</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
           </TouchableOpacity>
         )}
-        {!isBottomSheetActive && !startAddress && !endAddress && (
+        {!isBottomSheetActive && !supermarketAddress && !endAddress && (
           <TouchableOpacity
             style={styles.comeBack}
             onPress={() => router.back()}
@@ -471,6 +452,7 @@ export default function RequestTravel() {
           </TouchableOpacity>
         )}
       </View>
+
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
@@ -484,34 +466,76 @@ export default function RequestTravel() {
         <BottomSheetView style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (
             <>
-              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+              <View style={styles.headerRow}>
+                <Text style={styles.bottomSheetTitle}>Detalhes da Compra</Text>
+                <TouchableOpacity onPress={handleEdit}>
+                  <MaterialIcons name="edit" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+
+              {supermarketAddress ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Supermercado:</Text>
+                  <Text style={styles.detailValue}>{supermarketAddress}</Text>
+                </View>
+              ) : (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Supermercado:</Text>
+                  <Text style={styles.detailValue}>Sem preferência</Text>
+                </View>
+              )}
+
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Origem:</Text>
-                <Text style={styles.detailValue}>{startAddress}</Text>
+                <Text style={styles.detailLabel}>Endereço de entrega:</Text>
+                <Text style={styles.detailValue}>{endAddress}</Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Destino:</Text>
-                <Text style={styles.detailValue}>{endAddress}</Text>
+                <Text style={styles.detailLabel}>Itens:</Text>
+                <Text style={styles.detailValue}>
+                  {observacoes || "Não especificado"}
+                </Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Valor estimado:</Text>
+                <Text style={styles.detailValue}>
+                  R${" "}
+                  {parseFloat(valorEstimado)
+                    ? parseFloat(valorEstimado).toFixed(2)
+                    : "0,00"}
+                </Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Distância:</Text>
                 <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
               </View>
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Tempo Estimado:</Text>
                 <Text style={styles.detailValue}>
                   {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
                 </Text>
               </View>
+
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Preço:</Text>
+                <Text style={styles.detailLabel}>Preço total:</Text>
                 <Text style={[styles.detailValue, styles.priceText]}>
                   R$ {price.toFixed(2)}
                 </Text>
               </View>
-
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>
+                  Valores:
+                </Text>
+                <Text style={[styles.detailValue]}>
+                  Valor da corrida: R${" "}
+                  {(price - parseFloat(valorEstimado || "0")).toFixed(2)}
+                  {"\n"} Valor da compra: R${" "}
+                  {parseFloat(valorEstimado || "0").toFixed(2)}
+                </Text>
+              </View>
               <View style={styles.pickerContainer}>
                 <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
                 <View style={styles.picker}>
@@ -532,6 +556,7 @@ export default function RequestTravel() {
                   </Picker>
                 </View>
               </View>
+
               <TouchableOpacity
                 style={styles.solicitarButton}
                 onPress={handleSolicitar}
@@ -541,7 +566,7 @@ export default function RequestTravel() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.solicitarButtonText}>
-                    Solicitar Corrida
+                    Solicitar Compra
                   </Text>
                 )}
               </TouchableOpacity>
@@ -552,6 +577,7 @@ export default function RequestTravel() {
     </KeyboardAvoidingView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -619,6 +645,11 @@ const styles = StyleSheet.create({
   },
   bottomSheetBackground: {
     backgroundColor: "#f0f0f0",
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderLeftColor: "#ccc",
+    borderRightColor: "#ccc",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderStartEndRadius: 0,
@@ -636,10 +667,14 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     padding: 20,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
   bottomSheetTitle: {
     fontSize: 22,
-    marginBottom: 20,
-    textAlign: "center",
     color: "#000",
     fontFamily: "Righteous",
   },
@@ -721,53 +756,23 @@ const styles = StyleSheet.create({
     fontFamily: "Righteous",
     marginRight: 8,
   },
-  apagar: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  row: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-  },
-  suggestionBox: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#f9f9f9",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#ddd",
     marginBottom: 12,
   },
-
-  column: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
+  saveButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 5,
+    marginBottom: 10,
   },
-
-  suggestionTitle: {
-    fontFamily: "Righteous",
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 2,
-  },
-
-  suggestionAddress: {
-    fontFamily: "Righteous",
+  saveButtonText: {
+    color: "#fff",
     fontSize: 16,
+    fontFamily: "Righteous",
   },
   comeBack: {
     position: "absolute",
@@ -782,4 +787,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 5,
   },
+
 });

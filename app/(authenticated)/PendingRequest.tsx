@@ -129,16 +129,26 @@ export default function PendingRequest() {
           setShowModal(true);
 
           setTimeout(async () => {
+            const distancia = data.sol_distancia;
+            const tempoDeCompra = 15;
+            const tempo = tempoDeCompra + Math.ceil(distancia * 2);
+
             await Notifications.scheduleNotificationAsync({
               content: {
                 title:
                   data.sol_servico === "Entrega"
                     ? "Sua entrega foi aceita!"
-                    : "Sua corrida foi aceita!",
+                    : data.sol_servico === "Compras"
+                      ? "Sua solicitação de compras foi aceita!"
+                      : "Sua corrida foi aceita!",
                 body:
                   data.sol_servico === "Entrega"
-                    ? `${funcionario.fun_nome} será seu entregador! Aguarde no local indicado.${"\n\n"} Veículo: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`
-                    : `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`,
+                    ? `${funcionario.fun_nome} será seu entregador! Aguarde no local indicado.${"\n"} Veículo: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa} ${"\n"} Ele chegará em ${tempo} minutos`
+                    : data.sol_servico === "Mototáxi"
+                      ? `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa} ${"\n"} Ele chegará em ${tempo} minutos`
+                      : data.sol_servico === "Compras"
+                        ? `${funcionario.fun_nome} será responsável por suas compras! Aguarde no local indicado.${"\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa} ${"\n"} Tempo estimado de entrega ${tempo} minutos`
+                        : "",
                 data: { solicitacaoId },
               },
               trigger: null,
@@ -365,7 +375,11 @@ export default function PendingRequest() {
                 source={
                   solicitacao?.sol_servico === "Entrega"
                     ? require("../../assets/box_animation.json")
-                    : require("../../assets/motor_animation.json")
+                    : solicitacao?.sol_servico === "Mototáxi"
+                      ? require("../../assets/motor_animation.json")
+                      : solicitacao?.sol_servico === "Compras"
+                        ? require("../../assets/request_market_accepted.json")
+                        : null
                 }
                 autoPlay
                 loop
@@ -375,18 +389,26 @@ export default function PendingRequest() {
               <Text style={styles.modalTitle}>
                 {solicitacao?.sol_servico === "Entrega"
                   ? "Entrega Aceita!"
-                  : "Corrida Aceita!"}
+                  : solicitacao?.sol_servico === "Mototáxi"
+                    ? "Corrida Aceita!"
+                    : solicitacao?.sol_servico === "Compras"
+                      ? "Compra Aceita!"
+                      : ""}
               </Text>
 
               <Text style={styles.modalText}>
                 {solicitacao?.sol_servico === "Entrega"
                   ? "Seu entregador está a caminho! Aguarde no local indicado"
-                  : "Seu mototaxista está a caminho! Aguarde no local indicado"}
+                  : solicitacao?.sol_servico === "Mototáxi"
+                    ? "Seu mototaxista está a caminho! Aguarde no local indicado"
+                    : solicitacao?.sol_servico === "Compras"
+                      ? "Estamos realizando sua compra. Em breve ela chegará!"
+                      : ""}
                 {"\n\n"}
                 <Text style={styles.bold}>Nome:</Text> {mototaxista?.fun_nome}
                 {"\n"}
                 <Text style={styles.bold}>
-                  {solicitacao?.sol_servico === "entrega"
+                  {solicitacao?.sol_servico === "Entrega"
                     ? "Veículo:"
                     : "Moto:"}
                 </Text>{" "}

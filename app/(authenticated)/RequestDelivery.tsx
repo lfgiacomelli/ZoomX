@@ -127,7 +127,7 @@ const getRouteFromOSRM = async (
   }
 };
 
-export default function RotaScreen() {
+export default function RequestDelivery() {
   const animationRef = useRef(null);
   const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
@@ -135,6 +135,7 @@ export default function RotaScreen() {
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
   const [markers, setMarkers] = useState<Coordinates[]>([]);
   const [distance, setDistance] = useState<number | null>(null);
+  const [tempo, setTempo] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
@@ -203,17 +204,17 @@ export default function RotaScreen() {
       );
       const hora = new Date().getHours();
       let calculatedPrice = 0;
-
+      const tempo = distanceKm * 2; 
       if (hora < 6 || hora >= 22) {
         calculatedPrice = 5.6 + distanceKm * 0.85;
       } else {
         calculatedPrice = 5 + distanceKm * 0.5;
       }
-
       setRouteCoords(coords);
       setDistance(distanceKm);
       setPrice(calculatedPrice);
       setShowInputs(false);
+      setTempo(tempo);
 
       bottomSheetRef.current?.expand();
 
@@ -524,7 +525,12 @@ export default function RotaScreen() {
                 <Text style={styles.detailLabel}>Distância:</Text>
                 <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
               </View>
-
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Tempo Estimado:</Text>
+                <Text style={styles.detailValue}>
+                  {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
+                </Text>
+              </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Preço:</Text>
                 <Text style={[styles.detailValue, styles.priceText]}>

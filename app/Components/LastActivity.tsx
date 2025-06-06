@@ -6,9 +6,10 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import LottieView from "lottie-react-native";
 
 type Viagem = {
   via_codigo: Number;
@@ -30,6 +31,7 @@ export default function LastActivity() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter();
+  const animationRef = useRef(null);
 
   const baseURL = "https://backend-turma-a-2025.onrender.com";
 
@@ -49,6 +51,7 @@ export default function LastActivity() {
         setData(json.viagem);
       } else {
         setError("Nenhuma viagem em andamento encontrada.");
+        return; 
       }
     } catch (err: any) {
       setError(err.message || "Erro ao carregar dados");
@@ -112,7 +115,13 @@ export default function LastActivity() {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
+          <LottieView
+            ref={animationRef}
+            source={require("../../assets/loading_data.json")}
+            autoPlay
+            loop
+            style={{ width: 230, height: 230 }}
+          />
           <Text style={styles.loadingText}>
             Carregando sua última viagem...
           </Text>
@@ -130,7 +139,7 @@ export default function LastActivity() {
 
     return (
       <View style={styles.contentContainer}>
-      <Text style={styles.screenTitle}>Última Viagem</Text>
+        <Text style={styles.screenTitle}>Última Viagem</Text>
 
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
@@ -159,7 +168,7 @@ export default function LastActivity() {
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Serviço:</Text>
             <Text style={styles.infoValue}>
-                {data.via_servico || "Mototáxi"}
+              {data.via_servico || "Mototáxi"}
             </Text>
           </View>
         </View>
@@ -179,11 +188,7 @@ export default function LastActivity() {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      {renderContent()}
-    </View>
-  );
+  return <View style={styles.container}>{renderContent()}</View>;
 }
 
 const styles = StyleSheet.create({

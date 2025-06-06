@@ -21,6 +21,10 @@ type Viagem = {
   via_valor?: string;
   via_formapagamento?: string;
   via_servico?: string;
+  fun_nome?: string;
+  mot_placa?: string;
+  mot_modelo?: string;
+
 };
 
 const ProgressBar = ({ duration = 3000 }: { duration?: number }) => {
@@ -111,14 +115,13 @@ export default function PendingTravel() {
           <InfoRow label="ORIGEM" value={data.via_origem} />
           <InfoRow label="DESTINO" value={data.via_destino} />
           <InfoRow
-            label="DATA"
-            value={new Date(data.via_data).toLocaleString()}
-          />
-          <InfoRow
             label="STATUS"
             value={data.via_status.toUpperCase()}
             isStatus
           />
+          <InfoRow label='Mototaxista' value={data.fun_nome || "Indisponível"} />
+          <InfoRow label='Moto' value={data.mot_modelo || "Indisponível"} />
+          <InfoRow label='Placa' value={data.mot_placa || "Indisponível"} />
         </View>
         <TouchableOpacity
           onPress={() => {

@@ -162,7 +162,9 @@ export default function Travels() {
               const icone =
                 atividade.via_servico === "Mototáxi"
                   ? require("../../assets/motorcycle.png")
-                  : require("../../assets/box.png");
+                  : atividade.via_servico === "Compras"
+                    ? require("../../assets/shopping.png") 
+                    : require("../../assets/box.png");
 
               const dataFormatada = atividade.via_data
                 ? new Intl.DateTimeFormat("pt-BR", {
@@ -317,7 +319,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   newRequestText: {
-    textDecorationLine: 'underline',
+    textDecorationLine: "underline",
     fontFamily: "Righteous",
     fontSize: 18,
     color: "#fff",

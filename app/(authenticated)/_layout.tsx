@@ -11,12 +11,13 @@ export default function AuthenticatedLayout() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const id = await AsyncStorage.getItem("id");
-      if (id) {
+      const token = await AsyncStorage.getItem("token"); // Pega o token JWT
+      
+      if (token) {
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
-        router.replace("/login"); 
+        router.replace("/login");
       }
     };
 

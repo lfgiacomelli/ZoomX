@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "zoomx",
+    "name": "ZoomX",
     "slug": "zoomx",
     "scheme": "zoomx",
     "version": "1.0.0",
@@ -19,14 +19,15 @@
     },
     
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.4fordevs.zoomx"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/appIcon.png",
         "backgroundColor": "#000"
       },
-      "package": "com.smithgg.zoomx"
+      "package": "com.4fordevs.zoomx"
     },
     "web": {
       "favicon": "./assets/appIcon.png"

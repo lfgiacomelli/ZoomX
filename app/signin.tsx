@@ -1,9 +1,19 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ScrollView, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
-import { FontAwesome, Feather, Ionicons } from '@expo/vector-icons';
-import useRighteousFont from '../hooks/Font/index';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
+import useRighteousFont from "../hooks/Font/index";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SignIn() {
   const fontLoaded = useRighteousFont();
@@ -11,10 +21,10 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState({
-    usu_nome: '',
-    usu_email: '',
-    usu_telefone: '',
-    usu_senha: '',
+    usu_nome: "",
+    usu_email: "",
+    usu_telefone: "",
+    usu_senha: "",
   });
 
   if (!fontLoaded) {
@@ -26,8 +36,8 @@ export default function SignIn() {
   };
 
   const formatarTelefone = (text: string) => {
-    const numeros = text.replace(/\D/g, '');
-    let telefoneFormatado = '';
+    const numeros = text.replace(/\D/g, "");
+    let telefoneFormatado = "";
 
     if (numeros.length <= 2) {
       telefoneFormatado = `(${numeros}`;
@@ -47,74 +57,102 @@ export default function SignIn() {
   };
 
   const handleSubmit = async () => {
-    if (!form.usu_nome || !form.usu_email || !form.usu_telefone || !form.usu_senha) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+    if (
+      !form.usu_nome ||
+      !form.usu_email ||
+      !form.usu_telefone ||
+      !form.usu_senha
+    ) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos");
       return;
     }
 
     if (!validateEmail(form.usu_email)) {
-      Alert.alert('Erro', 'Por favor, insira um e-mail válido');
+      Alert.alert("Erro", "Por favor, insira um e-mail válido");
       return;
     }
 
     if (form.usu_senha.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://backend-turma-a-2025.onrender.com/api/usuarios', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          usu_nome: form.usu_nome,
-          usu_telefone: form.usu_telefone.replace(/\D/g, ''), 
-          usu_ativo: true,
-          usu_email: form.usu_email,
-          usu_senha: form.usu_senha,
-          usu_created_at: new Date().toISOString(),
-          usu_updated_at: new Date().toISOString(),
-        }),
-      });
+      const response = await fetch(
+        "https://backend-turma-a-2025.onrender.com/api/usuarios",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            usu_nome: form.usu_nome,
+            usu_telefone: form.usu_telefone.replace(/\D/g, ""),
+            usu_ativo: true,
+            usu_email: form.usu_email,
+            usu_senha: form.usu_senha,
+            usu_created_at: new Date().toISOString(),
+            usu_updated_at: new Date().toISOString(),
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        let errorMsg = data.message || 'Erro ao criar usuário';
+        let errorMsg = data.message || "Erro ao criar usuário";
         if (data.errors) {
-          errorMsg += '\n' + data.errors.map((err: any) => err.message).join('\n');
+          errorMsg +=
+            "\n" + data.errors.map((err: any) => err.message).join("\n");
         }
-        Alert.alert('Erro', errorMsg);
+        Alert.alert("Erro", errorMsg);
         return;
       }
 
-      Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      await AsyncStorage.setItem('token', data.token || 'logado');
-      await AsyncStorage.setItem('id', data.usuario.id.toString());
-      await AsyncStorage.setItem('nome', data.usuario.nome);
-      await AsyncStorage.setItem('email', data.usuario.email);
-      await AsyncStorage.setItem('telefone', data.usuario.telefone);
-      await AsyncStorage.setItem('criado_em', data.usuario.criado_em.toString());
-      console.log('Usuário criado com sucesso:', data);
-      router.replace('/(authenticated)/Home');
+      if (data.token) {
+        await AsyncStorage.setItem("token", data.token);
+      }
 
+      if (data.usuario) {
+        await AsyncStorage.setItem("id", data.usuario.id.toString());
+        await AsyncStorage.setItem("nome", data.usuario.nome);
+        await AsyncStorage.setItem("email", data.usuario.email);
+        await AsyncStorage.setItem("telefone", data.usuario.telefone);
+        await AsyncStorage.setItem(
+          "criado_em",
+          data.usuario.criado_em.toString()
+        );
+      }
+
+      Alert.alert("Sucesso", "Conta criada com sucesso!");
+      console.log("Usuário criado com sucesso:", data);
+
+      router.replace("/(authenticated)/Home");
     } catch (error: any) {
-      console.error('Erro completo:', error);
-      Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
+      console.error("Erro completo:", error);
+      Alert.alert(
+        "Erro",
+        error.message || "Não foi possível conectar ao servidor."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.container}>
         <View style={styles.logo}>
-          <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
+          <Image
+            source={require("../assets/logo.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
         <Text style={styles.title}>Crie sua conta:</Text>
         <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
@@ -124,7 +162,7 @@ export default function SignIn() {
           <TextInput
             placeholder="Insira seu Nome Completo"
             placeholderTextColor="#aaa"
-            onChangeText={(text) => handleChange('usu_nome', text)}
+            onChangeText={(text) => handleChange("usu_nome", text)}
             style={styles.input}
             value={form.usu_nome}
           />
@@ -137,7 +175,7 @@ export default function SignIn() {
             placeholderTextColor="#aaa"
             keyboardType="email-address"
             autoCapitalize="none"
-            onChangeText={(text) => handleChange('usu_email', text)}
+            onChangeText={(text) => handleChange("usu_email", text)}
             style={styles.input}
             value={form.usu_email}
           />
@@ -150,7 +188,9 @@ export default function SignIn() {
             placeholderTextColor="#aaa"
             keyboardType="phone-pad"
             value={form.usu_telefone}
-            onChangeText={(text) => handleChange('usu_telefone', formatarTelefone(text))}
+            onChangeText={(text) =>
+              handleChange("usu_telefone", formatarTelefone(text))
+            }
             style={styles.input}
           />
         </View>
@@ -161,14 +201,14 @@ export default function SignIn() {
             placeholder="Insira sua Senha (mínimo 6 caracteres)"
             placeholderTextColor="#aaa"
             secureTextEntry
-            onChangeText={(text) => handleChange('usu_senha', text)}
+            onChangeText={(text) => handleChange("usu_senha", text)}
             style={styles.input}
             value={form.usu_senha}
           />
         </View>
 
-        <TouchableOpacity 
-          style={styles.button} 
+        <TouchableOpacity
+          style={styles.button}
           onPress={handleSubmit}
           disabled={isLoading}
         >
@@ -179,7 +219,7 @@ export default function SignIn() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/login')}>
+        <TouchableOpacity onPress={() => router.push("/login")}>
           <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
         </TouchableOpacity>
       </View>
@@ -193,13 +233,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     paddingHorizontal: 20,
     paddingBottom: 40,
     paddingTop: 60,
   },
   logo: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   logoImage: {
@@ -207,23 +247,23 @@ const styles = StyleSheet.create({
     height: 250,
   },
   title: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 24,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 5,
   },
   subtitle: {
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 30,
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#111',
-    borderColor: '#333',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderColor: "#333",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -232,31 +272,31 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fff',
-    fontFamily: 'Righteous',
+    color: "#fff",
+    fontFamily: "Righteous",
     marginLeft: 10,
     minHeight: 20,
   },
   button: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 14,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 15,
-    justifyContent: 'center',
+    justifyContent: "center",
     minHeight: 50,
   },
   buttonText: {
-    color: '#000',
-    fontFamily: 'Righteous',
+    color: "#000",
+    fontFamily: "Righteous",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   linkText: {
-    color: '#fff',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-    fontFamily: 'Righteous',
+    color: "#fff",
+    textAlign: "center",
+    textDecorationLine: "underline",
+    fontFamily: "Righteous",
     marginTop: 10,
   },
 });
