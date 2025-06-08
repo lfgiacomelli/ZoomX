@@ -32,7 +32,14 @@ const MyReviews = () => {
       if (!usu_codigo) throw new Error("Usuário não autenticado");
 
       const response = await fetch(
-        `https://backend-turma-a-2025.onrender.com/api/avaliacoes/usuario/${usu_codigo}`
+        `https://backend-turma-a-2025.onrender.com/api/avaliacoes/usuario/${usu_codigo}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          },
+        }
       );
       const data = await response.json();
       setAvaliacoes(data);

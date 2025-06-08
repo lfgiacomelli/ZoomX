@@ -28,6 +28,7 @@ import Services from "../Components/Services";
 import Benefits from "../Components/Benefits";
 import Help from "../Components/Help";
 import PendingTravel from "../Components/PendingTravel";
+import AvaliarViagem from "../Components/AvaliarViagem";
 
 const Home = () => {
   const router = useRouter();
@@ -156,6 +157,7 @@ const Home = () => {
           )}
         </View>
         <Services />
+        <AvaliarViagem />
         <PendingTravel />
 
         <Benefits />
@@ -208,7 +210,7 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#f0f0f0",
     paddingHorizontal: 16,
   },
   serviceIcon: {

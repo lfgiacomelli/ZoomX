@@ -14,11 +14,14 @@ import { useRouter } from "expo-router";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "../hooks/Font/index";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Modal } from "react-native";
+import LottieView  from "lottie-react-native";
 
 export default function SignIn() {
   const fontLoaded = useRighteousFont();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [form, setForm] = useState({
     usu_nome: "",
@@ -126,7 +129,8 @@ export default function SignIn() {
         );
       }
 
-      Alert.alert("Sucesso", "Conta criada com sucesso!");
+      setModalVisible(true);
+
       console.log("Usuário criado com sucesso:", data);
 
       router.replace("/(authenticated)/Home");
@@ -145,7 +149,36 @@ export default function SignIn() {
     <ScrollView
       contentContainerStyle={styles.scrollContainer}
       keyboardShouldPersistTaps="handled"
-    >
+      showsVerticalScrollIndicator={false}>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Conta criada com sucesso!</Text>
+            <Text style={styles.modalMessage}>
+              Seus dados já foram criptografados!
+            </Text>
+            <Text style={styles.modalMessage}>
+              Comece a usar o <Text style={{ fontFamily: "Righteous" }}>ZoomX</Text>{" "}
+              agora mesmo!
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setModalVisible(false);
+                router.replace("/(authenticated)/Home");
+              }}
+            >
+              <Text style={styles.modalButtonText}>Começar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.container}>
         <View style={styles.logo}>
           <Image
@@ -298,5 +331,43 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     fontFamily: "Righteous",
     marginTop: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    padding: 24,
+    borderRadius: 12,
+    width: "85%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    fontFamily: "Righteous",
+    textAlign: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#333",
+    marginBottom: 20,
+    fontFamily: "Righteous",
+    textAlign: "center",
+  },
+  modalButton: {
+    backgroundColor: "#000",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Righteous",
   },
 });
