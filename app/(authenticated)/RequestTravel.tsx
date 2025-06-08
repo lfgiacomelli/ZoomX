@@ -240,6 +240,7 @@ export default function RequestTravel() {
       Alert.alert("Erro", "Calcule a rota antes de solicitar.");
       return;
     }
+
     try {
       await AsyncStorage.setItem("startAddress", startAddress);
       console.log("Endereço de partida salvo:", startAddress);
@@ -249,7 +250,9 @@ export default function RequestTravel() {
 
     try {
       const userId = await AsyncStorage.getItem("id");
-      if (!userId) {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
@@ -262,6 +265,7 @@ export default function RequestTravel() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             sol_origem: startAddress,

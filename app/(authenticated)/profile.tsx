@@ -9,7 +9,7 @@ import {
   ScrollView,
   Linking,
   Modal,
-  Pressable
+  Pressable,
 } from "react-native";
 import Tab from "../Components/Tab";
 import useRighteousFont from "../../hooks/Font";
@@ -38,7 +38,7 @@ export default function Profile() {
       await AsyncStorage.removeItem("email");
       await AsyncStorage.removeItem("telefone");
       await AsyncStorage.removeItem("criado_em");
-      await AsyncStorage.removeItem('startAddress')
+      await AsyncStorage.removeItem("startAddress");
       console.log("Usuário deslogado com sucesso");
       router.replace("/login");
     } catch (error) {
@@ -63,7 +63,14 @@ export default function Profile() {
         return;
       }
       const response = await fetch(
-        `https://backend-turma-a-2025.onrender.com/api/usuarios/${userId}`
+        `https://backend-turma-a-2025.onrender.com/api/usuarios/${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          },
+        }
       );
       if (!response.ok) {
         throw new Error("Erro ao buscar dados do usuário");
@@ -180,8 +187,8 @@ export default function Profile() {
             <Text style={styles.iconText}>Informações</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={styles.logoutButton} 
+        <TouchableOpacity
+          style={styles.logoutButton}
           onPress={() => setShowLogoutModal(true)}
         >
           <MaterialCommunityIcons name="logout" size={22} color="#fff" />
@@ -203,7 +210,7 @@ export default function Profile() {
             <Text style={styles.modalMessage}>
               Tem certeza que deseja sair? Nos vemos em breve!
             </Text>
-            
+
             <View style={styles.modalButtonsContainer}>
               <Pressable
                 style={[styles.modalButton, styles.cancelButton]}
@@ -211,7 +218,7 @@ export default function Profile() {
               >
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </Pressable>
-              
+
               <Pressable
                 style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleLogout}
@@ -312,7 +319,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   logoutButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     left: 16,
     right: 16,
@@ -349,59 +356,59 @@ const styles = StyleSheet.create({
   // Estilos do Modal
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
     paddingBottom: 32,
   },
   modalTitle: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 20,
-    color: '#000',
+    color: "#000",
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalMessage: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
+    color: "#555",
+    textAlign: "center",
     marginBottom: 24,
     lineHeight: 22,
   },
   modalButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 16,
   },
   modalButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   confirmButton: {
-    backgroundColor: '#DB2E05',
+    backgroundColor: "#DB2E05",
   },
   cancelButtonText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   confirmButtonText: {
-    fontFamily: 'Righteous',
+    fontFamily: "Righteous",
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
 });

@@ -57,10 +57,17 @@ export default function Travels() {
     setLoading(true);
     try {
       const usuarioId = await AsyncStorage.getItem("id");
+      const token = await AsyncStorage.getItem("token");
       if (!usuarioId) throw new Error("ID do usuário não encontrado");
 
       const route = `${baseURL}/api/viagens/${usuarioId}`;
-      const response = await fetch(route);
+      const response = await fetch(route, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error(`Erro de API: ${response.status}`);
       }

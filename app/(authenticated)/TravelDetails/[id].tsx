@@ -12,6 +12,7 @@ import Header from "../../Components/header";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import Tab from "../../Components/Tab";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function TravelDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,8 +26,15 @@ export default function TravelDetails() {
     const fetchViagem = async () => {
       setLoading(true);
       try {
-        const route = `https://backend-turma-a-2025.onrender.com/api/viagens/viagem/${id}`;
-        const response = await fetch(route);
+        const token = await AsyncStorage.getItem("token");
+        const route = `https://backend-turma-a-2025.onrender.com/api/viagens/viagem/${id}`
+        const response = await fetch(route, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`Erro de API: ${response.status}`);

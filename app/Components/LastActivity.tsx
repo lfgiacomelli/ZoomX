@@ -38,10 +38,18 @@ export default function LastActivity() {
   const fetchData = async () => {
     try {
       const usuarioId = await AsyncStorage.getItem("id");
+      const token = await AsyncStorage.getItem("token");
       if (!usuarioId) throw new Error("ID do usuário não encontrado");
 
       const response = await fetch(
-        `${baseURL}/api/viagens/andamento/${usuarioId}`
+        `${baseURL}/api/viagens/andamento/${usuarioId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.ok) throw new Error(`Erro de API: ${response.status}`);
 
@@ -51,7 +59,7 @@ export default function LastActivity() {
         setData(json.viagem);
       } else {
         setError("Nenhuma viagem em andamento encontrada.");
-        return; 
+        return;
       }
     } catch (err: any) {
       setError(err.message || "Erro ao carregar dados");

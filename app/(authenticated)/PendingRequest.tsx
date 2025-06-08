@@ -16,6 +16,7 @@ import Header from "../Components/header";
 import * as Notifications from "expo-notifications";
 import LottieView from "lottie-react-native";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Solicitacao = {
   sol_codigo: number;
@@ -87,9 +88,28 @@ export default function PendingRequest() {
       setLoading(true);
       setError(null);
 
+      // Pega o token e usuário uma vez só no início
+      const token = await AsyncStorage.getItem("token");
+      const userId = await AsyncStorage.getItem("id");
+
+      if (!token || !userId) {
+        Alert.alert("Erro", "Usuário não autenticado.");
+        setLoading(false);
+        return;
+      }
+
+      // Busca a solicitação passando token no header Authorization
       const response = await fetch(
-        `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`
+        `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
+
       if (!response.ok)
         throw new Error(`Erro ao buscar solicitação: ${response.status}`);
 
@@ -101,20 +121,29 @@ export default function PendingRequest() {
       ) {
         playSound();
       }
-
       previousStatus.current = data.sol_status;
+
       setSolicitacao(data);
 
       if (data.sol_status === "aceita") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
         if (intervalRef.current) clearInterval(intervalRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
 
         try {
           const solicitacaoId = data.sol_codigo;
 
+          // Busca os dados do funcionário passando token no header Authorization
           const responseFuncionario = await fetch(
-            `https://backend-turma-a-2025.onrender.com/api/viagens/solicitacao/${solicitacaoId}/funcionario`
+            `https://backend-turma-a-2025.onrender.com/api/viagens/solicitacao/${solicitacaoId}/funcionario`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
           );
 
           if (!responseFuncionario.ok) {
@@ -125,13 +154,32 @@ export default function PendingRequest() {
 
           const responseJson = await responseFuncionario.json();
           const funcionario = responseJson.funcionario;
+
           setMototaxista(funcionario);
           setShowModal(true);
 
           setTimeout(async () => {
             const distancia = data.sol_distancia;
-            const tempoDeCompra = 15;
-            const tempo = tempoDeCompra + Math.ceil(distancia * 2);
+            const tempoBase = 15;
+            let tempo;
+
+            if (data.sol_servico === "Compras") {
+              tempo = tempoBase + Math.ceil(distancia * 2);
+            } else {
+              tempo = Math.ceil(distancia * 2.3);
+            }
+
+            const mensagemBase = ` ${funcionario.fun_nome} será `;
+            const veiculoInfo = `\nMoto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`;
+            let mensagemFinal = "";
+
+            if (data.sol_servico === "Entrega") {
+              mensagemFinal = `${mensagemBase}seu entregador! Aguarde no local indicado.${veiculoInfo}\nEle chegará em ${tempo} minutos`;
+            } else if (data.sol_servico === "Mototáxi") {
+              mensagemFinal = `${mensagemBase}seu mototaxista! Aguarde no local indicado.${veiculoInfo}\nEle chegará em ${tempo} minutos`;
+            } else if (data.sol_servico === "Compras") {
+              mensagemFinal = `${mensagemBase}responsável por suas compras! Aguarde no local indicado.${veiculoInfo}\nTempo estimado de entrega: ${tempo} minutos`;
+            }
 
             await Notifications.scheduleNotificationAsync({
               content: {
@@ -141,14 +189,7 @@ export default function PendingRequest() {
                     : data.sol_servico === "Compras"
                       ? "Sua solicitação de compras foi aceita!"
                       : "Sua corrida foi aceita!",
-                body:
-                  data.sol_servico === "Entrega"
-                    ? `${funcionario.fun_nome} será seu entregador! Aguarde no local indicado.${"\n"} Veículo: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa} ${"\n"} Ele chegará em ${tempo} minutos`
-                    : data.sol_servico === "Mototáxi"
-                      ? `${funcionario.fun_nome} será seu mototaxista! Aguarde no local indicado.${"\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa} ${"\n"} Ele chegará em ${tempo} minutos`
-                      : data.sol_servico === "Compras"
-                        ? `${funcionario.fun_nome} será responsável por suas compras! Aguarde no local indicado.${"\n"} Moto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa} ${"\n"} Tempo estimado de entrega ${tempo} minutos`
-                        : "",
+                body: mensagemFinal,
                 data: { solicitacaoId },
               },
               trigger: null,
@@ -177,8 +218,12 @@ export default function PendingRequest() {
           });
         }, 3000);
       }
-    } catch (err: any) {
-      setError(err.message || "Erro desconhecido");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "Erro desconhecido");
+      } else {
+        setError("Erro desconhecido");
+      }
     } finally {
       setLoading(false);
     }

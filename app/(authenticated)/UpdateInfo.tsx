@@ -38,7 +38,14 @@ export default function EditProfile() {
         setUserId(id);
 
         const response = await fetch(
-          `https://backend-turma-a-2025.onrender.com/api/usuarios/${id}`
+          `https://backend-turma-a-2025.onrender.com/api/usuarios/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+            },
+          }
         );
         const data = await response.json();
 

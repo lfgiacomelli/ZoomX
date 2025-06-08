@@ -69,10 +69,18 @@ export default function PendingTravel() {
   const fetchData = async () => {
     try {
       const usuarioId = await AsyncStorage.getItem("id");
+      const token = await AsyncStorage.getItem("token");
       if (!usuarioId) throw new Error("ID do usuário não encontrado");
 
       const response = await fetch(
-        `${baseURL}/api/viagens/andamento/${usuarioId}`
+        `${baseURL}/api/viagens/andamento/${usuarioId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       if (!response.ok) throw new Error(`Erro de API: ${response.status}`);
 
