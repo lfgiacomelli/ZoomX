@@ -12,7 +12,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
-
+import Header from "../../Components/header.tsx";
+import Tab from '../../Components/Tab.tsx';
 const StarRating = ({ rating, setRating }: { rating: number; setRating: (value: number) => void }) => {
   return (
     <View style={styles.starsContainer}>
@@ -101,63 +102,62 @@ export default function AvaliarViagem() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Avaliar Viagem</Text>
+    <>
+      <Header />
+      <View style={styles.container}>
+        <Text style={styles.title}>Avaliar Viagem</Text>
 
-      <View style={styles.ratingSection}>
-        <Text style={styles.subtitle}>Selecione sua avaliação:</Text>
-        <View style={styles.starsWrapper}>
-          <StarRating rating={rating} setRating={setRating} />
-        </View>
-        <Text style={styles.ratingText}>
-          {rating ? `Você avaliou com ${rating} estrela${rating > 1 ? 's' : ''}` : 'Toque nas estrelas para avaliar'}
-        </Text>
-      </View>
-
-      <View style={styles.commentSection}>
-        <Text style={styles.subtitle}>Comentário (opcional):</Text>
-        <TextInput
-          style={styles.commentInput}
-          multiline
-          numberOfLines={4}
-          placeholder="Conte como foi sua experiência..."
-          placeholderTextColor="#888"
-          value={comentario}
-          onChangeText={setComentario}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[styles.button, rating === 0 && styles.buttonDisabled]}
-        onPress={enviarAvaliacao}
-        disabled={rating === 0 || loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#f0f0f0" />
-        ) : (
-          <Text style={styles.buttonText}>ENVIAR AVALIAÇÃO</Text>
-        )}
-      </TouchableOpacity>
-
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="fade"
-        onRequestClose={fecharModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <LottieView ref={animationRef} source={require('../../../assets/reviews_animation.json')} autoPlay loop style={{ width: 200, height: 200 }} />
-            <Text style={styles.modalText}>
-              Muito obrigado por avaliar a viagem!{'\n'}Assim conseguimos melhorar nossos serviços.
-            </Text>
-            <TouchableOpacity style={styles.modalButton} onPress={fecharModal}>
-              <Text style={styles.modalButtonText}>Ok</Text>
-            </TouchableOpacity>
+        <View style={styles.ratingSection}>
+          <Text style={styles.subtitle}>Selecione sua avaliação:</Text>
+          <View style={styles.starsWrapper}>
+            <StarRating rating={rating} setRating={setRating} />
           </View>
+          <Text style={styles.ratingText}>
+            {rating ? `Você avaliou com ${rating} estrela${rating > 1 ? 's' : ''}` : 'Toque nas estrelas para avaliar'}
+          </Text>
         </View>
-      </Modal>
-    </View>
+
+        <View style={styles.commentSection}>
+          <Text style={styles.subtitle}>Comentário (opcional):</Text>
+          <TextInput
+            style={styles.commentInput}
+            multiline
+            numberOfLines={4}
+            placeholder="Conte como foi sua experiência..."
+            placeholderTextColor="#888"
+            value={comentario}
+            onChangeText={setComentario}
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, rating === 0 && styles.buttonDisabled]}
+          onPress={enviarAvaliacao}
+          disabled={rating === 0 || loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#f0f0f0" />
+          ) : (
+            <Text style={styles.buttonText}>ENVIAR AVALIAÇÃO</Text>
+          )}
+        </TouchableOpacity>
+
+        <Modal visible={showModal} transparent animationType="fade" onRequestClose={fecharModal}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <LottieView ref={animationRef} source={require('../../../assets/reviews_animation.json')} autoPlay loop style={{ width: 200, height: 200 }} />
+              <Text style={styles.modalText}>
+                Muito obrigado por avaliar a viagem!{'\n'}Assim conseguimos melhorar nossos serviços.
+              </Text>
+              <TouchableOpacity style={styles.modalButton} onPress={fecharModal}>
+                <Text style={styles.modalButtonText}>Ok</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
+      <Tab />
+    </>
   );
 }
 

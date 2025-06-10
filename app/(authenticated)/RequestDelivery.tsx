@@ -245,19 +245,20 @@ export default function RequestDelivery() {
 
     try {
       const userId = await AsyncStorage.getItem("id");
-      if (!userId) {
+      const token = await AsyncStorage.getItem('token')
+      if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
 
       setIsLoading(true);
-
       const response = await fetch(
         "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             sol_origem: startAddress,

@@ -10,8 +10,8 @@ export default function Index() {
   useEffect(() => {
     const checkAuth = async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
-      const token = await AsyncStorage.getItem('auth');
-      router.replace(token ? '/(authenticated)/home' : '/login');
+      const token = await AsyncStorage.getItem('token');
+      router.replace(token ? '/(authenticated)/Home' : '/login');
     };
 
     checkAuth();

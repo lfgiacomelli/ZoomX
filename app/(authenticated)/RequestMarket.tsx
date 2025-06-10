@@ -245,7 +245,8 @@ export default function RequestMarket() {
 
     try {
       const userId = await AsyncStorage.getItem("id");
-      if (!userId) {
+      const token = await AsyncStorage.getItem('token');
+      if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
@@ -258,6 +259,7 @@ export default function RequestMarket() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             sol_origem: supermarketAddress.trim()
