@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   TextInput,
@@ -9,13 +9,14 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  StatusBar,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "../hooks/Font/index";
-
+import LottieView  from "lottie-react-native";
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
 export default function Login() {
@@ -24,6 +25,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const fontLoaded = useRighteousFont();
+  const animationRef = useRef(null);
 
   if (!fontLoaded) return null;
 
@@ -51,7 +53,10 @@ export default function Login() {
         await AsyncStorage.setItem("nome", data.usuario.nome);
         await AsyncStorage.setItem("email", data.usuario.email);
         await AsyncStorage.setItem("telefone", data.usuario.telefone);
-        await AsyncStorage.setItem("criado_em", data.usuario.criado_em.toString());
+        await AsyncStorage.setItem(
+          "criado_em",
+          data.usuario.criado_em.toString()
+        );
       }
 
       router.replace("/(authenticated)/Home");
@@ -64,65 +69,71 @@ export default function Login() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContainer}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.container}>
-        <View style={styles.logo}>
-          <Image
-            source={require("../assets/logo.png")}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+    <>
+      <StatusBar backgroundColor="#000" barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.container}>
+          <View style={styles.logo}>
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            {/* <LottieView ref={animation Ref} source={require("../assets/splash.json")} autoPlay loop style={styles.logoImage} /> */}
+          </View>
+
+          <Text style={styles.title}>Faça login:</Text>
+          <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+
+          <View style={styles.inputWrapper}>
+            <Feather name="mail" size={20} color="#fff" />
+            <TextInput
+              placeholder="E-mail"
+              placeholderTextColor="#aaa"
+              style={styles.input}
+              value={usu_email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Ionicons name="lock-closed-outline" size={20} color="#fff" />
+            <TextInput
+              placeholder="Senha"
+              placeholderTextColor="#aaa"
+              style={styles.input}
+              value={usu_senha}
+              onChangeText={setSenha}
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.buttonText}>Entrar</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push("/signin")}>
+            <Text style={styles.linkText}>
+              Ainda não tem uma conta? Cadastre-se!
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        <Text style={styles.title}>Faça login:</Text>
-        <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
-
-        <View style={styles.inputWrapper}>
-          <Feather name="mail" size={20} color="#fff" />
-          <TextInput
-            placeholder="E-mail"
-            placeholderTextColor="#aaa"
-            style={styles.input}
-            value={usu_email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputWrapper}>
-          <Ionicons name="lock-closed-outline" size={20} color="#fff" />
-          <TextInput
-            placeholder="Senha"
-            placeholderTextColor="#aaa"
-            style={styles.input}
-            value={usu_senha}
-            onChangeText={setSenha}
-            secureTextEntry
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <Text style={styles.buttonText}>Entrar</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.push("/signin")}>
-          <Text style={styles.linkText}>Ainda não tem uma conta? Cadastre-se!</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 
@@ -142,8 +153,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoImage: {
-    width: 300,
-    height: 300,
+    width: 400,
+    height: 400,
+    marginBottom: -120,
   },
   title: {
     fontFamily: "Righteous",
@@ -153,6 +165,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   subtitle: {
+    fontSize: 20,
     color: "#fff",
     textAlign: "center",
     marginBottom: 30,

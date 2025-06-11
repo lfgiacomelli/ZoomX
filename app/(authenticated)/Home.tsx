@@ -200,7 +200,7 @@ const Home = () => {
       {/* <TouchableOpacity
         style={styles.solicitarButton} onPress={() => router.push("/RequestTravel")}>
         <MaterialIcons name="keyboard-arrow-up" size={22} color="white" />
-        <Text style={styles.solicitarButtonText}>SolicitaO r Mototáxi</Text>
+        <Text style={styles.solicitarButtonText}>Solicitar Mototáxi</Text>
       </TouchableOpacity> */}
       <Tab />
     </>

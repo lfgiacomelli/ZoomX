@@ -8,20 +8,22 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "../hooks/Font/index";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Modal } from "react-native";
-import LottieView  from "lottie-react-native";
+import LottieView from "lottie-react-native";
 
 export default function SignIn() {
   const fontLoaded = useRighteousFont();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const animationRef = useRef(null);
 
   const [form, setForm] = useState({
     usu_nome: "",
@@ -146,117 +148,129 @@ export default function SignIn() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContainer}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+    <>
+      <StatusBar backgroundColor={"#000"} barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Conta criada com sucesso!</Text>
-            <Text style={styles.modalMessage}>
-              Seus dados já foram criptografados!
-            </Text>
-            <Text style={styles.modalMessage}>
-              Comece a usar o <Text style={{ fontFamily: "Righteous" }}>ZoomX</Text>{" "}
-              agora mesmo!
-            </Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => {
-                setModalVisible(false);
-                router.replace("/(authenticated)/Home");
-              }}
-            >
-              <Text style={styles.modalButtonText}>Começar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <View style={styles.container}>
-        <View style={styles.logo}>
-          <Image
-            source={require("../assets/logo.png")}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-        </View>
-        <Text style={styles.title}>Crie sua conta:</Text>
-        <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
-
-        <View style={styles.inputWrapper}>
-          <FontAwesome name="user" size={20} color="#fff" />
-          <TextInput
-            placeholder="Insira seu Nome Completo"
-            placeholderTextColor="#aaa"
-            onChangeText={(text) => handleChange("usu_nome", text)}
-            style={styles.input}
-            value={form.usu_nome}
-          />
-        </View>
-
-        <View style={styles.inputWrapper}>
-          <Feather name="mail" size={20} color="#fff" />
-          <TextInput
-            placeholder="Insira seu E-mail"
-            placeholderTextColor="#aaa"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            onChangeText={(text) => handleChange("usu_email", text)}
-            style={styles.input}
-            value={form.usu_email}
-          />
-        </View>
-
-        <View style={styles.inputWrapper}>
-          <Feather name="phone" size={20} color="#fff" />
-          <TextInput
-            placeholder="Insira seu Telefone"
-            placeholderTextColor="#aaa"
-            keyboardType="phone-pad"
-            value={form.usu_telefone}
-            onChangeText={(text) =>
-              handleChange("usu_telefone", formatarTelefone(text))
-            }
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.inputWrapper}>
-          <Ionicons name="lock-closed-outline" size={20} color="#fff" />
-          <TextInput
-            placeholder="Insira sua Senha (mínimo 6 caracteres)"
-            placeholderTextColor="#aaa"
-            secureTextEntry
-            onChangeText={(text) => handleChange("usu_senha", text)}
-            style={styles.input}
-            value={form.usu_senha}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSubmit}
-          disabled={isLoading}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <Text style={styles.buttonText}>Criar Conta</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Conta criada com sucesso!</Text>
+              <Text style={styles.modalMessage}>
+                Seus dados já foram criptografados!
+              </Text>
+              <Text style={styles.modalMessage}>
+                Comece a usar o{" "}
+                <Text style={{ fontFamily: "Righteous" }}>ZoomX</Text> agora
+                mesmo!
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setModalVisible(false);
+                  router.replace("/(authenticated)/Home");
+                }}
+              >
+                <Text style={styles.modalButtonText}>Começar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
-        <TouchableOpacity onPress={() => router.push("/login")}>
-          <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.container}>
+          <View style={styles.logo}>
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            {/* <LottieView
+              source={require("../assets/splash.json")}
+              ref={animationRef}
+              autoPlay
+              loop
+              style={styles.logoImage}
+            /> */}
+          </View>
+          <Text style={styles.title}>Crie sua conta:</Text>
+          <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+
+          <View style={styles.inputWrapper}>
+            <FontAwesome name="user" size={20} color="#fff" />
+            <TextInput
+              placeholder="Insira seu Nome Completo"
+              placeholderTextColor="#aaa"
+              onChangeText={(text) => handleChange("usu_nome", text)}
+              style={styles.input}
+              value={form.usu_nome}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Feather name="mail" size={20} color="#fff" />
+            <TextInput
+              placeholder="Insira seu E-mail"
+              placeholderTextColor="#aaa"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onChangeText={(text) => handleChange("usu_email", text)}
+              style={styles.input}
+              value={form.usu_email}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Feather name="phone" size={20} color="#fff" />
+            <TextInput
+              placeholder="Insira seu Telefone"
+              placeholderTextColor="#aaa"
+              keyboardType="phone-pad"
+              value={form.usu_telefone}
+              onChangeText={(text) =>
+                handleChange("usu_telefone", formatarTelefone(text))
+              }
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Ionicons name="lock-closed-outline" size={20} color="#fff" />
+            <TextInput
+              placeholder="Insira sua Senha (mínimo 6 caracteres)"
+              placeholderTextColor="#aaa"
+              secureTextEntry
+              onChangeText={(text) => handleChange("usu_senha", text)}
+              style={styles.input}
+              value={form.usu_senha}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.buttonText}>Criar Conta</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push("/login")}>
+            <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </>
   );
 }
 
@@ -276,17 +290,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoImage: {
-    width: 250,
-    height: 250,
+    marginTop: -90,
+    width: 400,
+    height: 400,
+    marginBottom: -130,
   },
   title: {
     fontFamily: "Righteous",
-    fontSize: 24,
+    fontSize: 30,
     color: "#fff",
     textAlign: "center",
     marginBottom: 5,
   },
   subtitle: {
+    fontSize: 20,
     color: "#fff",
     textAlign: "center",
     marginBottom: 30,
