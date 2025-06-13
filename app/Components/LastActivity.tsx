@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 
 type Viagem = {
-  via_codigo: Number;
+  via_codigo: number;
   via_data: string;
   via_servico: string;
   via_status: string;
@@ -21,8 +21,8 @@ type Viagem = {
   via_destino: string;
   via_valor: string;
   via_formapagamento: string;
-  sol_distancia: Number;
-  usu_codigo: Number;
+  sol_distancia: number;
+  usu_codigo: number;
 };
 
 export default function LastActivity() {
@@ -36,6 +36,8 @@ export default function LastActivity() {
   const baseURL = "https://backend-turma-a-2025.onrender.com";
 
   const fetchData = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const usuarioId = await AsyncStorage.getItem("id");
       const token = await AsyncStorage.getItem("token");
@@ -51,18 +53,27 @@ export default function LastActivity() {
           },
         }
       );
+
+      if (response.status === 404) {
+        setData(null);
+        setError(null);
+        return;
+      }
+
       if (!response.ok) throw new Error(`Erro de API: ${response.status}`);
 
       const json = await response.json();
 
       if (json.sucesso && json.viagem) {
         setData(json.viagem);
+        setError(null);
       } else {
-        setError("Nenhuma viagem em andamento encontrada.");
-        return;
+        setData(null);
+        setError(null);
       }
     } catch (err: any) {
       setError(err.message || "Erro ao carregar dados");
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -104,6 +115,7 @@ export default function LastActivity() {
           sol_observacoes: "Solicitado novamente via histórico do App",
         }),
       });
+
       const json = await response.json();
 
       if (!response.ok) {
@@ -130,19 +142,21 @@ export default function LastActivity() {
             loop
             style={{ width: 230, height: 230 }}
           />
-          <Text style={styles.loadingText}>
-            Carregando sua última viagem...
-          </Text>
+          <Text style={styles.loadingText}>Carregando sua última viagem...</Text>
         </View>
       );
     }
 
     if (error) {
-      return;
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      );
     }
 
     if (!data) {
-      return;
+      return null;
     }
 
     return (
@@ -162,22 +176,17 @@ export default function LastActivity() {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Valor:</Text>
-            <Text style={styles.infoValue}>
-              R$ {Number(data.via_valor).toFixed(2)}
-            </Text>
+            <Text style={styles.infoValue}>R$ {Number(data.via_valor).toFixed(2)}</Text>
           </View>
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Pagamento:</Text>
-            <Text style={styles.infoValue}>
-              {data.via_formapagamento || "Dinheiro"}
-            </Text>
+            <Text style={styles.infoValue}>{data.via_formapagamento || "Dinheiro"}</Text>
           </View>
+
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Serviço:</Text>
-            <Text style={styles.infoValue}>
-              {data.via_servico || "Mototáxi"}
-            </Text>
+            <Text style={styles.infoValue}>{data.via_servico || "Mototáxi"}</Text>
           </View>
         </View>
 
@@ -267,6 +276,9 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
     borderRadius: 8,
     borderWidth: 1,
@@ -276,10 +288,13 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: "Righteous",
     fontSize: 16,
-    color: "#000000",
+    color: "#FF0000",
     textAlign: "center",
   },
   emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
     borderRadius: 8,
     borderWidth: 1,

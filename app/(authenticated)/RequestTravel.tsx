@@ -18,13 +18,15 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  AccessibilityInfo,
+  Modal,
+  Pressable,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import Header from "../Components/header";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -128,6 +130,13 @@ const getRouteFromOSRM = async (
   }
 };
 
+const paymentMethods = [
+  { id: "1", name: "Dinheiro", icon: "cash-outline" },
+  { id: "2", name: "Cartão de Crédito", icon: "card-outline" },
+  { id: "3", name: "Cartão de Débito", icon: "card-outline" },
+  { id: "4", name: "PIX", icon: "qr-code-outline" },
+];
+
 export default function RequestTravel() {
   const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
@@ -145,6 +154,9 @@ export default function RequestTravel() {
   const animationRef = useRef(null);
   const [suggestedAddress, setSuggestedAddress] = useState("");
   const [tempo, setTempo] = useState<number | null>(null);
+  const [statusLeitor, setStatusLeitor] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const initialRegion = {
     latitude: -21.8756,
@@ -280,7 +292,6 @@ export default function RequestTravel() {
           }),
         }
       );
-
       const data = await response.json();
 
       if (!response.ok) {
@@ -299,6 +310,23 @@ export default function RequestTravel() {
     }
   };
 
+  const checkScreenReader = async () => {
+    const status = await AccessibilityInfo.isScreenReaderEnabled();
+    setStatusLeitor(status);
+  };
+
+  useEffect(() => {
+    checkScreenReader();
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      setStatusLeitor
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
   const resetForm = () => {
     setStartAddress("");
     setEndAddress("");
@@ -313,25 +341,12 @@ export default function RequestTravel() {
     }
   };
 
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (!endAddress.trim()) return;
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    if (isBottomSheetActive && startAddress && endAddress) {
+      Keyboard.dismiss();
     }
+  }, [isBottomSheetActive, startAddress, endAddress]);
 
-    typingTimeoutRef.current = setTimeout(() => {
-      calcularRota();
-    }, 1000);
-
-    return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    };
-  }, [endAddress]);
-  if (isBottomSheetActive && startAddress && endAddress) {
-    Keyboard.dismiss();
-  }
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       if (isBottomSheetActive) {
@@ -344,11 +359,13 @@ export default function RequestTravel() {
         bottomSheetRef.current?.expand();
       }
     });
+
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
     };
   }, [isBottomSheetActive]);
+
   useEffect(() => {
     const loadSuggestedAddress = async () => {
       try {
@@ -366,6 +383,33 @@ export default function RequestTravel() {
     setStartAddress(suggestedAddress);
   };
 
+  const handlePaymentMethodSelect = (method: string) => {
+    setFormaPagamento(method);
+    setModalVisible(false);
+  };
+  const renderLupa = () => {
+    if (endAddress) {
+      return (
+        <TouchableOpacity
+          style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
+          onPress={calcularRota}
+          onPressIn={() => setIsPressed(true)}
+          onPressOut={() => setIsPressed(false)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
+            Ver trajeto
+          </Text>
+          <Ionicons
+            name="search"
+            size={20}
+            color={isPressed ? "#fff" : "#000"}
+          />
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -412,6 +456,7 @@ export default function RequestTravel() {
             clearButtonMode="while-editing"
             returnKeyType="done"
           />
+          <View style={styles.row}>{renderLupa()}</View>
         </View>
       </View>
       {isLoading && (
@@ -516,26 +561,78 @@ export default function RequestTravel() {
                 </Text>
               </View>
 
-              <View style={styles.pickerContainer}>
-                <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
-                <View style={styles.picker}>
-                  <Picker
-                    selectedValue={formaPagamento}
-                    onValueChange={(itemValue) => setFormaPagamento(itemValue)}
-                  >
-                    <Picker.Item label="Dinheiro" value="Dinheiro" />
-                    <Picker.Item
-                      label="Cartão de Crédito"
-                      value="Cartão de Crédito"
-                    />
-                    <Picker.Item
-                      label="Cartão de Débito"
-                      value="Cartão de Débito"
-                    />
-                    <Picker.Item label="PIX" value="PIX" />
-                  </Picker>
-                </View>
+              <View style={styles.paymentMethodContainer}>
+                <Text style={styles.paymentMethodLabel}>
+                  Forma de Pagamento:
+                </Text>
+                <TouchableOpacity
+                  style={styles.paymentMethodButton}
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Text style={styles.paymentMethodButtonText}>
+                    {formaPagamento}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#666" />
+                </TouchableOpacity>
               </View>
+
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>
+                      Selecione a forma de pagamento
+                    </Text>
+
+                    <ScrollView style={styles.paymentMethodsList}>
+                      {paymentMethods.map((method) => (
+                        <Pressable
+                          key={method.id}
+                          style={({ pressed }) => [
+                            styles.paymentMethodItem,
+                            pressed && styles.paymentMethodItemPressed,
+                            formaPagamento === method.name &&
+                              styles.paymentMethodItemSelected,
+                          ]}
+                          onPress={() => handlePaymentMethodSelect(method.name)}
+                        >
+                          <Ionicons
+                            name={method.icon as any}
+                            size={24}
+                            color={
+                              formaPagamento === method.name ? "#000" : "#666"
+                            }
+                          />
+                          <Text
+                            style={[
+                              styles.paymentMethodText,
+                              formaPagamento === method.name &&
+                                styles.paymentMethodTextSelected,
+                            ]}
+                          >
+                            {method.name}
+                          </Text>
+                          {formaPagamento === method.name && (
+                            <Ionicons name="checkmark" size={20} color="#000" />
+                          )}
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+
               <TouchableOpacity
                 style={styles.solicitarButton}
                 onPress={handleSolicitar}
@@ -556,6 +653,7 @@ export default function RequestTravel() {
     </KeyboardAvoidingView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -672,21 +770,87 @@ const styles = StyleSheet.create({
     color: "#2e7d32",
     fontFamily: "Righteous",
   },
-  pickerContainer: {
+  paymentMethodContainer: {
     marginTop: 15,
     marginBottom: 20,
   },
-  pickerLabel: {
+  paymentMethodLabel: {
     fontSize: 16,
     color: "#000",
     marginBottom: 8,
     fontFamily: "Righteous",
   },
-  picker: {
+  paymentMethodButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    overflow: "hidden",
+    padding: 15,
+    backgroundColor: "#fff",
+  },
+  paymentMethodButtonText: {
+    fontSize: 16,
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    maxHeight: "60%",
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: "center",
+    fontFamily: "Righteous",
+  },
+  paymentMethodsList: {
+    marginBottom: 20,
+  },
+  paymentMethodItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  paymentMethodItemPressed: {
+    backgroundColor: "#f5f5f5",
+  },
+  paymentMethodItemSelected: {
+    backgroundColor: "#f0f0f0",
+  },
+  paymentMethodText: {
+    flex: 1,
+    marginLeft: 15,
+    fontSize: 16,
+    color: "#666",
+    fontFamily: "Righteous",
+  },
+  paymentMethodTextSelected: {
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  modalCloseButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalCloseButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Righteous",
   },
   solicitarButton: {
     backgroundColor: "#000",
@@ -755,20 +919,17 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     marginBottom: 12,
   },
-
   column: {
     flex: 1,
     flexDirection: "column",
     justifyContent: "center",
   },
-
   suggestionTitle: {
     fontFamily: "Righteous",
     fontSize: 14,
     color: "#666",
     marginBottom: 2,
   },
-
   suggestionAddress: {
     fontFamily: "Righteous",
     fontSize: 16,
@@ -785,5 +946,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
+  },
+  lupaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "#000",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+    marginVertical: 5,
+  },
+  lupaText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000",
+    marginRight: 8,
+    letterSpacing: 0.5,
+  },
+  lupaButtonPressed: {
+    backgroundColor: "#000",
+  },
+  lupaTextPressed: {
+    color: "#fff",
   },
 });

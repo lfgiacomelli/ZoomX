@@ -38,48 +38,48 @@ export default function Support() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Header />
+    <>
+      <Header />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <View style={styles.content}>
+            <View style={styles.animationContainer}>
+              <LottieView
+                source={require("../../assets/support_animation.json")}
+                autoPlay
+                loop
+                style={styles.lottie}
+              />
+            </View>
 
-        <View style={styles.content}>
-          <View style={styles.animationContainer}>
-            <LottieView
-              source={require("../../assets/support_animation.json")}
-              autoPlay
-              loop
-              style={styles.lottie}
-            />
-          </View>
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>Precisa de ajuda?</Text>
 
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>Precisa de ajuda?</Text>
+              <Text style={styles.message}>
+                Nosso app ainda não possui um chat de atendimento, mas você pode
+                entrar em contato diretamente com nossa equipe por e-mail.
+                Respondemos rapidamente para ajudar com qualquer dúvida ou
+                problema que você tiver.
+              </Text>
+            </View>
 
-            <Text style={styles.message}>
-              Nosso app ainda não possui um chat de atendimento, mas você pode
-              entrar em contato diretamente com nossa equipe por e-mail.
-              Respondemos rapidamente para ajudar com qualquer dúvida ou
-              problema que você tiver.
+            <TouchableOpacity
+              onPress={handleSupportPress}
+              style={styles.button}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Enviar email</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.footerText}>
+              Horário de atendimento: Seg-Sex, 9h às 18h
             </Text>
+            <Text style={styles.footerText}>Atte. Equipe ZoomX</Text>
           </View>
-
-          <TouchableOpacity
-            onPress={handleSupportPress}
-            style={styles.button}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Enviar email</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.footerText}>
-            Horário de atendimento: Seg-Sex, 9h às 18h
-          </Text>
-          <Text style={styles.footerText}>Atte. Equipe ZoomX</Text>
         </View>
-
-        <Tab />
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+      <Tab />
+    </>
   );
 }
 
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   message: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Righteous",
     color: "#333333",
     textAlign: "justify",

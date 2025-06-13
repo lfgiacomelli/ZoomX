@@ -10,13 +10,15 @@ import {
   Image,
   ScrollView,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "../hooks/Font/index";
-import LottieView  from "lottie-react-native";
+import LottieView from "lottie-react-native";
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
 export default function Login() {
@@ -26,7 +28,11 @@ export default function Login() {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
   const animationRef = useRef(null);
+  const [passwordVisibility, setPasswordVisibility] = useState(true);
 
+  const togglePasswordVisibility = () => {
+    setPasswordVisibility(!passwordVisibility);
+  };
   if (!fontLoaded) return null;
 
   const handleLogin = async () => {
@@ -70,69 +76,81 @@ export default function Login() {
 
   return (
     <>
-      <StatusBar backgroundColor="#000" barStyle="light-content" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <View style={styles.container}>
-          <View style={styles.logo}>
-            <Image
-              source={require("../assets/logo.png")}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-            {/* <LottieView ref={animation Ref} source={require("../assets/splash.json")} autoPlay loop style={styles.logoImage} /> */}
+      <StatusBar backgroundColor="#000" barStyle="light-content" />
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.container}>
+            <View style={styles.logo}>
+              <Image
+                source={require("../assets/logo.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+              {/* <LottieView ref={animation Ref} source={require("../assets/splash.json")} autoPlay loop style={styles.logoImage} /> */}
+            </View>
+
+            <Text style={styles.title}>Faça login:</Text>
+            <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+
+            <View style={styles.inputWrapper}>
+              <Feather name="mail" size={20} color="#fff" />
+              <TextInput
+                placeholder="E-mail"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+                value={usu_email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed-outline" size={20} color="#fff" />
+              <TextInput
+                placeholder="Senha"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+                value={usu_senha}
+                onChangeText={setSenha}
+                secureTextEntry={passwordVisibility}
+              />
+              <Ionicons
+                name={passwordVisibility ? "eye" : "eye-off-outline"}
+                size={24}
+                color="#fff"
+                onPress={togglePasswordVisibility}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.buttonText}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/signin")}>
+              <Text style={styles.linkText}>
+                Ainda não tem uma conta? Cadastre-se!
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.title}>Faça login:</Text>
-          <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
-
-          <View style={styles.inputWrapper}>
-            <Feather name="mail" size={20} color="#fff" />
-            <TextInput
-              placeholder="E-mail"
-              placeholderTextColor="#aaa"
-              style={styles.input}
-              value={usu_email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputWrapper}>
-            <Ionicons name="lock-closed-outline" size={20} color="#fff" />
-            <TextInput
-              placeholder="Senha"
-              placeholderTextColor="#aaa"
-              style={styles.input}
-              value={usu_senha}
-              onChangeText={setSenha}
-              secureTextEntry
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("/signin")}>
-            <Text style={styles.linkText}>
-              Ainda não tem uma conta? Cadastre-se!
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }

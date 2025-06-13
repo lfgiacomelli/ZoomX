@@ -134,7 +134,6 @@ export default function PendingRequest() {
         try {
           const solicitacaoId = data.sol_codigo;
 
-          // Busca os dados do funcionário passando token no header Authorization
           const responseFuncionario = await fetch(
             `https://backend-turma-a-2025.onrender.com/api/viagens/solicitacao/${solicitacaoId}/funcionario`,
             {
@@ -235,6 +234,9 @@ export default function PendingRequest() {
         `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`,
         {
           method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          },
         }
       );
       if (!response.ok)
