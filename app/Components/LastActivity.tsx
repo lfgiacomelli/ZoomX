@@ -102,6 +102,7 @@ export default function LastActivity() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
         },
         body: JSON.stringify({
           sol_origem: data.via_origem,
