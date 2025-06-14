@@ -20,14 +20,69 @@ import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
 
 export default function Profile() {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const animationRef = useRef(null);
+
+  useEffect(() => {
+    loadUserPhoto();
+  }, []);
+
+  const loadUserPhoto = async () => {
+    try {
+      const photoUri = await AsyncStorage.getItem("userPhoto");
+      if (photoUri) {
+        setUserPhoto(photoUri);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar foto:", error);
+    }
+  };
+
+  const handleChoosePhoto = async () => {
+    setShowPhotoModal(false);
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Precisamos de permissão para acessar suas fotos!");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+      if (!result.canceled) {
+        await AsyncStorage.setItem("userPhoto", result.assets[0].uri);
+        setUserPhoto(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Erro ao selecionar foto:", error);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setShowPhotoModal(false);
+    try {
+      await AsyncStorage.removeItem("userPhoto");
+      setUserPhoto(null);
+    } catch (error) {
+      console.error("Erro ao remover foto:", error);
+    }
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -106,9 +161,27 @@ export default function Profile() {
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.userNameContainer}>
-          <Text style={styles.userName}>{userData.username}</Text>
+        <View style={styles.profileHeader}>
+          <TouchableOpacity
+            onPress={() => setShowPhotoModal(true)}
+            style={styles.photoContainer}
+          >
+            {userPhoto ? (
+              <Image source={{ uri: userPhoto }} style={styles.profilePhoto} />
+            ) : (
+              <Ionicons name="person" size={80} color="#000" />
+            )}
+            <View style={styles.editPhotoButton}>
+              <Ionicons name="camera" size={20} color="#fff" />
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{userData.username}</Text>
+            <Text style={styles.userEmail}>{userData.email}</Text>
+          </View>
         </View>
+
         <View style={styles.userSinceContainer}>
           <Text style={styles.userSince}>
             Você é usuário desde: {userData.since}
@@ -197,7 +270,6 @@ export default function Profile() {
       </ScrollView>
       <Tab />
 
-      {/* Modal de Confirmação de Logout */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -234,6 +306,47 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showPhotoModal}
+        onRequestClose={() => setShowPhotoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.photoModalContainer}>
+            <View style={styles.row}>
+              <Text style={styles.modalTitle}>Foto de Perfil</Text>
+              <Ionicons
+                name="close"
+                size={20}
+                color="#000"
+                onPress={() => setShowPhotoModal(false)}
+              />
+            </View>
+
+            <Pressable
+              style={styles.photoModalOption}
+              onPress={handleChoosePhoto}
+            >
+              <Ionicons name="image" size={24} color="#000" />
+              <Text style={styles.photoModalOptionText}>
+                Escolher da Galeria
+              </Text>
+            </Pressable>
+
+            {userPhoto && (
+              <Pressable
+                style={styles.photoModalOption}
+                onPress={handleRemovePhoto}
+              >
+                <Ionicons name="trash" size={24} color="#000" />
+                <Text style={styles.photoModalOptionText}>Remover Foto</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -251,14 +364,62 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  userNameContainer: {
-    marginBottom: 12,
+  profileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  photoContainer: {
+    position: "relative",
+    marginRight: 16,
+  },
+  profilePhoto: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#e0e0e0",
+  },
+  editPhotoButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#000",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userInfo: {
+    flex: 1,
   },
   userName: {
     fontFamily: "Righteous",
     fontSize: 24,
     color: "#000",
-    textAlign: "left",
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontFamily: "Righteous",
+    fontSize: 14,
+    color: "#555",
+  },
+  userSinceContainer: {
+    marginBottom: 12,
+    marginTop: 4,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    elevation: 2,
+    alignSelf: "center",
   },
   userSince: {
     fontFamily: "Righteous",
@@ -336,24 +497,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
   },
-  userSinceContainer: {
-    marginBottom: 12,
-    marginTop: 4,
-    alignItems: "flex-start",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-    width: "100%",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    elevation: 2,
-    alignSelf: "center",
-  },
-  // Estilos do Modal
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -365,6 +508,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 24,
     paddingBottom: 32,
+  },
+  photoModalContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 32,
+    alignItems: "center",
   },
   modalTitle: {
     fontFamily: "Righteous",
@@ -392,6 +543,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+  },
+  photoModalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  photoModalOptionText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000",
+    marginLeft: 16,
   },
   cancelButton: {
     backgroundColor: "#f0f0f0",

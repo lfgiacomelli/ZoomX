@@ -13,11 +13,9 @@
       "color": "#000000"
     },
     "splash": {
-      "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000"
     },
-    
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.4fordevs.zoomx"
@@ -27,7 +25,11 @@
         "foregroundImage": "./assets/appIcon.png",
         "backgroundColor": "#000"
       },
-      "package": "com.4fordevs.zoomx"
+      "package": "com.smithgg.zoomx",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/appIcon.png"
@@ -44,7 +46,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "ded4843a-e544-4322-ba40-2a6c2ca01b12"
+        "projectId": "9046af95-c23e-4a4b-9205-25e2b7e5d3cf"
       }
     }
   }

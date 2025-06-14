@@ -194,7 +194,6 @@ const Home = () => {
         <Help />
         <View style={styles.adsSection}>
           <Text style={styles.sectionTitle}>Dicas e Promoções</Text>
-          <AnunciosCarousel />
         </View>
       </ScrollView>
       {/* <TouchableOpacity

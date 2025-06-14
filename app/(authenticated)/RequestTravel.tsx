@@ -672,6 +672,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
+  row:{
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   line: {
     width: 2,
     height: 30,
@@ -720,7 +726,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomSheetBackground: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#f2f2f2",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderStartEndRadius: 0,
