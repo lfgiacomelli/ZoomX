@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager, FlatList } from "react-native";
 import { useEffect, useState, useRef } from "react";
 import LottieView from "lottie-react-native";
 
@@ -93,143 +93,114 @@ export default function Travels() {
     <>
       <Header />
       <View style={styles.wrapper}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>Últimas atividades</Text>
-
-          {loading && !error ? (
-            <>
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
+        <FlatList
+          contentContainerStyle={styles.container}
+          data={data}
+          keyExtractor={(_, index) => index.toString()}
+          ListHeaderComponent={<Text style={styles.title}>Últimas atividades</Text>}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            loading && !error ? (
+              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <LottieView
                   ref={animationRef}
                   source={loadingAnimation}
                   autoPlay
-                  loop={true}
-                  style={{ width: 220, height: 220, alignSelf: "center" }}
+                  loop
+                  style={{ width: 220, height: 220 }}
                 />
-                <Text
-                  style={{
-                    fontFamily: "Righteous",
-                    fontSize: 18,
-                    color: "#000",
-                  }}
-                >
+                <Text style={{ fontFamily: "Righteous", fontSize: 18, color: "#000" }}>
                   Carregando atividades...
                 </Text>
               </View>
-            </>
-          ) : error ? (
-            <>
-              <LottieView
-                ref={animationRef}
-                source={errorAnimation}
-                autoPlay
-                loop={true}
-                style={{ width: 220, height: 220, alignSelf: "center" }}
-              />
-
-              <Text style={styles.errorTitle}>Erro ao carregar dados</Text>
-              <Text style={styles.errorMessage}>
-                Ocorreu um problema ao buscar suas atividades. Verifique sua
-                conexão com a internet e tente novamente.
-              </Text>
-              <TouchableOpacity onPress={fetchData} style={styles.newRequest}>
-                <Text style={styles.newRequestText}>Tentar novamente</Text>
-              </TouchableOpacity>
-            </>
-          ) : data.length === 0 ? (
-            <>
-              <Image
-                source={require("@assets/empty.png")}
-                style={styles.iconEmpty}
-              />
-              <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
-              <TouchableOpacity
-                style={styles.newRequest}
-                onPress={() => {
-                  router.push("/RequestTravel");
-                }}
-              >
-                <Text style={styles.newRequestText}>
-                  Peça um mototáxi agora
+            ) : error ? (
+              <>
+                <LottieView
+                  ref={animationRef}
+                  source={errorAnimation}
+                  autoPlay
+                  loop
+                  style={styles.iconError}
+                />
+                <Text style={styles.errorTitle}>Erro ao carregar dados</Text>
+                <Text style={styles.errorMessage}>
+                  Ocorreu um problema ao buscar suas atividades. Verifique sua conexão com a internet e tente novamente.
                 </Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            data.map((atividade, index) => {
-              const isExpanded = expandedIndex === index;
-              const icone =
-                atividade.via_servico === "Mototáxi"
-                  ? require("@assets/motorcycle.png")
-                  : atividade.via_servico === "Compras"
-                    ? require("@assets/shopping.png") 
-                    : require("@assets/box.png");
-
-              const dataFormatada = atividade.via_data
-                ? new Intl.DateTimeFormat("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                  }).format(new Date(atividade.via_data))
-                : "--/--";
-
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.card, isExpanded && styles.cardExpanded]}
-                  onPress={() => toggleExpand(index)}
-                  activeOpacity={0.9}
-                >
-                  <Image source={icone} style={styles.icon} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>Serviço:</Text>
-                    <Text style={styles.text}>
-                      {capitalizeFirstLetter(atividade.via_servico) ||
-                        "Indefinido"}
-                    </Text>
-
-                    {isExpanded && (
-                      <>
-                        <Text style={styles.detail}>
-                          Origem: {atividade.via_origem || "N/A"}
-                        </Text>
-                        <Text style={styles.detail}>
-                          Destino: {atividade.via_destino || "N/A"}
-                        </Text>
-                        <Text style={styles.detail}>
-                          Valor: R${" "}
-                          {atividade.via_valor !== undefined &&
-                          atividade.via_valor !== null
-                            ? Number(atividade.via_valor).toFixed(2)
-                            : "0,00"}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() =>
-                            router.replace({
-                              pathname: "/TravelDetails/[id]",
-                              params: { id: atividade.via_codigo },
-                            })
-                          }
-                          style={styles.newRequest}
-                        >
-                          <Text style={styles.newRequestText}>Detalhes</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                  </View>
-                  <View style={styles.dateContainer}>
-                    <Text style={styles.label}>Data:</Text>
-                    <Text style={styles.text}>{dataFormatada}</Text>
-                  </View>
+                <TouchableOpacity onPress={fetchData} style={styles.newRequest}>
+                  <Text style={styles.newRequestText}>Tentar novamente</Text>
                 </TouchableOpacity>
-              );
-            })
-          )}
-        </ScrollView>
+              </>
+            ) : (
+              <>
+                <Image source={require("@assets/empty.png")} style={styles.iconEmpty} />
+                <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
+                <TouchableOpacity
+                  style={styles.newRequest}
+                  onPress={() => router.push("/RequestTravel")}
+                >
+                  <Text style={styles.newRequestText}>Peça um mototáxi agora</Text>
+                </TouchableOpacity>
+              </>
+            )
+          }
+          renderItem={({ item, index }) => {
+            const isExpanded = expandedIndex === index;
+            const icone =
+              item.via_servico === "Mototáxi"
+                ? require("@assets/motorcycle.png")
+                : item.via_servico === "Compras"
+                  ? require("@assets/shopping.png")
+                  : require("@assets/box.png");
+
+            const dataFormatada = item.via_data
+              ? new Intl.DateTimeFormat("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              }).format(new Date(item.via_data))
+              : "--/--";
+
+            return (
+              <TouchableOpacity
+                style={[styles.card, isExpanded && styles.cardExpanded]}
+                onPress={() => toggleExpand(index)}
+                activeOpacity={0.9}
+              >
+                <Image source={icone} style={styles.icon} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Serviço:</Text>
+                  <Text style={styles.text}>
+                    {capitalizeFirstLetter(item.via_servico) || "Indefinido"}
+                  </Text>
+                  {isExpanded && (
+                    <>
+                      <Text style={styles.detail}>Origem: {item.via_origem || "N/A"}</Text>
+                      <Text style={styles.detail}>Destino: {item.via_destino || "N/A"}</Text>
+                      <Text style={styles.detail}>
+                        Valor: R$ {item.via_valor != null ? Number(item.via_valor).toFixed(2) : "0,00"}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          router.replace({
+                            pathname: "/TravelDetails/[id]",
+                            params: { id: item.via_codigo },
+                          })
+                        }
+                        style={styles.newRequest}
+                      >
+                        <Text style={styles.newRequestText}>Detalhes</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+                <View style={styles.dateContainer}>
+                  <Text style={styles.label}>Data:</Text>
+                  <Text style={styles.text}>{dataFormatada}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+
         <Tab />
       </View>
     </>

@@ -147,7 +147,7 @@ export default function AvaliarViagem() {
         <Modal visible={showModal} transparent animationType="fade" onRequestClose={fecharModal}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <LottieView ref={animationRef} source={reviewsAnimation} autoPlay loop style={{ width: 200, height: 200 }} />
+              <LottieView ref={animationRef} source={reviewsAnimation} autoPlay loop style={{ width: 300, height: 200 }} />
               <Text style={styles.modalText}>
                 Muito obrigado por avaliar a viagem!{'\n'}Assim conseguimos melhorar nossos serviços.
               </Text>
