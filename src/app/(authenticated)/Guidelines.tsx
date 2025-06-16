@@ -1,12 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import Tab from '../Components/Tab';
-import useRighteousFont from '../../hooks/Font';
-import Header from '../Components/header';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet } from 'react-native';
+
+import Header from '@components/header';
+import Tab from '@components/Tab';
+import useRighteousFont from '@hooks/Font';
 
 export default function Guidelines() {
   const fontLoaded = useRighteousFont();
-  const router = useRouter();
 
   if (!fontLoaded) return null;
 

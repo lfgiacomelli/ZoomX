@@ -1,35 +1,17 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  StatusBar,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Modal,
-} from "react-native";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
-import Header from "../Components/header";
-import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import { Picker } from "@react-native-picker/picker";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Keyboard } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+
 import LottieView from "lottie-react-native";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+
+import Header from "@components/header";
+
+import { useRouter } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+
+import loadingMotorcycleAnimation from "@animations/loading_motorcycle.json";
 
 type Coordinates = {
   latitude: number;
@@ -128,26 +110,33 @@ const getRouteFromOSRM = async (
   }
 };
 
-export default function RequestMarket() {
-  const animationRef = useRef(null);
-  const [supermarketAddress, setSupermarketAddress] = useState("");
+const paymentMethods = [
+  { id: "1", name: "Dinheiro", icon: "cash-outline" },
+  { id: "2", name: "Cartão de Crédito", icon: "card-outline" },
+  { id: "3", name: "Cartão de Débito", icon: "card-outline" },
+  { id: "4", name: "PIX", icon: "qr-code-outline" },
+];
+
+export default function RequestTravel() {
+  const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
   const [markers, setMarkers] = useState<Coordinates[]>([]);
   const [distance, setDistance] = useState<number | null>(null);
-  const [tempo, setTempo] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
-  const [showInputs, setShowInputs] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [observacoes, setObservacoes] = useState("");
-  const [valorEstimado, setValorEstimado] = useState("");
-  const [modalMessage, setModalMessage] = useState(false);
+  const [observacoes, setObservacoes] = useState<string>("");
+  const animationRef = useRef(null);
+  const [suggestedAddress, setSuggestedAddress] = useState("");
+  const [tempo, setTempo] = useState<number | null>(null);
+  const [statusLeitor, setStatusLeitor] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const initialRegion = {
     latitude: -21.8756,
@@ -164,8 +153,12 @@ export default function RequestMarket() {
   }, []);
 
   const calcularRota = async () => {
-    if (!valorEstimado.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o valor estimado.");
+    if (!startAddress.trim() || !endAddress.trim()) {
+      Alert.alert("Erro", "Por favor, preencha ambos os endereços.");
+      return;
+    }
+    if (startAddress.toLowerCase() === endAddress.toLowerCase()) {
+      Alert.alert("Erro", "Os endereços de partida e destino são iguais.");
       return;
     }
 
@@ -176,14 +169,10 @@ export default function RequestMarket() {
     setPrice(null);
 
     try {
-      const origin = supermarketAddress.trim()
-        ? await getCoordsFromAddress(supermarketAddress)
-        : {
-            latitude: -21.8756,
-            longitude: -51.8437,
-          };
-
-      const destination = await getCoordsFromAddress(endAddress);
+      const [origin, destination] = await Promise.all([
+        getCoordsFromAddress(startAddress),
+        getCoordsFromAddress(endAddress),
+      ]);
 
       const distanceBetween = calculateHaversineDistance(origin, destination);
 
@@ -202,18 +191,19 @@ export default function RequestMarket() {
         origin,
         destination
       );
+      const tempo = distanceKm * 2;
+      const hora = new Date().getHours();
       let calculatedPrice = 0;
-      const tempoDeCompra = 15;
-      const tempo = tempoDeCompra + distanceKm * 2;
-      calculatedPrice = 3.9 + (distanceKm * 0.54) ;
 
-      const valorCompra = parseFloat(valorEstimado) || 0;
-      const totalPrice = calculatedPrice + valorCompra;
+      if (hora < 6 || hora >= 22) {
+        calculatedPrice = 6.2 + distanceKm * 1;
+      } else {
+        calculatedPrice = 5.8 + distanceKm * 0.8;
+      }
 
       setRouteCoords(coords);
       setDistance(distanceKm);
-      setPrice(totalPrice);
-      setShowInputs(false);
+      setPrice(calculatedPrice);
       setTempo(tempo);
 
       bottomSheetRef.current?.expand();
@@ -244,8 +234,16 @@ export default function RequestMarket() {
     }
 
     try {
+      await AsyncStorage.setItem("startAddress", startAddress);
+      console.log("Endereço de partida salvo:", startAddress);
+    } catch (error) {
+      console.error("Erro ao salvar endereço:", error);
+    }
+
+    try {
       const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem("token");
+
       if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
@@ -259,26 +257,21 @@ export default function RequestMarket() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            sol_origem: supermarketAddress.trim()
-              ? supermarketAddress
-              : "Sem preferência de supermercado",
+            sol_origem: startAddress,
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Compras",
+            sol_servico: "Mototáxi",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
-            sol_observacoes: `Itens a comprar: ${observacoes}\nValor estimado de compras: R$ ${parseFloat(valorEstimado) || 0}`,
+            sol_observacoes: "Pedido via App",
           }),
         }
       );
-      if (supermarketAddress.trim() === "") {
-        setModalMessage(true);
-      }
       const data = await response.json();
 
       if (!response.ok) {
@@ -297,46 +290,106 @@ export default function RequestMarket() {
     }
   };
 
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setShowInputs(true);
-    bottomSheetRef.current?.close();
-  };
-
-  const handleSaveEdit = async () => {
-    setIsEditing(false);
-    await calcularRota();
+  const checkScreenReader = async () => {
+    const status = await AccessibilityInfo.isScreenReaderEnabled();
+    setStatusLeitor(status);
   };
 
   useEffect(() => {
-    if (isEditing) return;
+    checkScreenReader();
 
-    const camposObrigatoriosPreenchidos =
-      valorEstimado && valorEstimado.trim() !== "";
-
-    if (!camposObrigatoriosPreenchidos || !showInputs) return;
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    typingTimeoutRef.current = setTimeout(() => {
-      calcularRota();
-    }, 1000);
+    const subscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      setStatusLeitor
+    );
 
     return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+      subscription.remove();
+    };
+  }, []);
+  const resetForm = () => {
+    setStartAddress("");
+    setEndAddress("");
+    setRouteCoords([]);
+    setMarkers([]);
+    setDistance(null);
+    setPrice(null);
+    setRegion(initialRegion);
+    bottomSheetRef.current?.close();
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(initialRegion);
+    }
+  };
+
+  useEffect(() => {
+    if (isBottomSheetActive && startAddress && endAddress) {
+      Keyboard.dismiss();
+    }
+  }, [isBottomSheetActive, startAddress, endAddress]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      if (isBottomSheetActive) {
+        bottomSheetRef.current?.close();
+      }
+    });
+
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      if (isBottomSheetActive) {
+        bottomSheetRef.current?.expand();
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [isBottomSheetActive]);
+
+  useEffect(() => {
+    const loadSuggestedAddress = async () => {
+      try {
+        const address = await AsyncStorage.getItem("startAddress");
+        if (address) setSuggestedAddress(address);
+      } catch (error) {
+        console.error("Erro ao carregar endereço salvo:", error);
       }
     };
-  }, [valorEstimado, showInputs, isEditing]);
 
-  if (isBottomSheetActive && (supermarketAddress || endAddress)) {
-    Keyboard.dismiss();
-  }
+    loadSuggestedAddress();
+  }, []);
 
+  const handleUseSuggested = () => {
+    setStartAddress(suggestedAddress);
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setFormaPagamento(method);
+    setModalVisible(false);
+  };
+  const renderLupa = () => {
+    if (endAddress) {
+      return (
+        <TouchableOpacity
+          style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
+          onPress={calcularRota}
+          onPressIn={() => setIsPressed(true)}
+          onPressOut={() => setIsPressed(false)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
+            Ver trajeto
+          </Text>
+          <Ionicons
+            name="search"
+            size={20}
+            color={isPressed ? "#fff" : "#000"}
+          />
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -345,58 +398,52 @@ export default function RequestMarket() {
     >
       <Header />
       <StatusBar barStyle="light-content" />
-
-      {showInputs && (
-        <View style={styles.form}>
-          <View style={styles.inputColumn}>
-            <TextInput
-              style={styles.input}
-              placeholder="Supermercado (opcional)"
-              value={supermarketAddress}
-              onChangeText={setSupermarketAddress}
-              clearButtonMode="while-editing"
-              returnKeyType="next"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço de entrega (obrigatório)"
-              value={endAddress}
-              onChangeText={setEndAddress}
-              clearButtonMode="while-editing"
-              returnKeyType="done"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Itens e quantidades (ex: 2x Leite, 1x Pão)"
-              value={observacoes}
-              onChangeText={setObservacoes}
-              multiline
-              numberOfLines={3}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Valor estimado das compras (R$)"
-              value={valorEstimado}
-              onChangeText={setValorEstimado}
-              keyboardType="numeric"
-            />
-            {isEditing && (
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSaveEdit}
-              >
-                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+      <View style={styles.form}>
+        <View style={styles.iconColumn}>
+          <Ionicons name="location-outline" size={24} color="#000" />
+          <View style={styles.line} />
+          <Ionicons name="flag-outline" size={24} color="#000" />
         </View>
-      )}
 
+        <View style={styles.inputColumn}>
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de partida (ex: Rua A, 123)"
+            value={startAddress}
+            onChangeText={setStartAddress}
+            clearButtonMode="while-editing"
+            returnKeyType="next"
+          />
+          {suggestedAddress && startAddress !== suggestedAddress && (
+            <TouchableOpacity
+              style={styles.suggestionBox}
+              onPress={handleUseSuggested}
+            >
+              <View style={styles.column}>
+                <Text style={styles.suggestionTitle}>
+                  Usar esse endereço novamente:
+                </Text>
+                <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
+              </View>
+              <Ionicons name="arrow-up-outline" size={24} color="#000" />
+            </TouchableOpacity>
+          )}
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de destino (ex: Av. B, 456)"
+            value={endAddress}
+            onChangeText={setEndAddress}
+            clearButtonMode="while-editing"
+            returnKeyType="done"
+          />
+          <View style={styles.row}>{renderLupa()}</View>
+        </View>
+      </View>
       {isLoading && (
         <View style={styles.loadingContainer}>
           <LottieView
-            source={require("../../assets/loading_box.json")}
             ref={animationRef}
+            source={loadingMotorcycleAnimation}
             autoPlay
             loop
             style={{ width: 50, height: 50 }}
@@ -419,8 +466,8 @@ export default function RequestMarket() {
               <Image
                 source={
                   idx === 0
-                    ? require("../../assets/partida.png")
-                    : require("../../assets/destino.png")
+                    ? require("@assets/partida.png")
+                    : require("@assets/destino.png")
                 }
                 style={{ width: 40, height: 40 }}
                 resizeMode="contain"
@@ -434,18 +481,17 @@ export default function RequestMarket() {
               strokeWidth={4}
             />
           )}
-          
         </MapView>
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity
             style={styles.floatingButton}
             onPress={() => bottomSheetRef.current?.expand()}
           >
-            <Text style={styles.floatingButtonText}>Ver detalhes</Text>
+            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
           </TouchableOpacity>
         )}
-        {!isBottomSheetActive && !supermarketAddress && !endAddress && (
+        {!isBottomSheetActive && !startAddress && !endAddress && (
           <TouchableOpacity
             style={styles.comeBack}
             onPress={() => router.back()}
@@ -454,7 +500,6 @@ export default function RequestMarket() {
           </TouchableOpacity>
         )}
       </View>
-
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
@@ -468,96 +513,105 @@ export default function RequestMarket() {
         <BottomSheetView style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (
             <>
-              <View style={styles.headerRow}>
-                <Text style={styles.bottomSheetTitle}>Detalhes da Compra</Text>
-                <TouchableOpacity onPress={handleEdit}>
-                  <MaterialIcons name="edit" size={24} color="#000" />
-                </TouchableOpacity>
+              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Origem:</Text>
+                <Text style={styles.detailValue}>{startAddress}</Text>
               </View>
 
-              {supermarketAddress ? (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Supermercado:</Text>
-                  <Text style={styles.detailValue}>{supermarketAddress}</Text>
-                </View>
-              ) : (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Supermercado:</Text>
-                  <Text style={styles.detailValue}>Sem preferência</Text>
-                </View>
-              )}
-
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Endereço de entrega:</Text>
+                <Text style={styles.detailLabel}>Destino:</Text>
                 <Text style={styles.detailValue}>{endAddress}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Itens:</Text>
-                <Text style={styles.detailValue}>
-                  {observacoes || "Não especificado"}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Valor estimado:</Text>
-                <Text style={styles.detailValue}>
-                  R${" "}
-                  {parseFloat(valorEstimado)
-                    ? parseFloat(valorEstimado).toFixed(2)
-                    : "0,00"}
-                </Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Distância:</Text>
                 <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
               </View>
-
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Tempo Estimado:</Text>
                 <Text style={styles.detailValue}>
                   {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
                 </Text>
               </View>
-
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Preço total:</Text>
+                <Text style={styles.detailLabel}>Preço:</Text>
                 <Text style={[styles.detailValue, styles.priceText]}>
                   R$ {price.toFixed(2)}
                 </Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>
-                  Valores:
+
+              <View style={styles.paymentMethodContainer}>
+                <Text style={styles.paymentMethodLabel}>
+                  Forma de Pagamento:
                 </Text>
-                <Text style={[styles.detailValue]}>
-                  Valor da corrida: R${" "}
-                  {(price - parseFloat(valorEstimado || "0")).toFixed(2)}
-                  {"\n"} Valor da compra: R${" "}
-                  {parseFloat(valorEstimado || "0").toFixed(2)}
-                </Text>
+                <TouchableOpacity
+                  style={styles.paymentMethodButton}
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Text style={styles.paymentMethodButtonText}>
+                    {formaPagamento}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#666" />
+                </TouchableOpacity>
               </View>
-              <View style={styles.pickerContainer}>
-                <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
-                <View style={styles.picker}>
-                  <Picker
-                    selectedValue={formaPagamento}
-                    onValueChange={(itemValue) => setFormaPagamento(itemValue)}
-                  >
-                    <Picker.Item label="Dinheiro" value="Dinheiro" />
-                    <Picker.Item
-                      label="Cartão de Crédito"
-                      value="Cartão de Crédito"
-                    />
-                    <Picker.Item
-                      label="Cartão de Débito"
-                      value="Cartão de Débito"
-                    />
-                    <Picker.Item label="PIX" value="PIX" />
-                  </Picker>
+
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>
+                      Selecione a forma de pagamento
+                    </Text>
+
+                    <ScrollView style={styles.paymentMethodsList}>
+                      {paymentMethods.map((method) => (
+                        <Pressable
+                          key={method.id}
+                          style={({ pressed }) => [
+                            styles.paymentMethodItem,
+                            pressed && styles.paymentMethodItemPressed,
+                            formaPagamento === method.name &&
+                              styles.paymentMethodItemSelected,
+                          ]}
+                          onPress={() => handlePaymentMethodSelect(method.name)}
+                        >
+                          <Ionicons
+                            name={method.icon as any}
+                            size={24}
+                            color={
+                              formaPagamento === method.name ? "#000" : "#666"
+                            }
+                          />
+                          <Text
+                            style={[
+                              styles.paymentMethodText,
+                              formaPagamento === method.name &&
+                                styles.paymentMethodTextSelected,
+                            ]}
+                          >
+                            {method.name}
+                          </Text>
+                          {formaPagamento === method.name && (
+                            <Ionicons name="checkmark" size={20} color="#000" />
+                          )}
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+              </Modal>
 
               <TouchableOpacity
                 style={styles.solicitarButton}
@@ -568,7 +622,7 @@ export default function RequestMarket() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.solicitarButtonText}>
-                    Solicitar Compra
+                    Solicitar Corrida
                   </Text>
                 )}
               </TouchableOpacity>
@@ -597,6 +651,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
+  },
+  row:{
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 12,
   },
   line: {
     width: 2,
@@ -646,12 +706,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomSheetBackground: {
-    backgroundColor: "#f0f0f0",
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderLeftColor: "#ccc",
-    borderRightColor: "#ccc",
+    borderWidth: 2,
+    borderColor: "#ccc",
+    backgroundColor: "#f2f2f2",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderStartEndRadius: 0,
@@ -669,14 +726,10 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     padding: 20,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
   bottomSheetTitle: {
     fontSize: 22,
+    marginBottom: 20,
+    textAlign: "center",
     color: "#000",
     fontFamily: "Righteous",
   },
@@ -705,21 +758,87 @@ const styles = StyleSheet.create({
     color: "#2e7d32",
     fontFamily: "Righteous",
   },
-  pickerContainer: {
+  paymentMethodContainer: {
     marginTop: 15,
     marginBottom: 20,
   },
-  pickerLabel: {
+  paymentMethodLabel: {
     fontSize: 16,
     color: "#000",
     marginBottom: 8,
     fontFamily: "Righteous",
   },
-  picker: {
+  paymentMethodButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    overflow: "hidden",
+    padding: 15,
+    backgroundColor: "#fff",
+  },
+  paymentMethodButtonText: {
+    fontSize: 16,
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    maxHeight: "60%",
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: "center",
+    fontFamily: "Righteous",
+  },
+  paymentMethodsList: {
+    marginBottom: 20,
+  },
+  paymentMethodItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  paymentMethodItemPressed: {
+    backgroundColor: "#f5f5f5",
+  },
+  paymentMethodItemSelected: {
+    backgroundColor: "#f0f0f0",
+  },
+  paymentMethodText: {
+    flex: 1,
+    marginLeft: 15,
+    fontSize: 16,
+    color: "#666",
+    fontFamily: "Righteous",
+  },
+  paymentMethodTextSelected: {
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  modalCloseButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalCloseButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Righteous",
   },
   solicitarButton: {
     backgroundColor: "#000",
@@ -758,23 +877,50 @@ const styles = StyleSheet.create({
     fontFamily: "Righteous",
     marginRight: 8,
   },
-  row: {
+  apagar: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+  },
+  suggestionBox: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    backgroundColor: "#f9f9f9",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#ddd",
     marginBottom: 12,
   },
-  saveButton: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 5,
-    marginBottom: 10,
+  column: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
   },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
+  suggestionTitle: {
     fontFamily: "Righteous",
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 2,
+  },
+  suggestionAddress: {
+    fontFamily: "Righteous",
+    fontSize: 16,
   },
   comeBack: {
     position: "absolute",
@@ -789,5 +935,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 5,
   },
-
+  lupaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "#000",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+    marginVertical: 5,
+  },
+  lupaText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000",
+    marginRight: 8,
+    letterSpacing: 0.5,
+  },
+  lupaButtonPressed: {
+    backgroundColor: "#000",
+  },
+  lupaTextPressed: {
+    color: "#fff",
+  },
 });

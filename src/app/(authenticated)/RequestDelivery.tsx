@@ -1,37 +1,20 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  StatusBar,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  AccessibilityInfo,
-  Modal,
-  Pressable,
-} from "react-native";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
-import Header from "../Components/header";
-import { useRouter } from "expo-router";
+import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Keyboard } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import * as Battery from "expo-battery";
+
 import LottieView from "lottie-react-native";
+
+import Header from "@components/header";
+
+import { useRouter } from "expo-router";
+
+import {MaterialIcons, Ionicons} from "@expo/vector-icons";
+
+
+import loadingBoxAnimation from "@animations/loading_box.json";
 
 type Coordinates = {
   latitude: number;
@@ -130,33 +113,27 @@ const getRouteFromOSRM = async (
   }
 };
 
-const paymentMethods = [
-  { id: "1", name: "Dinheiro", icon: "cash-outline" },
-  { id: "2", name: "Cartão de Crédito", icon: "card-outline" },
-  { id: "3", name: "Cartão de Débito", icon: "card-outline" },
-  { id: "4", name: "PIX", icon: "qr-code-outline" },
-];
-
-export default function RequestTravel() {
+export default function RequestDelivery() {
+  const animationRef = useRef(null);
   const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
   const [markers, setMarkers] = useState<Coordinates[]>([]);
   const [distance, setDistance] = useState<number | null>(null);
+  const [tempo, setTempo] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
-  const [observacoes, setObservacoes] = useState<string>("");
-  const animationRef = useRef(null);
-  const [suggestedAddress, setSuggestedAddress] = useState("");
-  const [tempo, setTempo] = useState<number | null>(null);
-  const [statusLeitor, setStatusLeitor] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
+  const [peso, setPeso] = useState("");
+  const [comprimento, setComprimento] = useState("");
+  const [altura, setAltura] = useState("");
+  const [largura, setLargura] = useState("");
+  const [showInputs, setShowInputs] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
   const initialRegion = {
     latitude: -21.8756,
@@ -211,19 +188,18 @@ export default function RequestTravel() {
         origin,
         destination
       );
-      const tempo = distanceKm * 2;
       const hora = new Date().getHours();
       let calculatedPrice = 0;
-
+      const tempo = distanceKm * 2; 
       if (hora < 6 || hora >= 22) {
-        calculatedPrice = 6.2 + distanceKm * 1;
+        calculatedPrice = 5.6 + distanceKm * 0.85;
       } else {
-        calculatedPrice = 5.8 + distanceKm * 0.8;
+        calculatedPrice = 5 + distanceKm * 0.5;
       }
-
       setRouteCoords(coords);
       setDistance(distanceKm);
       setPrice(calculatedPrice);
+      setShowInputs(false);
       setTempo(tempo);
 
       bottomSheetRef.current?.expand();
@@ -254,44 +230,40 @@ export default function RequestTravel() {
     }
 
     try {
-      await AsyncStorage.setItem("startAddress", startAddress);
-      console.log("Endereço de partida salvo:", startAddress);
-    } catch (error) {
-      console.error("Erro ao salvar endereço:", error);
-    }
-
-    try {
       const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
-
+      const token = await AsyncStorage.getItem('token')
       if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
 
       setIsLoading(true);
-
       const response = await fetch(
         "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             sol_origem: startAddress,
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Mototáxi",
+            sol_servico: "Entrega",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
+            sol_peso: parseFloat(peso),
+            sol_comprimento: parseFloat(comprimento),
+            sol_altura: parseFloat(altura),
+            sol_largura: parseFloat(largura),
             sol_observacoes: "Pedido via App",
           }),
         }
       );
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -310,106 +282,59 @@ export default function RequestTravel() {
     }
   };
 
-  const checkScreenReader = async () => {
-    const status = await AccessibilityInfo.isScreenReaderEnabled();
-    setStatusLeitor(status);
-  };
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    checkScreenReader();
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "screenReaderChanged",
-      setStatusLeitor
-    );
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-  const resetForm = () => {
-    setStartAddress("");
-    setEndAddress("");
-    setRouteCoords([]);
-    setMarkers([]);
-    setDistance(null);
-    setPrice(null);
-    setRegion(initialRegion);
+  const handleEdit = () => {
+    setIsEditing(true);
+    setShowInputs(true);
     bottomSheetRef.current?.close();
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(initialRegion);
-    }
   };
 
+  const handleSaveEdit = async () => {
+    setIsEditing(false);
+    await calcularRota();
+  };
   useEffect(() => {
-    if (isBottomSheetActive && startAddress && endAddress) {
-      Keyboard.dismiss();
+    if (isEditing) return;
+
+    const todosCamposPreenchidos =
+      startAddress.trim() &&
+      endAddress.trim() &&
+      comprimento.trim() &&
+      peso.trim() &&
+      altura.trim() &&
+      largura.trim();
+
+    if (!todosCamposPreenchidos || !showInputs) return;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
     }
-  }, [isBottomSheetActive, startAddress, endAddress]);
 
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      if (isBottomSheetActive) {
-        bottomSheetRef.current?.close();
-      }
-    });
-
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      if (isBottomSheetActive) {
-        bottomSheetRef.current?.expand();
-      }
-    });
+    typingTimeoutRef.current = setTimeout(() => {
+      calcularRota();
+    }, 1000);
 
     return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [isBottomSheetActive]);
-
-  useEffect(() => {
-    const loadSuggestedAddress = async () => {
-      try {
-        const address = await AsyncStorage.getItem("startAddress");
-        if (address) setSuggestedAddress(address);
-      } catch (error) {
-        console.error("Erro ao carregar endereço salvo:", error);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
     };
+  }, [
+    largura,
+    startAddress,
+    endAddress,
+    comprimento,
+    peso,
+    altura,
+    showInputs,
+    isEditing,
+  ]);
 
-    loadSuggestedAddress();
-  }, []);
+  if (isBottomSheetActive && startAddress && endAddress) {
+    Keyboard.dismiss();
+  }
 
-  const handleUseSuggested = () => {
-    setStartAddress(suggestedAddress);
-  };
-
-  const handlePaymentMethodSelect = (method: string) => {
-    setFormaPagamento(method);
-    setModalVisible(false);
-  };
-  const renderLupa = () => {
-    if (endAddress) {
-      return (
-        <TouchableOpacity
-          style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
-          onPress={calcularRota}
-          onPressIn={() => setIsPressed(true)}
-          onPressOut={() => setIsPressed(false)}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
-            Ver trajeto
-          </Text>
-          <Ionicons
-            name="search"
-            size={20}
-            color={isPressed ? "#fff" : "#000"}
-          />
-        </TouchableOpacity>
-      );
-    }
-    return null;
-  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -418,52 +343,75 @@ export default function RequestTravel() {
     >
       <Header />
       <StatusBar barStyle="light-content" />
-      <View style={styles.form}>
-        <View style={styles.iconColumn}>
-          <Ionicons name="location-outline" size={24} color="#000" />
-          <View style={styles.line} />
-          <Ionicons name="flag-outline" size={24} color="#000" />
-        </View>
 
-        <View style={styles.inputColumn}>
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de partida (ex: Rua A, 123)"
-            value={startAddress}
-            onChangeText={setStartAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="next"
-          />
-          {suggestedAddress && startAddress !== suggestedAddress && (
-            <TouchableOpacity
-              style={styles.suggestionBox}
-              onPress={handleUseSuggested}
-            >
-              <View style={styles.column}>
-                <Text style={styles.suggestionTitle}>
-                  Usar esse endereço novamente:
-                </Text>
-                <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
-              </View>
-              <Ionicons name="arrow-up-outline" size={24} color="#000" />
-            </TouchableOpacity>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de destino (ex: Av. B, 456)"
-            value={endAddress}
-            onChangeText={setEndAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="done"
-          />
-          <View style={styles.row}>{renderLupa()}</View>
+      {showInputs && (
+        <View style={styles.form}>
+          <View style={styles.inputColumn}>
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de retirada (ex: Rua A, 123)"
+              value={startAddress}
+              onChangeText={setStartAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de entrega (ex: Av. B, 456)"
+              value={endAddress}
+              onChangeText={setEndAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="done"
+            />
+            <View style={styles.row}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 5 }]}
+                placeholder="Peso (kg)"
+                value={peso}
+                onChangeText={setPeso}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.input, { flex: 1, marginLeft: 5 }]}
+                placeholder="Comprimento (cm)"
+                value={comprimento}
+                onChangeText={setComprimento}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.row}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 5 }]}
+                placeholder="Altura (cm)"
+                value={altura}
+                onChangeText={setAltura}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.input, { flex: 1, marginLeft: 5 }]}
+                placeholder="Largura (cm)"
+                value={largura}
+                onChangeText={setLargura}
+                keyboardType="numeric"
+              />
+            </View>
+            {isEditing && (
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveEdit}
+              >
+                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      )}
+
       {isLoading && (
         <View style={styles.loadingContainer}>
           <LottieView
+            source={loadingBoxAnimation}
             ref={animationRef}
-            source={require("../../assets/loading_motorcycle.json")}
             autoPlay
             loop
             style={{ width: 50, height: 50 }}
@@ -486,8 +434,8 @@ export default function RequestTravel() {
               <Image
                 source={
                   idx === 0
-                    ? require("../../assets/partida.png")
-                    : require("../../assets/destino.png")
+                    ? require("@assets/partida.png")
+                    : require("@assets/destino.png")
                 }
                 style={{ width: 40, height: 40 }}
                 resizeMode="contain"
@@ -507,7 +455,7 @@ export default function RequestTravel() {
             style={styles.floatingButton}
             onPress={() => bottomSheetRef.current?.expand()}
           >
-            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
+            <Text style={styles.floatingButtonText}>Ver detalhes</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
           </TouchableOpacity>
         )}
@@ -520,6 +468,7 @@ export default function RequestTravel() {
           </TouchableOpacity>
         )}
       </View>
+
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
@@ -533,7 +482,13 @@ export default function RequestTravel() {
         <BottomSheetView style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (
             <>
-              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+              <View style={styles.headerRow}>
+                <Text style={styles.bottomSheetTitle}>Detalhes da Entrega</Text>
+                <TouchableOpacity onPress={handleEdit}>
+                  <MaterialIcons name="edit" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Origem:</Text>
                 <Text style={styles.detailValue}>{startAddress}</Text>
@@ -543,7 +498,16 @@ export default function RequestTravel() {
                 <Text style={styles.detailLabel}>Destino:</Text>
                 <Text style={styles.detailValue}>{endAddress}</Text>
               </View>
-
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Peso:</Text>
+                <Text style={styles.detailValue}>{peso} kg</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Dimensões:</Text>
+                <Text style={styles.detailValue}>
+                  {comprimento} x {altura} x {largura} cm
+                </Text>
+              </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Distância:</Text>
                 <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
@@ -561,77 +525,26 @@ export default function RequestTravel() {
                 </Text>
               </View>
 
-              <View style={styles.paymentMethodContainer}>
-                <Text style={styles.paymentMethodLabel}>
-                  Forma de Pagamento:
-                </Text>
-                <TouchableOpacity
-                  style={styles.paymentMethodButton}
-                  onPress={() => setModalVisible(true)}
-                >
-                  <Text style={styles.paymentMethodButtonText}>
-                    {formaPagamento}
-                  </Text>
-                  <Ionicons name="chevron-down" size={20} color="#666" />
-                </TouchableOpacity>
-              </View>
-
-              <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-              >
-                <View style={styles.modalOverlay}>
-                  <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>
-                      Selecione a forma de pagamento
-                    </Text>
-
-                    <ScrollView style={styles.paymentMethodsList}>
-                      {paymentMethods.map((method) => (
-                        <Pressable
-                          key={method.id}
-                          style={({ pressed }) => [
-                            styles.paymentMethodItem,
-                            pressed && styles.paymentMethodItemPressed,
-                            formaPagamento === method.name &&
-                              styles.paymentMethodItemSelected,
-                          ]}
-                          onPress={() => handlePaymentMethodSelect(method.name)}
-                        >
-                          <Ionicons
-                            name={method.icon as any}
-                            size={24}
-                            color={
-                              formaPagamento === method.name ? "#000" : "#666"
-                            }
-                          />
-                          <Text
-                            style={[
-                              styles.paymentMethodText,
-                              formaPagamento === method.name &&
-                                styles.paymentMethodTextSelected,
-                            ]}
-                          >
-                            {method.name}
-                          </Text>
-                          {formaPagamento === method.name && (
-                            <Ionicons name="checkmark" size={20} color="#000" />
-                          )}
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-
-                    <TouchableOpacity
-                      style={styles.modalCloseButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <Text style={styles.modalCloseButtonText}>Fechar</Text>
-                    </TouchableOpacity>
-                  </View>
+              <View style={styles.pickerContainer}>
+                <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
+                <View style={styles.picker}>
+                  <Picker
+                    selectedValue={formaPagamento}
+                    onValueChange={(itemValue) => setFormaPagamento(itemValue)}
+                  >
+                    <Picker.Item label="Dinheiro" value="Dinheiro" />
+                    <Picker.Item
+                      label="Cartão de Crédito"
+                      value="Cartão de Crédito"
+                    />
+                    <Picker.Item
+                      label="Cartão de Débito"
+                      value="Cartão de Débito"
+                    />
+                    <Picker.Item label="PIX" value="PIX" />
+                  </Picker>
                 </View>
-              </Modal>
+              </View>
 
               <TouchableOpacity
                 style={styles.solicitarButton}
@@ -642,7 +555,7 @@ export default function RequestTravel() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.solicitarButtonText}>
-                    Solicitar Corrida
+                    Solicitar Entrega
                   </Text>
                 )}
               </TouchableOpacity>
@@ -671,12 +584,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
-  },
-  row:{
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginBottom: 12,
   },
   line: {
     width: 2,
@@ -726,7 +633,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomSheetBackground: {
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#f0f0f0",
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderLeftColor: "#ccc",
+    borderRightColor: "#ccc",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderStartEndRadius: 0,
@@ -744,10 +656,14 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     padding: 20,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
   bottomSheetTitle: {
     fontSize: 22,
-    marginBottom: 20,
-    textAlign: "center",
     color: "#000",
     fontFamily: "Righteous",
   },
@@ -776,87 +692,21 @@ const styles = StyleSheet.create({
     color: "#2e7d32",
     fontFamily: "Righteous",
   },
-  paymentMethodContainer: {
+  pickerContainer: {
     marginTop: 15,
     marginBottom: 20,
   },
-  paymentMethodLabel: {
+  pickerLabel: {
     fontSize: 16,
     color: "#000",
     marginBottom: 8,
     fontFamily: "Righteous",
   },
-  paymentMethodButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  picker: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    padding: 15,
-    backgroundColor: "#fff",
-  },
-  paymentMethodButtonText: {
-    fontSize: 16,
-    color: "#000",
-    fontFamily: "Righteous",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContainer: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    maxHeight: "60%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: "center",
-    fontFamily: "Righteous",
-  },
-  paymentMethodsList: {
-    marginBottom: 20,
-  },
-  paymentMethodItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  paymentMethodItemPressed: {
-    backgroundColor: "#f5f5f5",
-  },
-  paymentMethodItemSelected: {
-    backgroundColor: "#f0f0f0",
-  },
-  paymentMethodText: {
-    flex: 1,
-    marginLeft: 15,
-    fontSize: 16,
-    color: "#666",
-    fontFamily: "Righteous",
-  },
-  paymentMethodTextSelected: {
-    color: "#000",
-    fontFamily: "Righteous",
-  },
-  modalCloseButton: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  modalCloseButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Righteous",
+    overflow: "hidden",
   },
   solicitarButton: {
     backgroundColor: "#000",
@@ -895,50 +745,23 @@ const styles = StyleSheet.create({
     fontFamily: "Righteous",
     marginRight: 8,
   },
-  apagar: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  row: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-  },
-  suggestionBox: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#f9f9f9",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#ddd",
     marginBottom: 12,
   },
-  column: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
+  saveButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 5,
+    marginBottom: 10,
   },
-  suggestionTitle: {
-    fontFamily: "Righteous",
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 2,
-  },
-  suggestionAddress: {
-    fontFamily: "Righteous",
+  saveButtonText: {
+    color: "#fff",
     fontSize: 16,
+    fontFamily: "Righteous",
   },
   comeBack: {
     position: "absolute",
@@ -952,35 +775,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-  },
-  lupaContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: "#000",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-    marginVertical: 5,
-  },
-  lupaText: {
-    fontFamily: "Righteous",
-    fontSize: 16,
-    color: "#000",
-    marginRight: 8,
-    letterSpacing: 0.5,
-  },
-  lupaButtonPressed: {
-    backgroundColor: "#000",
-  },
-  lupaTextPressed: {
-    color: "#fff",
   },
 });

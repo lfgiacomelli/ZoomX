@@ -1,12 +1,11 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import Tab from '../Components/Tab';
-import useRighteousFont from '../../hooks/Font/index';
-import Header from '../Components/header';
-import { useRouter } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { View, Text, StyleSheet, Image } from 'react-native';
+
+import Header from '@components/header';
+import Tab from '@components/Tab';
+import useRighteousFont from '@hooks/Font/';
+
 
 export default function AboutApp() {
-    const router = useRouter();
     const fontLoaded = useRighteousFont();
 
     if (!fontLoaded) return null;  
@@ -26,7 +25,7 @@ export default function AboutApp() {
                 </View>
 
                 <Text style={styles.sectionTitle}>Desenvolvido por:</Text>
-                <Image source={require('../../assets/fordevslogo.png')} style={styles.logo} />
+                <Image source={require('@assets/fordevslogo.png')} style={styles.logo} />
                 <View style={styles.versionBox}>
                     <Text style={styles.storyText}>Versão:</Text>
                     <Text style={styles.storyText}>1.0.0 BETA</Text>

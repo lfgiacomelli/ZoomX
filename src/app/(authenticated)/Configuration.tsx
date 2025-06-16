@@ -1,24 +1,17 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  StatusBar,
-  Switch,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  Linking,
-} from "react-native";
+import { View, Text, StyleSheet, StatusBar, Switch, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
 import { useState, useEffect } from "react";
-import Header from "../Components/header";
-import Tab from "../Components/Tab";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
-import * as Location from "expo-location";
-import { MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import useRighteousFont from "../../hooks/Font";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+import useRighteousFont from "@hooks/Font";
+
+import { FontAwesome6, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
 
 export default function SettingsScreen() {
   const router = useRouter();

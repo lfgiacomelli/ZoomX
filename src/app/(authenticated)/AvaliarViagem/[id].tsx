@@ -12,8 +12,10 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
-import Header from "../../Components/header.tsx";
-import Tab from '../../Components/Tab.tsx';
+import Header from "@components/header";
+import Tab from '@components/Tab';
+
+import reviewsAnimation from '@animations/reviews_animation.json';
 const StarRating = ({ rating, setRating }: { rating: number; setRating: (value: number) => void }) => {
   return (
     <View style={styles.starsContainer}>
@@ -145,7 +147,7 @@ export default function AvaliarViagem() {
         <Modal visible={showModal} transparent animationType="fade" onRequestClose={fecharModal}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <LottieView ref={animationRef} source={require('../../../assets/reviews_animation.json')} autoPlay loop style={{ width: 200, height: 200 }} />
+              <LottieView ref={animationRef} source={reviewsAnimation} autoPlay loop style={{ width: 200, height: 200 }} />
               <Text style={styles.modalText}>
                 Muito obrigado por avaliar a viagem!{'\n'}Assim conseguimos melhorar nossos serviços.
               </Text>

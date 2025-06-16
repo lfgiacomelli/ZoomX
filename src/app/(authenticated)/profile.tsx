@@ -1,38 +1,28 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  StatusBar,
-  ActivityIndicator,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Linking,
-  Modal,
-  Pressable,
-} from "react-native";
-import Tab from "../Components/Tab";
-import useRighteousFont from "../../hooks/Font";
-import Header from "../Components/header";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import Entypo from "@expo/vector-icons/Entypo";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import Octicons from "@expo/vector-icons/Octicons";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import * as ImagePicker from "expo-image-picker";
+import { View, Text, StyleSheet, StatusBar, ActivityIndicator, TouchableOpacity, Image, ScrollView, Linking, Modal, Pressable } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import LottieView from "lottie-react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+import useRighteousFont from "@hooks/Font";
+
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+
+import {Entypo, MaterialCommunityIcons, Octicons, EvilIcons, Ionicons} from "@expo/vector-icons";
 
 export default function Profile() {
   const router = useRouter();
+
   const fontLoaded = useRighteousFont();
+
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
-  const animationRef = useRef(null);
 
   useEffect(() => {
     loadUserPhoto();
@@ -210,9 +200,12 @@ export default function Profile() {
           style={styles.dropdown}
           onPress={() => router.push("/AboutApp")}
         >
-          <Text style={styles.dropdownText}>Veja sobre o APP</Text>
-          <AntDesign name="down" size={20} color="black" />
+          <View style={styles.textContainer}>
+            <Text style={styles.dropdownText}>Veja sobre o APP</Text>
+          </View>
+          <EvilIcons name="chevron-down" size={20} color="black" />
         </TouchableOpacity>
+
 
         <View style={styles.row}>
           <TouchableOpacity
@@ -220,7 +213,7 @@ export default function Profile() {
             onPress={() => router.push("/LastActivities")}
           >
             <Image
-              source={require("../../assets/motorcycle.png")}
+              source={require("@assets/motorcycle.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Viagens</Text>
@@ -231,7 +224,7 @@ export default function Profile() {
             onPress={() => router.push("/Guidelines")}
           >
             <Image
-              source={require("../../assets/list.png")}
+              source={require("@assets/list.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Diretrizes</Text>
@@ -243,7 +236,7 @@ export default function Profile() {
             onPress={() => router.push("/MyReviews")}
           >
             <Image
-              source={require("../../assets/avaliacao_icon.png")}
+              source={require("@assets/avaliacao_icon.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Avaliações</Text>
@@ -254,7 +247,7 @@ export default function Profile() {
             onPress={() => router.push("/UpdateInfo")}
           >
             <Image
-              source={require("../../assets/updateicon.png")}
+              source={require("@assets/updateicon.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Informações</Text>
@@ -454,20 +447,26 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#fff",
     padding: 14,
     borderRadius: 12,
     marginTop: 16,
     width: "100%",
     elevation: 2,
+  },
+
+  textContainer: {
+    flex: 1,
     alignItems: "center",
   },
+
   dropdownText: {
     fontFamily: "Righteous",
     fontSize: 14,
     color: "#000",
   },
+
   icon: {
     width: 40,
     height: 40,

@@ -1,22 +1,20 @@
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Image, ScrollView, Modal } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Modal,
-} from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { Audio } from "expo-av";
-import Header from "../Components/header";
-import * as Notifications from "expo-notifications";
-import LottieView from "lottie-react-native";
-import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import LottieView from "lottie-react-native";
+
+import Header from "@components/header";
+
+import { useRouter, useLocalSearchParams } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
+
+import boxAnimation from "@animations/box_animation.json";
+import motorAnimation from "@animations/motor_animation.json";
+import requestMarketAccepted from "@animations/request_market_accepted.json";
+import timerAnimation from "@animations/timer_animation.json";
 
 type Solicitacao = {
   sol_codigo: number;
@@ -50,22 +48,6 @@ export default function PendingRequest() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animationRef = useRef(null);
-  useEffect(() => {
-    async function loadSound() {
-      const { sound } = await Audio.Sound.createAsync(
-        require("../../assets/notificacao.mp3")
-      );
-      setSound(sound);
-    }
-
-    loadSound();
-
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, []);
 
   const playSound = async () => {
     try {
@@ -88,7 +70,6 @@ export default function PendingRequest() {
       setLoading(true);
       setError(null);
 
-      // Pega o token e usuário uma vez só no início
       const token = await AsyncStorage.getItem("token");
       const userId = await AsyncStorage.getItem("id");
 
@@ -98,7 +79,6 @@ export default function PendingRequest() {
         return;
       }
 
-      // Busca a solicitação passando token no header Authorization
       const response = await fetch(
         `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`,
         {
@@ -317,7 +297,7 @@ export default function PendingRequest() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
           <Image
-            source={require("../../assets/atendente.png")}
+            source={require("@assets/atendente.png")}
             style={styles.atendenteImage}
           />
           <Text style={styles.message}>
@@ -327,7 +307,7 @@ export default function PendingRequest() {
           <View style={styles.timerContainer}>
             <Text style={styles.timerLabel}>Tempo para cancelamento:</Text>
             <LottieView
-              source={require("../../assets/timer_animation.json")}
+              source={timerAnimation}
               autoPlay
               loop
               style={{ width: 50, height: 50, marginBottom: 10 }}
@@ -417,21 +397,25 @@ export default function PendingRequest() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <LottieView
-                ref={animationRef}
-                source={
-                  solicitacao?.sol_servico === "Entrega"
-                    ? require("../../assets/box_animation.json")
-                    : solicitacao?.sol_servico === "Mototáxi"
-                      ? require("../../assets/motor_animation.json")
-                      : solicitacao?.sol_servico === "Compras"
-                        ? require("../../assets/request_market_accepted.json")
-                        : null
-                }
-                autoPlay
-                loop
-                style={styles.lottie}
-              />
+              {(
+                solicitacao?.sol_servico === "Entrega" ||
+                solicitacao?.sol_servico === "Mototáxi" ||
+                solicitacao?.sol_servico === "Compras"
+              ) && (
+                <LottieView
+                  ref={animationRef}
+                  source={
+                    solicitacao?.sol_servico === "Entrega"
+                      ? boxAnimation
+                      : solicitacao?.sol_servico === "Mototáxi"
+                        ? motorAnimation
+                        : requestMarketAccepted
+                  }
+                  autoPlay
+                  loop
+                  style={styles.lottie}
+                />
+              )}
 
               <Text style={styles.modalTitle}>
                 {solicitacao?.sol_servico === "Entrega"
@@ -485,7 +469,7 @@ export default function PendingRequest() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Image
-                source={require("../../assets/recusado.png")}
+                source={require("@assets/recusado.png")}
                 style={{ width: 100, height: 100, marginBottom: 20 }}
               />
               <Text style={styles.modalTitle}>Solicitação Recusada</Text>

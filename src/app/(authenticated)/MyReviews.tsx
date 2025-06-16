@@ -1,17 +1,11 @@
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from "react-native";
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-  Image,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Header from "../Components/header";
-import Tab from "../Components/Tab";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+
 
 interface Avaliacao {
   ava_codigo: string;
@@ -86,7 +80,7 @@ const MyReviews = () => {
         {avaliacoes.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Image
-              source={require("../../assets/empty_reviews.png")}
+              source={require("@assets/empty_reviews.png")}
               style={{ width: 300, height: 300, marginTop: -110 }}
             />
             <Text style={styles.emptyTitle}>Nenhuma avaliação encontrada</Text>

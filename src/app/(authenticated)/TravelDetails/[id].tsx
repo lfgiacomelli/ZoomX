@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import Header from "../../Components/header";
+import Header from "@components/header";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import Tab from "../../Components/Tab";
+import Tab from "@components/Tab";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function TravelDetails() {

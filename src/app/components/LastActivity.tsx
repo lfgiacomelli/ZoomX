@@ -11,6 +11,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 
+import loadingDataAnimation from "@animations/loading_data.json";
+
 type Viagem = {
   via_codigo: number;
   via_data: string;
@@ -138,7 +140,7 @@ export default function LastActivity() {
         <View style={styles.loadingContainer}>
           <LottieView
             ref={animationRef}
-            source={require("../../assets/loading_data.json")}
+            source={loadingDataAnimation}
             autoPlay
             loop
             style={{ width: 230, height: 230 }}
@@ -151,7 +153,9 @@ export default function LastActivity() {
     if (error) {
       return (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>
+            Houve algum erro por aqui.
+          </Text>
         </View>
       );
     }

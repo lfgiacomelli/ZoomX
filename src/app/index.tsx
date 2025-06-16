@@ -20,7 +20,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <LottieView
-        source={require('../assets/splash.json')}
+        source={require('@animations/splash.json')}
         autoPlay
         loop={false}
         style={styles.animation}

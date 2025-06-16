@@ -1,17 +1,11 @@
-import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Linking,
-  StyleSheet,
-  Dimensions,
-  SafeAreaView,
-  Alert,
-} from "react-native";
+import { View, Text, TouchableOpacity, Linking, StyleSheet, Dimensions, SafeAreaView, Alert } from "react-native";
+
 import LottieView from "lottie-react-native";
-import Header from "../Components/header";
-import Tab from "../Components/Tab";
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+
+import supportAnimation from "@animations/support_animation.json";
 
 const { width } = Dimensions.get("window");
 const email_default = "support@zoomx.com.br";
@@ -45,7 +39,7 @@ export default function Support() {
           <View style={styles.content}>
             <View style={styles.animationContainer}>
               <LottieView
-                source={require("../../assets/support_animation.json")}
+                source={supportAnimation}
                 autoPlay
                 loop
                 style={styles.lottie}

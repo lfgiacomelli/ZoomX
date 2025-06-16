@@ -17,7 +17,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import useRighteousFont from "../hooks/Font/index";
+import useRighteousFont from "./hooks/Font/index";
 import LottieView from "lottie-react-native";
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
@@ -90,7 +90,7 @@ export default function Login() {
           <View style={styles.container}>
             <View style={styles.logo}>
               <Image
-                source={require("../assets/logo.png")}
+                source={require("@assets/logo.png")}
                 style={styles.logoImage}
                 resizeMode="contain"
               />

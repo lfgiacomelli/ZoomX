@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type ViagemNaoAvaliada = {
   via_codigo: string;
@@ -20,12 +21,15 @@ const AvaliarViagem: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
+  const translateY = useState(new Animated.Value(20))[0];
 
   useEffect(() => {
     const fetchViagemNaoAvaliada = async () => {
       try {
         const usuarioId = await AsyncStorage.getItem("id");
-        if (!usuarioId) {
+        const token = await AsyncStorage.getItem("token");
+
+        if (!usuarioId || !token) {
           setError("Usuário não autenticado");
           setLoading(false);
           return;
@@ -37,24 +41,29 @@ const AvaliarViagem: React.FC = () => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Erro na API: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
 
         const data = await response.json();
 
         if (data.sucesso && data.viagem) {
           setViagem(data.viagem);
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }).start();
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+              toValue: 0,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ]).start();
         } else {
           setViagem(null);
         }
@@ -80,57 +89,71 @@ const AvaliarViagem: React.FC = () => {
   if (loading || error || !viagem) return null;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Você possui uma avaliação pendente!</Text>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      <Text style={styles.title}>🚨 Avaliação pendente</Text>
+      <Text style={styles.subtitle}>
+        Sua última corrida ainda não foi avaliada.
+      </Text>
+
       <TouchableOpacity style={styles.button} onPress={handleAvaliarPress}>
-        <Text style={styles.buttonText}>Avaliar Viagem</Text>
+        <MaterialIcons name="rate-review" size={20} color="#fff" />
+        <Text style={styles.buttonText}>Avaliar agora</Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#f0f0f0",
-    marginBottom:18
+    padding: 20,
+    marginBottom: 20,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 3,
   },
   title: {
     fontSize: 18,
     fontFamily: "Righteous",
-    color: "#222",
-    marginBottom: 12,
-    textAlign: "left",
-    letterSpacing: 0.5,
+    color: "#000",
+    marginBottom: 6,
+    letterSpacing: 0.4,
   },
-  text: {
-    fontSize: 16,
+  subtitle: {
+    fontSize: 14,
     fontFamily: "Righteous",
     color: "#555",
-    textAlign: "center",
-    marginBottom: 20,
-    lineHeight: 22,
+    marginBottom: 16,
     letterSpacing: 0.3,
   },
   button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#000",
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: "flex-start",
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
     fontFamily: "Righteous",
-    letterSpacing: 0.8,
+    fontSize: 14,
+    marginLeft: 8,
+    letterSpacing: 0.5,
   },
 });
-
 
 export default AvaliarViagem;

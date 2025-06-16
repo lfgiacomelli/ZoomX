@@ -37,7 +37,6 @@ export default function VerificarAndamento() {
         })();
     }, []);
 
-    // Pegar ID do usuário
     useEffect(() => {
         async function pegarUsuarioId() {
             try {
@@ -50,7 +49,6 @@ export default function VerificarAndamento() {
         pegarUsuarioId();
     }, []);
 
-    // Verificar status da viagem e notificar apenas uma vez por viagem
     useEffect(() => {
         if (!usuarioId) return;
 
@@ -78,7 +76,6 @@ export default function VerificarAndamento() {
                     const ultimaNotificada = await AsyncStorage.getItem("ultimaViagemNotificada");
 
                     if (ultimaNotificada !== via_codigo) {
-                        // Envia a notificação
                         await Notifications.scheduleNotificationAsync({
                             content: {
                                 title: "Viagem finalizada!",
@@ -91,7 +88,6 @@ export default function VerificarAndamento() {
 
                         console.log("Notificação enviada para viagem:", via_codigo);
 
-                        // Salva ID da última notificada
                         await AsyncStorage.setItem("ultimaViagemNotificada", via_codigo);
                     }
                 }

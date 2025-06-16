@@ -1,21 +1,17 @@
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Modal,
-} from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
 import { useState, useEffect, useRef } from "react";
-import useRighteousFont from "../../hooks/Font";
-import Header from "../Components/header";
-import Tab from "../Components/Tab";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+
 import LottieView from "lottie-react-native";
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+import useRighteousFont from "@hooks/Font";
+
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+
+import infoAnimation from "@assets/animations/info_animation.json";
 
 export default function EditProfile() {
   const fontLoaded = useRighteousFont();
@@ -34,6 +30,7 @@ export default function EditProfile() {
     const loadUserData = async () => {
       try {
         const id = await AsyncStorage.getItem("id");
+        const token = await AsyncStorage.getItem("token");
         if (!id) return;
         setUserId(id);
 
@@ -43,7 +40,7 @@ export default function EditProfile() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -63,6 +60,7 @@ export default function EditProfile() {
   if (!fontLoaded) return null;
 
   const handleUpdate = async () => {
+    const token = await AsyncStorage.getItem("token");
     if (!name || !email || !phone || !password) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
       return;
@@ -76,6 +74,7 @@ export default function EditProfile() {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             usu_nome: name,
@@ -178,7 +177,7 @@ export default function EditProfile() {
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
             <LottieView
-              source={require("../../assets/info_animation.json")}
+              source={infoAnimation}
               autoPlay
               loop={false}
               ref={animationRef}

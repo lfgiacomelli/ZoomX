@@ -1,23 +1,20 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Image,
-  TouchableOpacity,
-  LayoutAnimation,
-  Platform,
-  UIManager,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager } from "react-native";
 import { useEffect, useState, useRef } from "react";
-import Tab from "../Components/Tab";
-import useRighteousFont from "../../hooks/Font/index";
-import Header from "../Components/header";
+import LottieView from "lottie-react-native";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+import useRighteousFont from "@hooks/Font/";
+
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import LottieView from "lottie-react-native";
+
+import loadingAnimation from "@animations/loading_animation.json";
+import errorAnimation from "@animations/error_animation.json";
+
+
 export default function Travels() {
   const fontLoaded = useRighteousFont();
   interface Atividade {
@@ -110,7 +107,7 @@ export default function Travels() {
               >
                 <LottieView
                   ref={animationRef}
-                  source={require("../../assets/loading_animation.json")}
+                  source={loadingAnimation}
                   autoPlay
                   loop={true}
                   style={{ width: 220, height: 220, alignSelf: "center" }}
@@ -130,7 +127,7 @@ export default function Travels() {
             <>
               <LottieView
                 ref={animationRef}
-                source={require("../../assets/error_animation.json")}
+                source={errorAnimation}
                 autoPlay
                 loop={true}
                 style={{ width: 220, height: 220, alignSelf: "center" }}
@@ -148,7 +145,7 @@ export default function Travels() {
           ) : data.length === 0 ? (
             <>
               <Image
-                source={require("../../assets/empty.png")}
+                source={require("@assets/empty.png")}
                 style={styles.iconEmpty}
               />
               <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
@@ -168,10 +165,10 @@ export default function Travels() {
               const isExpanded = expandedIndex === index;
               const icone =
                 atividade.via_servico === "Mototáxi"
-                  ? require("../../assets/motorcycle.png")
+                  ? require("@assets/motorcycle.png")
                   : atividade.via_servico === "Compras"
-                    ? require("../../assets/shopping.png") 
-                    : require("../../assets/box.png");
+                    ? require("@assets/shopping.png") 
+                    : require("@assets/box.png");
 
               const dataFormatada = atividade.via_data
                 ? new Intl.DateTimeFormat("pt-BR", {

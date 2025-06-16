@@ -1,53 +1,52 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ActivityIndicator,
-  StatusBar,
-  ScrollView,
-  AccessibilityInfo,
-  Linking,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import useRighteousFont from "../../hooks/Font/index";
-import { useRouter } from "expo-router";
-import Header from "../Components/header";
-import Tab from "../Components/Tab";
-import Constants from "expo-constants";
+import { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, StatusBar, ScrollView, AccessibilityInfo } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { useEffect, useState } from "react";
-import AnunciosCarousel from "../Components/Anuncios";
+
 import * as Notifications from "expo-notifications";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+
+import { Ionicons } from "@expo/vector-icons";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+import Header from "@components/header";
+import Tab from "@components/Tab";
+import Benefits from "@components/Benefits";
+import LastActivity from "@components/LastActivity";
+import Services from "@components/Services";
+import Help from "@components/Help";
 import NetInfo from "@react-native-community/netinfo";
-import LastActivity from "../Components/LastActivity";
-import Services from "../Components/Services";
-import Benefits from "../Components/Benefits";
-import Help from "../Components/Help";
-import PendingTravel from "../Components/PendingTravel";
-import AvaliarViagem from "../Components/AvaliarViagem";
+import PendingTravel from "@components/PendingTravel";
+import AvaliarViagem from "@components/AvaliarViagem";
+import AnunciosCarousel from "@components/Anuncios";
+
+import useRighteousFont from "@hooks/Font";
+
+
 
 const Home = () => {
   const router = useRouter();
-  const [helpVisible, setHelpVisible] = useState(false);
   const fontLoaded = useRighteousFont();
-  const [userFirstName, setUserFirstName] = useState("Usuário");
+  const [userFirstName, setUserFirstName] = useState('');
   const [statusLeitor, setStatusLeitor] = useState(false);
-  const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+
+  const [location, setLocation] = useState<{ latitude: number; longitude: number;} | null>(null);
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const [isMobileData, setIsMobileData] = useState(false);
+
   const getFirstNameFromStorage = async () => {
+
     try {
       const fullName = await AsyncStorage.getItem("nome");
+
       if (fullName) {
         const firstName = fullName.trim().split(" ")[0];
         setUserFirstName(firstName);
+
       }
     } catch (error) {
       console.error("Erro ao buscar o nome:", error);
@@ -112,11 +111,11 @@ const Home = () => {
     return (
       <View style={styles.loadingContainer}>
         <Image
-          source={require("../../assets/logo.png")}
+          source={require("@assets/logo.png")}
           style={styles.loadingLogo}
         />
         <Text style={styles.loadingText}>Preparando tudo para você...</Text>
-        <ActivityIndicator size="large" color="#000" />
+        <ActivityIndicator size={50} color="#000" />
       </View>
     );
   }
@@ -192,15 +191,10 @@ const Home = () => {
           </View>
         )}
         <Help />
-        <View style={styles.adsSection}>
+        {/* <View style={styles.adsSection}>
           <Text style={styles.sectionTitle}>Dicas e Promoções</Text>
-        </View>
+        </View> */}
       </ScrollView>
-      {/* <TouchableOpacity
-        style={styles.solicitarButton} onPress={() => router.push("/RequestTravel")}>
-        <MaterialIcons name="keyboard-arrow-up" size={22} color="white" />
-        <Text style={styles.solicitarButtonText}>Solicitar Mototáxi</Text>
-      </TouchableOpacity> */}
       <Tab />
     </>
   );

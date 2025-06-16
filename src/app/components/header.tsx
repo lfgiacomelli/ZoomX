@@ -13,7 +13,7 @@ export default function Header() {
                 translucent={true}
             />
             <TouchableOpacity onPress={() => router.push('/Home')}>
-                <Image source={require('../../assets/logo.png')} style={{ width: 190, height: 140 }} />
+                <Image source={require('@assets/logo.png')} style={{ width: 190, height: 140 }} />
             </TouchableOpacity>
         </View>
     );
