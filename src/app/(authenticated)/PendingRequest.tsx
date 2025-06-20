@@ -297,7 +297,7 @@ export default function PendingRequest() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
           <Image
-            source={require("@assets/atendente.png")}
+            source={require("@images/atendente.png")}
             style={styles.atendenteImage}
           />
           <Text style={styles.message}>
@@ -469,7 +469,7 @@ export default function PendingRequest() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Image
-                source={require("@assets/recusado.png")}
+                source={require("@images/recusado.png")}
                 style={{ width: 100, height: 100, marginBottom: 20 }}
               />
               <Text style={styles.modalTitle}>Solicitação Recusada</Text>

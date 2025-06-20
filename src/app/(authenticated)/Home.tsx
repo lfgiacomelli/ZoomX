@@ -111,7 +111,7 @@ const Home = () => {
     return (
       <View style={styles.loadingContainer}>
         <Image
-          source={require("@assets/logo.png")}
+          source={require("@images/logo.png")}
           style={styles.loadingLogo}
         />
         <Text style={styles.loadingText}>Preparando tudo para você...</Text>

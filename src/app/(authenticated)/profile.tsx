@@ -213,7 +213,7 @@ export default function Profile() {
             onPress={() => router.push("/LastActivities")}
           >
             <Image
-              source={require("@assets/motorcycle.png")}
+              source={require("@images/motorcycle.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Viagens</Text>
@@ -224,7 +224,7 @@ export default function Profile() {
             onPress={() => router.push("/Guidelines")}
           >
             <Image
-              source={require("@assets/list.png")}
+              source={require("@images/list.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Diretrizes</Text>
@@ -236,7 +236,7 @@ export default function Profile() {
             onPress={() => router.push("/MyReviews")}
           >
             <Image
-              source={require("@assets/avaliacao_icon.png")}
+              source={require("@images/avaliacao_icon.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Avaliações</Text>
@@ -247,7 +247,7 @@ export default function Profile() {
             onPress={() => router.push("/UpdateInfo")}
           >
             <Image
-              source={require("@assets/updateicon.png")}
+              source={require("@images/updateicon.png")}
               style={styles.icon}
             />
             <Text style={styles.iconText}>Informações</Text>

@@ -407,8 +407,8 @@ export default function RequestMarket() {
               <Image
                 source={
                   idx === 0
-                    ? require("@assets/partida.png")
-                    : require("@assets/destino.png")
+                    ? require("@images/partida.png")
+                    : require("@images/destino.png")
                 }
                 style={{ width: 40, height: 40 }}
                 resizeMode="contain"

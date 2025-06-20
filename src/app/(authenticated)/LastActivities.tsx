@@ -132,7 +132,7 @@ export default function Travels() {
               </>
             ) : (
               <>
-                <Image source={require("@assets/empty.png")} style={styles.iconEmpty} />
+                <Image source={require("@images/empty.png")} style={styles.iconEmpty} />
                 <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
                 <TouchableOpacity
                   style={styles.newRequest}
@@ -147,10 +147,10 @@ export default function Travels() {
             const isExpanded = expandedIndex === index;
             const icone =
               item.via_servico === "Mototáxi"
-                ? require("@assets/motorcycle.png")
+                ? require("@images/motorcycle.png")
                 : item.via_servico === "Compras"
-                  ? require("@assets/shopping.png")
-                  : require("@assets/box.png");
+                  ? require("@images/shopping.png")
+                  : require("@images/box.png");
 
             const dataFormatada = item.via_data
               ? new Intl.DateTimeFormat("pt-BR", {

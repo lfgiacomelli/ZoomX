@@ -80,7 +80,7 @@ const MyReviews = () => {
         {avaliacoes.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Image
-              source={require("@assets/empty_reviews.png")}
+              source={require("@images/empty_reviews.png")}
               style={{ width: 300, height: 300, marginTop: -110 }}
             />
             <Text style={styles.emptyTitle}>Nenhuma avaliação encontrada</Text>

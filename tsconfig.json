@@ -16,6 +16,9 @@
       "@animations/*": [
         "src/app/assets/animations/*"
       ],
+      "@images/*": [
+        "src/app/assets/images/*"
+      ],
     }
   }
 }

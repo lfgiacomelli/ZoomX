@@ -11,7 +11,7 @@ import useRighteousFont from "@hooks/Font";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 
-import infoAnimation from "@assets/animations/info_animation.json";
+import infoAnimation from "@animations/info_animation.json";
 
 export default function EditProfile() {
   const fontLoaded = useRighteousFont();
