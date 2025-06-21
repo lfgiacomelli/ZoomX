@@ -17,7 +17,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import useRighteousFont from "./hooks/Font/index";
+import useRighteousFont from "./hooks/Font/Righteous";
 import LottieView from "lottie-react-native";
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
@@ -27,7 +27,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const fontLoaded = useRighteousFont();
-  const animationRef = useRef(null);
+  // const animationRef = useRef(null);
   const [passwordVisibility, setPasswordVisibility] = useState(true);
 
   const togglePasswordVisibility = () => {
@@ -52,6 +52,7 @@ export default function Login() {
 
       if (data.token) {
         await AsyncStorage.setItem("token", data.token);
+        console.log("Token armazenado com sucesso:", data.token);
       }
 
       if (data.usuario) {
@@ -90,7 +91,7 @@ export default function Login() {
           <View style={styles.container}>
             <View style={styles.logo}>
               <Image
-                source={require("@assets/logo.png")}
+                source={require("@images/logo.png")}
                 style={styles.logoImage}
                 resizeMode="contain"
               />

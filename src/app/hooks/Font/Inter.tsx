@@ -1,13 +1,13 @@
 import * as Font from 'expo-font';
 import { useEffect, useState } from 'react';
 
-export default function useRighteousFont() {
+export default function useInterFont() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     async function loadFont() {
       await Font.loadAsync({
-        Righteous: require('../../assets/fonts/Righteous-Regular.ttf'),
+        Light: require('@fonts/Inter_18pt-Light.ttf'),
       });
       setLoaded(true);
     }

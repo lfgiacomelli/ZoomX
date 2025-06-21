@@ -33,7 +33,7 @@ export default function LastActivity() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter();
-  const animationRef = useRef(null);
+  const animationRef = useRef<LottieView | null>(null);
 
   const baseURL = "https://backend-turma-a-2025.onrender.com";
 
@@ -62,7 +62,9 @@ export default function LastActivity() {
         return;
       }
 
-      if (!response.ok) throw new Error(`Erro de API: ${response.status}`);
+      if (!response.ok) {
+        throw new Error("Erro ao carregar dados da última viagem");
+      }
 
       const json = await response.json();
 
@@ -95,7 +97,8 @@ export default function LastActivity() {
 
     try {
       const userId = await AsyncStorage.getItem("id");
-      if (!userId) {
+      const token = await AsyncStorage.getItem("token");
+      if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
@@ -104,7 +107,7 @@ export default function LastActivity() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           sol_origem: data.via_origem,
@@ -153,13 +156,12 @@ export default function LastActivity() {
     if (error) {
       return (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Houve algum erro por aqui.
-          </Text>
+          <Text style={styles.errorText}>Houve algum erro por aqui.</Text>
         </View>
       );
     }
 
+    // Se não há dados e nem erro, não exibe nada
     if (!data) {
       return null;
     }
@@ -181,12 +183,16 @@ export default function LastActivity() {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Valor:</Text>
-            <Text style={styles.infoValue}>R$ {Number(data.via_valor).toFixed(2)}</Text>
+            <Text style={styles.infoValue}>
+              R$ {Number(data.via_valor).toFixed(2)}
+            </Text>
           </View>
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Pagamento:</Text>
-            <Text style={styles.infoValue}>{data.via_formapagamento || "Dinheiro"}</Text>
+            <Text style={styles.infoValue}>
+              {data.via_formapagamento || "Dinheiro"}
+            </Text>
           </View>
 
           <View style={styles.infoItem}>
@@ -199,6 +205,8 @@ export default function LastActivity() {
           style={[styles.button, isSubmitting && styles.buttonDisabled]}
           onPress={handleSolicitarNovamente}
           disabled={isSubmitting}
+          accessibilityRole="button"
+          accessibilityLabel="Solicitar a última viagem novamente"
         >
           {isSubmitting ? (
             <ActivityIndicator color="#000" />
@@ -295,22 +303,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FF0000",
     textAlign: "center",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    backgroundColor: "#FFFFFF",
-  },
-  emptyText: {
-    fontFamily: "Righteous",
-    fontSize: 16,
-    color: "#000000",
-    textAlign: "center",
-    opacity: 0.7,
   },
 });

@@ -13,6 +13,7 @@ module.exports = function (api) {
                         '@hooks': './src/app/hooks',
                         '@animations': './src/app/assets/animations',
                         "@images": './src/app/assets/images',
+                        "@fonts": './src/app/assets/fonts',
                     },
                 },
             ],

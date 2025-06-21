@@ -7,7 +7,7 @@ export default function Services() {
     {
       id: 1,
       title: "Mototáxi",
-      icon: require("@assets/motorcycle.png"),
+      icon: require("@images/motorcycle.png"),
       description: "Viagens rápidas pela cidade",
       action: () => router.push("/RequestTravel"),
       color: "#FF6B00",
@@ -15,7 +15,7 @@ export default function Services() {
     {
       id: 2,
       title: "Entregas",
-      icon: require("@assets/box.png"),
+      icon: require("@images/box.png"),
       description: "Envie seus pacotes com segurança",
       action: () => router.push("/RequestDelivery"),
       color: "#00A859",
@@ -23,7 +23,7 @@ export default function Services() {
     {
       id: 3,
       title: "Compras",
-      icon: require("@assets/shopping.png"),
+      icon: require("@images/shopping.png"),
       description: "Faça suas compras sem sair de casa",
       action: () => router.push("/RequestMarket"),
       color: "#2D9CDB",
@@ -31,7 +31,7 @@ export default function Services() {
     {
       id: 4,
       title: "Urgências",
-      icon: require("@assets/emergency.png"),
+      icon: require("@images/emergency.png"),
       description: "Transporte rápido para emergências",
       action: () => router.push("/RequestTravel"),
       color: "#EB5757",
@@ -76,7 +76,7 @@ export default function Services() {
         accessibilityHint="Clique para solicitar um mototáxi agora"
       >
         <Image
-          source={require("@assets/motorcycle.png")}
+          source={require("@images/motorcycle.png")}
           style={styles.serviceIcon}
         />
         <Text style={styles.mainActionText}>SOLICITAR AGORA</Text>

@@ -19,6 +19,9 @@
       "@images/*": [
         "src/app/assets/images/*"
       ],
+      "@fonts/*": [
+        "src/app/assets/fonts/*"
+      ],
     }
   }
 }

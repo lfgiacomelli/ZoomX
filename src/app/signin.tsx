@@ -15,7 +15,7 @@ import {
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
-import useRighteousFont from "./hooks/Font/index";
+import useRighteousFont from "./hooks/Font/Righteous";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Modal } from "react-native";
 import LottieView from "lottie-react-native";
@@ -25,7 +25,7 @@ export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const animationRef = useRef(null);
+  // const animationRef = useRef(null);
   const [passwordVisibility, setPasswordVisibility] = useState(true);
 
   const togglePasswordVisibility = () => {
@@ -202,7 +202,7 @@ export default function SignIn() {
           <View style={styles.container}>
             <View style={styles.logo}>
               <Image
-                source={require("@assets/logo.png")}
+                source={require("@images/logo.png")}
                 style={styles.logoImage}
                 resizeMode="contain"
               />

@@ -1,20 +1,24 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard } from "react-native";
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard} from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import LottieView from "lottie-react-native";
+import styles from "./styles";
+
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import LottieView from "lottie-react-native";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import Header from "@components/header";
 
 import { useRouter } from "expo-router";
 
+
 import {MaterialIcons, Ionicons} from "@expo/vector-icons";
 
 
 import loadingBoxAnimation from "@animations/loading_box.json";
+
 
 type Coordinates = {
   latitude: number;
@@ -113,9 +117,9 @@ const getRouteFromOSRM = async (
   }
 };
 
-export default function RequestDelivery() {
+export default function RequestMarket() {
   const animationRef = useRef(null);
-  const [startAddress, setStartAddress] = useState("");
+  const [supermarketAddress, setSupermarketAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
@@ -128,12 +132,11 @@ export default function RequestDelivery() {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
-  const [peso, setPeso] = useState("");
-  const [comprimento, setComprimento] = useState("");
-  const [altura, setAltura] = useState("");
-  const [largura, setLargura] = useState("");
   const [showInputs, setShowInputs] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [observacoes, setObservacoes] = useState("");
+  const [valorEstimado, setValorEstimado] = useState("");
+  const [modalMessage, setModalMessage] = useState(false);
 
   const initialRegion = {
     latitude: -21.8756,
@@ -150,12 +153,8 @@ export default function RequestDelivery() {
   }, []);
 
   const calcularRota = async () => {
-    if (!startAddress.trim() || !endAddress.trim()) {
-      Alert.alert("Erro", "Por favor, preencha ambos os endereços.");
-      return;
-    }
-    if (startAddress.toLowerCase() === endAddress.toLowerCase()) {
-      Alert.alert("Erro", "Os endereços de partida e destino são iguais.");
+    if (!valorEstimado.trim()) {
+      Alert.alert("Erro", "Por favor, preencha o valor estimado.");
       return;
     }
 
@@ -166,10 +165,14 @@ export default function RequestDelivery() {
     setPrice(null);
 
     try {
-      const [origin, destination] = await Promise.all([
-        getCoordsFromAddress(startAddress),
-        getCoordsFromAddress(endAddress),
-      ]);
+      const origin = supermarketAddress.trim()
+        ? await getCoordsFromAddress(supermarketAddress)
+        : {
+            latitude: -21.8756,
+            longitude: -51.8437,
+          };
+
+      const destination = await getCoordsFromAddress(endAddress);
 
       const distanceBetween = calculateHaversineDistance(origin, destination);
 
@@ -188,17 +191,17 @@ export default function RequestDelivery() {
         origin,
         destination
       );
-      const hora = new Date().getHours();
       let calculatedPrice = 0;
-      const tempo = distanceKm * 2; 
-      if (hora < 6 || hora >= 22) {
-        calculatedPrice = 5.6 + distanceKm * 0.85;
-      } else {
-        calculatedPrice = 5 + distanceKm * 0.5;
-      }
+      const tempoDeCompra = 15;
+      const tempo = tempoDeCompra + distanceKm * 2;
+      calculatedPrice = 3.9 + (distanceKm * 0.54) ;
+
+      const valorCompra = parseFloat(valorEstimado) || 0;
+      const totalPrice = calculatedPrice + valorCompra;
+
       setRouteCoords(coords);
       setDistance(distanceKm);
-      setPrice(calculatedPrice);
+      setPrice(totalPrice);
       setShowInputs(false);
       setTempo(tempo);
 
@@ -231,13 +234,14 @@ export default function RequestDelivery() {
 
     try {
       const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem('token')
+      const token = await AsyncStorage.getItem('token');
       if (!userId || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
 
       setIsLoading(true);
+
       const response = await fetch(
         "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
         {
@@ -247,23 +251,23 @@ export default function RequestDelivery() {
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
-            sol_origem: startAddress,
+            sol_origem: supermarketAddress.trim()
+              ? supermarketAddress
+              : "Sem preferência de supermercado",
             sol_destino: endAddress,
             sol_distancia: distance,
             sol_valor: price,
-            sol_servico: "Entrega",
+            sol_servico: "Compras",
             usu_codigo: Number(userId),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
-            sol_peso: parseFloat(peso),
-            sol_comprimento: parseFloat(comprimento),
-            sol_altura: parseFloat(altura),
-            sol_largura: parseFloat(largura),
-            sol_observacoes: "Pedido via App",
+            sol_observacoes: `Itens a comprar: ${observacoes}\nValor estimado de compras: R$ ${parseFloat(valorEstimado) || 0}`,
           }),
         }
       );
-
+      if (supermarketAddress.trim() === "") {
+        setModalMessage(true);
+      }
       const data = await response.json();
 
       if (!response.ok) {
@@ -294,18 +298,14 @@ export default function RequestDelivery() {
     setIsEditing(false);
     await calcularRota();
   };
+
   useEffect(() => {
     if (isEditing) return;
 
-    const todosCamposPreenchidos =
-      startAddress.trim() &&
-      endAddress.trim() &&
-      comprimento.trim() &&
-      peso.trim() &&
-      altura.trim() &&
-      largura.trim();
+    const camposObrigatoriosPreenchidos =
+      valorEstimado && valorEstimado.trim() !== "";
 
-    if (!todosCamposPreenchidos || !showInputs) return;
+    if (!camposObrigatoriosPreenchidos || !showInputs) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -320,18 +320,9 @@ export default function RequestDelivery() {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [
-    largura,
-    startAddress,
-    endAddress,
-    comprimento,
-    peso,
-    altura,
-    showInputs,
-    isEditing,
-  ]);
+  }, [valorEstimado, showInputs, isEditing]);
 
-  if (isBottomSheetActive && startAddress && endAddress) {
+  if (isBottomSheetActive && (supermarketAddress || endAddress)) {
     Keyboard.dismiss();
   }
 
@@ -349,52 +340,35 @@ export default function RequestDelivery() {
           <View style={styles.inputColumn}>
             <TextInput
               style={styles.input}
-              placeholder="Endereço de retirada (ex: Rua A, 123)"
-              value={startAddress}
-              onChangeText={setStartAddress}
+              placeholder="Supermercado (opcional)"
+              value={supermarketAddress}
+              onChangeText={setSupermarketAddress}
               clearButtonMode="while-editing"
               returnKeyType="next"
             />
             <TextInput
               style={styles.input}
-              placeholder="Endereço de entrega (ex: Av. B, 456)"
+              placeholder="Endereço de entrega (obrigatório)"
               value={endAddress}
               onChangeText={setEndAddress}
               clearButtonMode="while-editing"
               returnKeyType="done"
             />
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, { flex: 1, marginRight: 5 }]}
-                placeholder="Peso (kg)"
-                value={peso}
-                onChangeText={setPeso}
-                keyboardType="numeric"
-              />
-              <TextInput
-                style={[styles.input, { flex: 1, marginLeft: 5 }]}
-                placeholder="Comprimento (cm)"
-                value={comprimento}
-                onChangeText={setComprimento}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, { flex: 1, marginRight: 5 }]}
-                placeholder="Altura (cm)"
-                value={altura}
-                onChangeText={setAltura}
-                keyboardType="numeric"
-              />
-              <TextInput
-                style={[styles.input, { flex: 1, marginLeft: 5 }]}
-                placeholder="Largura (cm)"
-                value={largura}
-                onChangeText={setLargura}
-                keyboardType="numeric"
-              />
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Itens e quantidades (ex: 2x Leite, 1x Pão)"
+              value={observacoes}
+              onChangeText={setObservacoes}
+              multiline
+              numberOfLines={3}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Valor estimado das compras (R$)"
+              value={valorEstimado}
+              onChangeText={setValorEstimado}
+              keyboardType="numeric"
+            />
             {isEditing && (
               <TouchableOpacity
                 style={styles.saveButton}
@@ -449,6 +423,7 @@ export default function RequestDelivery() {
               strokeWidth={4}
             />
           )}
+          
         </MapView>
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity
@@ -459,7 +434,7 @@ export default function RequestDelivery() {
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
           </TouchableOpacity>
         )}
-        {!isBottomSheetActive && !startAddress && !endAddress && (
+        {!isBottomSheetActive && !supermarketAddress && !endAddress && (
           <TouchableOpacity
             style={styles.comeBack}
             onPress={() => router.back()}
@@ -483,48 +458,75 @@ export default function RequestDelivery() {
           {distance !== null && price !== null && (
             <>
               <View style={styles.headerRow}>
-                <Text style={styles.bottomSheetTitle}>Detalhes da Entrega</Text>
+                <Text style={styles.bottomSheetTitle}>Detalhes da Compra</Text>
                 <TouchableOpacity onPress={handleEdit}>
                   <MaterialIcons name="edit" size={24} color="#000" />
                 </TouchableOpacity>
               </View>
 
+              {supermarketAddress ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Supermercado:</Text>
+                  <Text style={styles.detailValue}>{supermarketAddress}</Text>
+                </View>
+              ) : (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Supermercado:</Text>
+                  <Text style={styles.detailValue}>Sem preferência</Text>
+                </View>
+              )}
+
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Origem:</Text>
-                <Text style={styles.detailValue}>{startAddress}</Text>
+                <Text style={styles.detailLabel}>Endereço de entrega:</Text>
+                <Text style={styles.detailValue}>{endAddress}</Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Destino:</Text>
-                <Text style={styles.detailValue}>{endAddress}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Peso:</Text>
-                <Text style={styles.detailValue}>{peso} kg</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Dimensões:</Text>
+                <Text style={styles.detailLabel}>Itens:</Text>
                 <Text style={styles.detailValue}>
-                  {comprimento} x {altura} x {largura} cm
+                  {observacoes || "Não especificado"}
                 </Text>
               </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Valor estimado:</Text>
+                <Text style={styles.detailValue}>
+                  R${" "}
+                  {parseFloat(valorEstimado)
+                    ? parseFloat(valorEstimado).toFixed(2)
+                    : "0,00"}
+                </Text>
+              </View>
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Distância:</Text>
                 <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
               </View>
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Tempo Estimado:</Text>
                 <Text style={styles.detailValue}>
                   {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
                 </Text>
               </View>
+
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Preço:</Text>
+                <Text style={styles.detailLabel}>Preço total:</Text>
                 <Text style={[styles.detailValue, styles.priceText]}>
                   R$ {price.toFixed(2)}
                 </Text>
               </View>
-
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>
+                  Valores:
+                </Text>
+                <Text style={[styles.detailValue]}>
+                  Valor da corrida: R${" "}
+                  {(price - parseFloat(valorEstimado || "0")).toFixed(2)}
+                  {"\n"} Valor da compra: R${" "}
+                  {parseFloat(valorEstimado || "0").toFixed(2)}
+                </Text>
+              </View>
               <View style={styles.pickerContainer}>
                 <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
                 <View style={styles.picker}>
@@ -555,7 +557,7 @@ export default function RequestDelivery() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.solicitarButtonText}>
-                    Solicitar Entrega
+                    Solicitar Compra
                   </Text>
                 )}
               </TouchableOpacity>
@@ -566,214 +568,3 @@ export default function RequestDelivery() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0f0f0",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "row",
-    paddingHorizontal: 15,
-    paddingTop: 15,
-    backgroundColor: "#f0f0f0",
-  },
-  iconColumn: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  line: {
-    width: 2,
-    height: 30,
-    backgroundColor: "#000",
-    marginVertical: 4,
-  },
-  inputColumn: {
-    flexDirection: "column",
-    justifyContent: "center",
-    flex: 1,
-  },
-  input: {
-    width: "100%",
-    height: 45,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 12,
-    fontSize: 16,
-    backgroundColor: "#fff",
-    fontFamily: "Righteous",
-    color: "#000",
-  },
-  loadingContainer: {
-    textAlign: "center",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    flexDirection: "column",
-    marginBottom: 12,
-  },
-  loadingText: {
-    marginLeft: 10,
-    fontSize: 16,
-    color: "#000",
-    fontFamily: "Righteous",
-  },
-  mapContainer: {
-    flex: 1,
-    borderTopWidth: 1,
-    borderColor: "#ccc",
-  },
-  map: {
-    flex: 1,
-  },
-  bottomSheetBackground: {
-    backgroundColor: "#f0f0f0",
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderLeftColor: "#ccc",
-    borderRightColor: "#ccc",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderStartEndRadius: 0,
-    borderEndEndRadius: 0,
-    borderTopColor: "#ccc",
-  },
-  handleIndicator: {
-    backgroundColor: "#aaa",
-    width: 40,
-    height: 5,
-    alignSelf: "center",
-    marginVertical: 5,
-    borderRadius: 3,
-  },
-  bottomSheetContent: {
-    padding: 20,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  bottomSheetTitle: {
-    fontSize: 22,
-    color: "#000",
-    fontFamily: "Righteous",
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-  },
-  detailLabel: {
-    fontSize: 16,
-    color: "#000",
-    fontFamily: "Righteous",
-  },
-  detailValue: {
-    fontSize: 16,
-    color: "#000",
-    textAlign: "right",
-    flexShrink: 1,
-    marginLeft: 10,
-    fontFamily: "Righteous",
-  },
-  priceText: {
-    color: "#2e7d32",
-    fontFamily: "Righteous",
-  },
-  pickerContainer: {
-    marginTop: 15,
-    marginBottom: 20,
-  },
-  pickerLabel: {
-    fontSize: 16,
-    color: "#000",
-    marginBottom: 8,
-    fontFamily: "Righteous",
-  },
-  picker: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  solicitarButton: {
-    backgroundColor: "#000",
-    padding: 15,
-    marginBottom: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
-  solicitarButtonText: {
-    color: "#f0f0f0",
-    fontSize: 18,
-    fontFamily: "Righteous",
-  },
-  floatingButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#000",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  floatingButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Righteous",
-    marginRight: 8,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  saveButton: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 5,
-    marginBottom: 10,
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Righteous",
-  },
-  comeBack: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    backgroundColor: "#000",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-  },
-});

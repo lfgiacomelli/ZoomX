@@ -5,11 +5,11 @@
     "scheme": "zoomx",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "@assets/logo.png",
+    "icon": "@images/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "notification": {
-      "icon": "@assets/notification_icon.png",
+      "icon": "@images/notification_icon.png",
       "color": "#000000"
     },
     "splash": {
@@ -22,7 +22,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "@assets/logo.png",
+        "foregroundImage": "@images/logo.png",
         "backgroundColor": "#000"
       },
       "package": "com.smithgg.zoomx",
@@ -32,7 +32,7 @@
       ]
     },
     "web": {
-      "favicon": "@assets/logo.png"
+      "favicon": "@images/logo.png"
     },
     "plugins": [
       "expo-router",

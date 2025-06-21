@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, StatusBar, Switch, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
+import { View, Text, StatusBar, Switch, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
 import { useState, useEffect } from "react";
+import styles from "./styles";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -9,7 +10,7 @@ import * as Notifications from "expo-notifications";
 
 import Header from "@components/header";
 import Tab from "@components/Tab";
-import useRighteousFont from "@hooks/Font";
+import useRighteousFont from "@hooks/Font/Righteous";
 
 import { FontAwesome6, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
 
@@ -129,90 +130,3 @@ export default function SettingsScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#f7f7f7",
-    padding: 20,
-    flexGrow: 1,
-  },
-  title: {
-    fontFamily: "Righteous",
-    fontSize: 24,
-    marginBottom: 24,
-    color: "#000",
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  whiteButton: {
-    height: 40,
-    width: 172,
-    backgroundColor: "#fff",
-    flex: 1,
-    marginHorizontal: 6,
-    borderRadius: 4,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    elevation: 3,
-    padding: 8,
-  },
-  whiteButtonText: {
-    fontFamily: "Righteous",
-    fontSize: 14,
-    color: "#000",
-  },
-  switchContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    elevation: 2,
-  },
-  switchText: {
-    fontFamily: "Righteous",
-    fontSize: 24,
-    color: "#000",
-    marginLeft: 8,
-  },
-  deactivateButton: {
-    height: 45,
-    backgroundColor: "#007BFF",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 4,
-    marginTop: 20,
-    gap: 8,
-    elevation: 3,
-  },
-  deactivateText: {
-    fontFamily: "Righteous",
-    fontSize: 20,
-    color: "#fff",
-  },
-  logoutButton: {
-    backgroundColor: "#DB2E05",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 4,
-    marginTop: 12,
-    gap: 8,
-    elevation: 3,
-    height: 45,
-  },
-  logoutText: {
-    fontFamily: "Righteous",
-    fontSize: 20,
-    color: "#fff",
-  },
-});
