@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "notification": {
-      "icon": "@images/notification_icon.png",
+      "icon": "@images/logo.png",
       "color": "#000000"
     },
     "splash": {

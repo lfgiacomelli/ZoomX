@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 import Tab from "@components/Tab";
 
 

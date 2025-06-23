@@ -100,29 +100,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
   },
-  dropdown: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 16,
-    width: "100%",
-    elevation: 2,
-  },
-
-  textContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-
-  dropdownText: {
-    fontFamily: "Righteous",
-    fontSize: 14,
-    color: "#000",
-  },
-
-  icon: {
+   icon: {
     width: 40,
     height: 40,
     marginBottom: 4,

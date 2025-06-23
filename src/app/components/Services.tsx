@@ -38,9 +38,23 @@ export default function Services() {
     },
   ];
   const hora = new Date().getHours();
-  if (hora < 8 || hora > 20) {
-    services.splice(2, 1);
-    services.splice(2, 1);
+  const dia = new Date().getDay(); 
+
+  const diasDaSemana = [
+    "Domingo",
+    "Segunda-feira",
+    "Terça-feira",
+    "Quarta-feira",
+    "Quinta-feira",
+    "Sexta-feira",
+    "Sábado"
+  ];
+
+  if (dia === 0 || dia === 6 || hora < 6 || hora > 22) {
+    if (services.length > 3) {
+      services.splice(3, 1); 
+      services.splice(2, 1); 
+    }
   }
 
   return (

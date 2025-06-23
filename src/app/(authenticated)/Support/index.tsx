@@ -3,7 +3,7 @@ import styles from "./styles";
 
 import LottieView from "lottie-react-native";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 import Tab from "@components/Tab";
 
 import supportAnimation from "@animations/support_animation.json";

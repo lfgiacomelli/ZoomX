@@ -8,11 +8,11 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 
-import { FontAwesome6, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
+import { FontAwesome6, MaterialCommunityIcons, Entypo, EvilIcons } from "@expo/vector-icons";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -71,14 +71,7 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("id");
-    await AsyncStorage.removeItem("nome");
-    await AsyncStorage.removeItem("email");
-    await AsyncStorage.removeItem("telefone");
-    await AsyncStorage.removeItem("criado_em");
-    await AsyncStorage.removeItem("startAddress");
-    console.log("Usuário deslogado com sucesso");
+    await AsyncStorage.clear();
     router.replace("/login");
   };
 
@@ -92,7 +85,7 @@ export default function SettingsScreen() {
         <Text style={styles.title}>Configurações do APP</Text>
 
         <View style={styles.row}>
-          <TouchableOpacity style={styles.whiteButton} onPress={() =>router.push('/Support')}>
+          <TouchableOpacity style={styles.whiteButton} onPress={() => router.push('/Support')}>
             <FontAwesome6 name="users-gear" size={24} color="black" />
             <Text style={styles.whiteButtonText}>Suporte</Text>
           </TouchableOpacity>
@@ -121,6 +114,15 @@ export default function SettingsScreen() {
             thumbColor="#fff"
           />
         </View>
+        <TouchableOpacity
+          style={styles.switchContainer}
+          onPress={() => router.push("/AboutApp")}
+          accessibilityRole="button"
+          accessibilityLabel="Informações sobre o aplicativo"
+        >
+          <Text style={styles.switchText}>Veja sobre o APP</Text>
+          <EvilIcons name="chevron-right" size={30} color="#000" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <MaterialCommunityIcons name="logout" size={30} color="#fff" />
           <Text style={styles.logoutText}>Encerrar Sessão</Text>

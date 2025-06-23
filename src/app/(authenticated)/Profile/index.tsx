@@ -24,7 +24,7 @@ import {
   Ionicons,
 } from "@expo/vector-icons";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 
@@ -197,6 +197,7 @@ export default function Profile() {
         "email",
         "telefone",
         "criado_em",
+        "cpf",
         "startAddress",
         "userPhoto",
       ];
@@ -246,14 +247,12 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Usuário desde */}
         <View style={styles.userSinceContainer}>
           <Text style={styles.userSince}>
             Você é usuário desde: {userData.since}
           </Text>
         </View>
 
-        {/* Botões Config e Contato */}
         <View style={styles.row}>
           <TouchableOpacity
             style={styles.boxButton}
@@ -276,20 +275,6 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
-        {/* Link para Sobre o APP */}
-        <TouchableOpacity
-          style={styles.dropdown}
-          onPress={() => router.push("/AboutApp")}
-          accessibilityRole="button"
-          accessibilityLabel="Informações sobre o aplicativo"
-        >
-          <View style={styles.textContainer}>
-            <Text style={styles.dropdownText}>Veja sobre o APP</Text>
-          </View>
-          <EvilIcons name="chevron-down" size={20} color="black" />
-        </TouchableOpacity>
-
-        {/* Seção viagens, diretrizes, avaliações e infos */}
         <View style={styles.row}>
           <TouchableOpacity
             style={styles.boxButton}
@@ -349,8 +334,9 @@ export default function Profile() {
             <Text style={styles.iconText}>Informações</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Botão logout */}
+        <TouchableOpacity onPress={() => router.push("/MyPaymentsApproveds")}>
+          <Text>Meus pagamentos</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => setShowLogoutModal(true)}

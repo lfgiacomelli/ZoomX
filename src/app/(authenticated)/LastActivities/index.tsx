@@ -5,7 +5,7 @@ import styles from "./styles";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 

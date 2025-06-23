@@ -1,7 +1,7 @@
 import { View, Text, ScrollView } from 'react-native';
 import styles from './styles';
 
-import Header from '@components/header';
+import Header from '@components/Header';
 import Tab from '@components/Tab';
 import useRighteousFont from '@hooks/Font/Righteous';
 import useInterFont from '@hooks/Font/Inter';

@@ -9,7 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 
 import { useRouter } from "expo-router";
 

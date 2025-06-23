@@ -85,6 +85,40 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#fff",
   },
+
+  dropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 16,
+    width: "100%",
+    elevation: 2,
+  },
+
+  textContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  dropdownText: {
+    fontFamily: "Righteous",
+    fontSize: 14,
+    color: "#000",
+  },
+
+  icon: {
+    width: 40,
+    height: 40,
+    marginBottom: 4,
+  },
+  iconText: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#000",
+    textAlign: "center",
+  },
 });
 
 export default styles;

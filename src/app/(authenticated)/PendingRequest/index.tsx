@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import LottieView from "lottie-react-native";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Notifications from "expo-notifications";

@@ -7,7 +7,7 @@ import styles from "./styles";
 import LottieView from "lottie-react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -235,57 +235,104 @@ export default function RequestTravel() {
     }
 
     try {
-      await AsyncStorage.setItem("startAddress", startAddress);
-      console.log("Endereço de partida salvo:", startAddress);
-    } catch (error) {
-      console.error("Erro ao salvar endereço:", error);
-    }
-
-    try {
       const userId = await AsyncStorage.getItem("id");
       const token = await AsyncStorage.getItem("token");
+      const nome = await AsyncStorage.getItem("nome");
+      const cpf = await AsyncStorage.getItem("cpf");
+      const email = await AsyncStorage.getItem("email");
 
-      if (!userId || !token) {
+      if (!userId || !token || !nome || !email || !cpf) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
 
       setIsLoading(true);
 
-      const response = await fetch(
-        "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            sol_origem: startAddress,
-            sol_destino: endAddress,
-            sol_distancia: Number(distance.toFixed(2)),
-            sol_valor: Number(price.toFixed(2)),
-            sol_servico: "Mototáxi",
-            usu_codigo: Number(userId),
-            sol_data: new Date().toISOString(),
-            sol_formapagamento: formaPagamento,
-            sol_observacoes: "Pedido via App",
-          }),
+      if (formaPagamento?.toLowerCase() === "pix") {
+        const pagamentoResponse = await fetch(
+          "https://backend-turma-a-2025.onrender.com/api/payments/create-payment",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              sol_valor: Number(price.toFixed(2)),
+              sol_descricao: "Solicitação de corrida pelo Aplicativo ZoomX ",
+              sol_servico: "Mototáxi",
+              usu_codigo: Number(userId),
+              usu_nome: nome,
+              usu_cpf: cpf,
+              usu_email: email,
+            }),
+          }
+        );
+
+        const pagamentoData = await pagamentoResponse.json();
+
+        if (!pagamentoResponse.ok) {
+          throw new Error(pagamentoData.error || "Erro ao gerar pagamento.");
         }
-      );
-      const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao criar solicitação");
+        router.push({
+          pathname: "/PaymentPending",
+          params: {
+            paymentId: pagamentoData.id,
+            qrCode: pagamentoData.qr_code,
+            qrCodeBase64: pagamentoData.qr_code_base64,
+            startAddress,
+            endAddress,
+            distance: Number(distance.toFixed(2)),
+            price: Number(price.toFixed(2)),
+            formaPagamento,
+            userId: Number(userId),
+            nome,
+            cpf,
+            email,
+            shouldCreateSolicitacao: "true"
+          },
+        });
+
+      } else {
+        const solicitacaoResponse = await fetch(
+          "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              sol_origem: startAddress,
+              sol_destino: endAddress,
+              sol_distancia: Number(distance.toFixed(2)),
+              sol_valor: Number(price.toFixed(2)),
+              sol_servico: "Mototáxi",
+              usu_codigo: Number(userId),
+              sol_data: new Date().toISOString(),
+              sol_formapagamento: formaPagamento,
+              sol_observacoes: "Pedido via App",
+            }),
+          }
+        );
+
+        const solicitacaoData = await solicitacaoResponse.json();
+
+        if (!solicitacaoResponse.ok) {
+          throw new Error(solicitacaoData.message || "Erro ao criar solicitação.");
+        }
+
+        router.push({
+          pathname: "/PendingRequest",
+          params: {
+            solicitacaoId: solicitacaoData.sol_codigo,
+          },
+        });
       }
-
-      router.push({
-        pathname: "/PendingRequest",
-        params: { solicitacaoId: data.sol_codigo },
-      });
     } catch (error) {
-      console.error("Erro ao criar solicitação:", error);
-      Alert.alert("Erro", "Não foi possível criar a solicitação.");
+      console.error("Erro ao solicitar corrida:", error);
+      Alert.alert("Erro", "Não foi possível processar a solicitação.");
     } finally {
       setIsLoading(false);
     }
@@ -308,19 +355,6 @@ export default function RequestTravel() {
       subscription.remove();
     };
   }, []);
-  const resetForm = () => {
-    setStartAddress("");
-    setEndAddress("");
-    setRouteCoords([]);
-    setMarkers([]);
-    setDistance(null);
-    setPrice(null);
-    setRegion(initialRegion);
-    bottomSheetRef.current?.close();
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(initialRegion);
-    }
-  };
 
   useEffect(() => {
     if (isBottomSheetActive && startAddress && endAddress) {

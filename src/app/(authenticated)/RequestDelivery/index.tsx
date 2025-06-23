@@ -8,7 +8,7 @@ import styles from "./styles";
 
 import LottieView from "lottie-react-native";
 
-import Header from "@components/header";
+import Header from "@components/Header";
 
 import { useRouter } from "expo-router";
 

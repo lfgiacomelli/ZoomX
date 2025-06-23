@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import styles from "./styles";
 import { useLocalSearchParams } from "expo-router";
-import Header from "@components/header";
+import Header from "@components/Header";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import Tab from "@components/Tab";

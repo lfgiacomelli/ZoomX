@@ -13,7 +13,7 @@ import styles from './styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
-import Header from "@components/header";
+import Header from "@components/Header";
 import Tab from '@components/Tab';
 
 import reviewsAnimation from '@animations/reviews_animation.json';

@@ -60,12 +60,12 @@ export default function Login() {
         await AsyncStorage.setItem("nome", data.usuario.nome);
         await AsyncStorage.setItem("email", data.usuario.email);
         await AsyncStorage.setItem("telefone", data.usuario.telefone);
+        await AsyncStorage.setItem("cpf", data.usuario.cpf);
         await AsyncStorage.setItem(
           "criado_em",
           data.usuario.criado_em.toString()
         );
       }
-
       router.replace("/(authenticated)/Home");
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);

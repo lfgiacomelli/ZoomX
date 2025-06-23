@@ -35,6 +35,7 @@ export default function SignIn() {
     usu_nome: "",
     usu_email: "",
     usu_telefone: "",
+    usu_cpf: "",
     usu_senha: "",
   });
 
@@ -104,6 +105,7 @@ export default function SignIn() {
             usu_ativo: true,
             usu_email: form.usu_email,
             usu_senha: form.usu_senha,
+            usu_cpf: form.usu_cpf.replace(/\D/g, ""),
             usu_created_at: new Date().toISOString(),
             usu_updated_at: new Date().toISOString(),
           }),
@@ -131,6 +133,7 @@ export default function SignIn() {
         await AsyncStorage.setItem("nome", data.usuario.nome);
         await AsyncStorage.setItem("email", data.usuario.email);
         await AsyncStorage.setItem("telefone", data.usuario.telefone);
+        await AsyncStorage.setItem("cpf", data.usuario.cpf);
         await AsyncStorage.setItem(
           "criado_em",
           data.usuario.criado_em.toString()
@@ -252,6 +255,18 @@ export default function SignIn() {
                   handleChange("usu_telefone", formatarTelefone(text))
                 }
                 style={styles.input}
+              />
+            </View>
+            <View style={styles.inputWrapper}>
+              <Feather name="file-text" size={20} color="#fff" />
+              <TextInput
+                placeholder="Insira seu CPF (apenas números)"
+                placeholderTextColor="#aaa"
+                keyboardType="numeric"
+                maxLength={11}
+                onChangeText={(text) => handleChange("usu_cpf", text)}
+                style={styles.input}
+                value={form.usu_cpf}
               />
             </View>
 
