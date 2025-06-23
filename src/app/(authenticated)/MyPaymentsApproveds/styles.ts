@@ -106,7 +106,6 @@ export default StyleSheet.create({
     amountText: {
         fontFamily: "Righteous",
         fontSize: 16,
-        fontWeight: "bold",
         color: "#000",
     },
     refreshControl: {

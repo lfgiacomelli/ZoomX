@@ -63,7 +63,7 @@ export default function LastActivity() {
       }
 
       if (!response.ok) {
-        throw new Error("Erro ao carregar dados da última viagem");
+        return;
       }
 
       const json = await response.json();

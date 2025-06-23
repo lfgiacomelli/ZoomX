@@ -3,6 +3,8 @@ import React from "react";
 import { useRouter } from "expo-router";
 export default function Services() {
   const router = useRouter();
+  const hora = new Date().getHours();
+  const isNight = hora < 6 || hora >= 18; 
   const services = [
     {
       id: 1,
@@ -36,30 +38,17 @@ export default function Services() {
       action: () => router.push("/RequestTravel"),
       color: "#EB5757",
     },
-  ];
-  const hora = new Date().getHours();
-  const dia = new Date().getDay(); 
-
-  const diasDaSemana = [
-    "Domingo",
-    "Segunda-feira",
-    "Terça-feira",
-    "Quarta-feira",
-    "Quinta-feira",
-    "Sexta-feira",
-    "Sábado"
-  ];
-
-  if (dia === 0 || dia === 6 || hora < 6 || hora > 22) {
-    if (services.length > 3) {
-      services.splice(3, 1); 
-      services.splice(2, 1); 
+  ].filter((service) => {
+    if (isNight && (service.title === "Compras" || service.title === "Urgências")) {
+      return false;
     }
-  }
+    return true;
+  });
+
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>O que você precisa?</Text>
+      <Text style={styles.sectionTitle}>O que você precisa hoje?</Text>
       <View style={styles.servicesGrid}>
         {services.map((service) => (
           <TouchableOpacity

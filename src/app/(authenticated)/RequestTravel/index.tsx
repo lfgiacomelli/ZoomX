@@ -162,7 +162,7 @@ export default function RequestTravel() {
       Alert.alert("Erro", "Os endereços de partida e destino são iguais.");
       return;
     }
-
+    Keyboard.dismiss();
     setIsLoading(true);
     setRouteCoords([]);
     setMarkers([]);
@@ -174,6 +174,17 @@ export default function RequestTravel() {
         getCoordsFromAddress(startAddress),
         getCoordsFromAddress(endAddress),
       ]);
+
+      if (!origin) {
+        Alert.alert("Endereço não encontrado", `O endereço de origem "${startAddress}" não foi encontrado.`);
+        setIsLoading(false);
+        return;
+      }
+      if (!destination) {
+        Alert.alert("Endereço não encontrado", `O endereço de destino "${endAddress}" não foi encontrado.`);
+        setIsLoading(false);
+        return;
+      }
 
       const distanceBetween = calculateHaversineDistance(origin, destination);
 
@@ -188,10 +199,7 @@ export default function RequestTravel() {
 
       setMarkers([origin, destination]);
 
-      const { coords, distanceKm } = await getRouteFromOSRM(
-        origin,
-        destination
-      );
+      const { coords, distanceKm } = await getRouteFromOSRM(origin, destination);
       const tempo = distanceKm * 2;
       const hora = new Date().getHours();
       let calculatedPrice = 0;
@@ -245,6 +253,8 @@ export default function RequestTravel() {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
+      AsyncStorage.setItem("startAddress", startAddress);
+      console.log("Endereço de partida salvo:", startAddress);
 
       setIsLoading(true);
 
@@ -358,7 +368,6 @@ export default function RequestTravel() {
 
   useEffect(() => {
     if (isBottomSheetActive && startAddress && endAddress) {
-      Keyboard.dismiss();
     }
   }, [isBottomSheetActive, startAddress, endAddress]);
 
@@ -448,6 +457,7 @@ export default function RequestTravel() {
             onChangeText={setStartAddress}
             clearButtonMode="while-editing"
             returnKeyType="next"
+            autoFocus
           />
           {suggestedAddress && startAddress !== suggestedAddress && (
             <TouchableOpacity

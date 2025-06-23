@@ -22,6 +22,9 @@
       "@fonts/*": [
         "src/app/assets/fonts/*"
       ],
+      "@utils/*": [
+        "src/app/utils/*"
+      ],
     }
   }
 }

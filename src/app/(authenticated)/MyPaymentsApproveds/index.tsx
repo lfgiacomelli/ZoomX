@@ -47,9 +47,8 @@ export default function MyPaymentsApproveds() {
       }
 
       const data: Payment[] = await response.json();
-      // Filtrar apenas pagamentos aprovados se necessário
-      const approvedPayments = data.filter(payment => payment.pix_status === "approved");
-      setPayments(approvedPayments);
+      setPayments(data);
+
     } catch (error: any) {
       console.error("Erro ao buscar pagamentos:", error.message);
       setPayments([]);
@@ -58,6 +57,7 @@ export default function MyPaymentsApproveds() {
       setRefreshing(false);
     }
   };
+
 
   const handleRefresh = () => {
     setRefreshing(true);

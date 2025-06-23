@@ -12,11 +12,12 @@ import {
     BackHandler,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 
 import Header from "@components/Header";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function PaymentPending() {
     const params = useLocalSearchParams();
@@ -37,11 +38,12 @@ export default function PaymentPending() {
     useEffect(() => {
         const backAction = () => {
             if (status === "pending") {
-                Alert.alert(
-                    "Atenção",
-                    "Você não pode sair desta tela até que o pagamento seja concluído ou o tempo expire.",
-                    [{ text: "OK" }]
+                ToastAndroid.showWithGravity(
+                    "Finalize o pagamento ou aguarde.",
+                    ToastAndroid.SHORT,
+                    ToastAndroid.CENTER
                 );
+
                 return true;
             }
             return false;
@@ -112,8 +114,8 @@ export default function PaymentPending() {
                         },
                     }
                 );
-                console.log("ID do pagamento", paymentId);
                 const data = await response.json();
+                console.log("ID do pagamento:", paymentId);
 
                 if (!response.ok) {
                     console.error("Erro ao buscar status:", data);
@@ -129,7 +131,7 @@ export default function PaymentPending() {
                 if (data.status === "approved") {
                     clearInterval(interval);
                     clearTimeout(timeout);
-                    
+
                     try {
                         if (params.shouldCreateSolicitacao === "true") {
                             const newSolicitacaoId = await createSolicitacaoAfterPayment();
@@ -139,7 +141,7 @@ export default function PaymentPending() {
                         }
                     } catch (error) {
                         Alert.alert(
-                            "Erro", 
+                            "Erro",
                             "Pagamento aprovado, mas não foi possível criar a solicitação.",
                             [{ text: "OK", onPress: () => router.back() }]
                         );
@@ -148,7 +150,7 @@ export default function PaymentPending() {
                     clearInterval(interval);
                     clearTimeout(timeout);
                     Alert.alert(
-                        "Pagamento rejeitado", 
+                        "Pagamento rejeitado",
                         "Tente novamente com outro método.",
                         [{ text: "OK", onPress: () => router.back() }]
                     );

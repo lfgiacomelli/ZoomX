@@ -224,7 +224,6 @@ export default function Profile() {
       <Header />
 
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Header Perfil e Foto */}
         <View style={styles.profileHeader}>
           <TouchableOpacity
             onPress={() => setShowPhotoModal(true)}
@@ -334,9 +333,6 @@ export default function Profile() {
             <Text style={styles.iconText}>Informações</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => router.push("/MyPaymentsApproveds")}>
-          <Text>Meus pagamentos</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => setShowLogoutModal(true)}
@@ -350,7 +346,6 @@ export default function Profile() {
 
       <Tab />
 
-      {/* Modal Logout */}
       <Modal
         animationType="fade"
         transparent
@@ -392,7 +387,6 @@ export default function Profile() {
         </View>
       </Modal>
 
-      {/* Modal Foto */}
       <Modal
         animationType="slide"
         transparent

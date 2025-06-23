@@ -19,6 +19,7 @@ import Help from "@components/Help";
 import PendingTravel from "@components/PendingTravel";
 import AvaliarViagem from "@components/AvaliarViagem";
 import AnunciosCarousel from "@components/Anuncios";
+import StoriesView from "@components/StoriesView";
 
 import useRighteousFont from "@hooks/Font/Righteous";
 
@@ -91,6 +92,12 @@ export default function Home() {
         };
     }, [getFirstNameFromStorage, startWatchingLocation, handleNotificationResponse, checkScreenReader]);
 
+    const [photo, setPhoto] = useState<string | null>(null);
+
+    useEffect(() => {
+        AsyncStorage.getItem("userPhoto").then(setPhoto);
+    }, []);
+
     if (!fontLoaded) {
         return (
             <View style={styles.loadingContainer}>
@@ -117,14 +124,14 @@ export default function Home() {
                 <View style={styles.headerSection}>
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                         <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
-                        <TouchableOpacity
-                            style={styles.profileButton}
-                            onPress={() => router.push("/profile")}
-                            accessibilityLabel="Perfil"
-                            accessibilityHint="Clique para acessar seu perfil"
-                        >
-                            <Ionicons name="person-circle-outline" size={30} color="#fff" />
+                        <TouchableOpacity style={styles.profileButton} onPress={() => router.push("/Profile")}>
+                            {photo ? (
+                                <Image source={{ uri: photo }} style={styles.profileImage} />
+                            ) : (
+                                <Ionicons name="person-circle-outline" size={40} color="#000" />
+                            )}
                         </TouchableOpacity>
+
                     </View>
 
                     {isMobileData && (
@@ -135,7 +142,7 @@ export default function Home() {
                 <Services />
                 <AvaliarViagem />
                 <PendingTravel />
-                <Benefits />
+                <StoriesView />
                 <LastActivity />
 
                 {location && (
