@@ -115,7 +115,6 @@ export default function PaymentPending() {
                     }
                 );
                 const data = await response.json();
-                console.log("ID do pagamento:", paymentId);
 
                 if (!response.ok) {
                     console.error("Erro ao buscar status:", data);
@@ -202,14 +201,15 @@ export default function PaymentPending() {
     const handleCopyPix = useCallback(async () => {
         if (!pixCopy) return;
 
+        if (Platform.OS !== "ios" && Platform.OS !== "android") {
+            Alert.alert("Aviso", "Copiar código PIX está disponível apenas em dispositivos móveis.");
+            return;
+        }
+
         try {
-            if (Platform.OS === "web") {
-                if (navigator.clipboard) {
-                    await navigator.clipboard.writeText(pixCopy);
-                    alert("Código PIX copiado para a área de transferência!");
-                } else {
-                    prompt("Copie o código PIX abaixo:", pixCopy);
-                }
+            if (Platform.OS === "ios") {
+                await Clipboard.setStringAsync(pixCopy);
+                Alert.alert("Sucesso", "Código PIX copiado para a área de transferência!");
             } else {
                 await Clipboard.setStringAsync(pixCopy);
                 ToastAndroid.show("Código PIX copiado!", ToastAndroid.SHORT);

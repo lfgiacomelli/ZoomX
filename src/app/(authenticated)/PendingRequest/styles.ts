@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     fontFamily: "Righteous",
     fontSize: 16,
     color: "#fff",
+    textAlign: "center",
   },
   lottie: {
     width: 230,

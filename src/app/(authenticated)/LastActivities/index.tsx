@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager, FlatList } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager, SectionList } from "react-native";
 import { useEffect, useState, useRef } from "react";
 import LottieView from "lottie-react-native";
 import styles from "./styles";
@@ -15,33 +15,70 @@ import { router } from "expo-router";
 import loadingAnimation from "@animations/loading_animation.json";
 import errorAnimation from "@animations/error_animation.json";
 
+interface Atividade {
+  via_codigo: string;
+  via_funcionarioId: string;
+  via_solicitacaoId?: string;
+  via_usuarioId?: string;
+  via_origem: string;
+  via_destino: string;
+  via_formapagamento?: string;
+  via_observacoes?: string;
+  via_atendenteCodigo?: string;
+  via_servico: string;
+  via_status: "Pendente" | "Aprovada" | "Rejeitada";
+  via_data: string | Date;
+  via_valor: number;
+}
+
+interface Section {
+  title: string;
+  data: Atividade[];
+}
 
 export default function Travels() {
   const fontLoaded = useRighteousFont();
-  interface Atividade {
-    via_codigo: string;
-    via_funcionarioId: string;
-    via_solicitacaoId?: string;
-    via_usuarioId?: string;
-    via_origem: string;
-    via_destino: string;
-    via_formapagamento?: string;
-    via_observacoes?: string;
-    via_atendenteCodigo?: string;
-    via_servico: string;
-    via_status: "Pendente" | "Aprovada" | "Rejeitada";
-    via_data: string | Date;
-    via_valor: number;
-  }
   const animationRef = useRef(null);
   const [data, setData] = useState<Atividade[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<{sectionIndex: number, itemIndex: number} | null>(null);
   const baseURL = "https://backend-turma-a-2025.onrender.com";
+
   const capitalizeFirstLetter = (text: string) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const groupByDate = (activities: Atividade[]): Section[] => {
+    const grouped: {[key: string]: Atividade[]} = {};
+    
+    activities.forEach(activity => {
+      const date = new Date(activity.via_data);
+      const dateKey = date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      
+      grouped[dateKey].push(activity);
+    });
+    
+    // Sort dates in descending order (newest first)
+    const sortedDates = Object.keys(grouped).sort((a, b) => {
+      return new Date(b.split('/').reverse().join('-')).getTime() - 
+             new Date(a.split('/').reverse().join('-')).getTime();
+    });
+    
+    return sortedDates.map(date => ({
+      title: date,
+      data: grouped[date]
+    }));
   };
 
   const fetchData = async () => {
@@ -64,6 +101,7 @@ export default function Travels() {
       }
       const json = await response.json();
       setData(json);
+      setSections(groupByDate(json));
     } catch (err: any) {
       console.error("Erro ao buscar dados:", err);
       setError(err.message);
@@ -76,39 +114,49 @@ export default function Travels() {
     fetchData();
   }, []);
 
-  const toggleExpand = (index: number) => {
+  const toggleExpand = (sectionIndex: number, itemIndex: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedIndex((prevIndex) => (prevIndex === index ? null : index));
+    setExpandedIndex(prev => 
+      prev?.sectionIndex === sectionIndex && prev?.itemIndex === itemIndex 
+        ? null 
+        : { sectionIndex, itemIndex }
+    );
   };
 
   if (!fontLoaded) return null;
+
+  const renderSectionHeader = ({ section }: { section: Section }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{section.title}</Text>
+    </View>
+  );
 
   return (
     <>
       <Header />
       <View style={styles.wrapper}>
-        <FlatList
+        <SectionList
           contentContainerStyle={styles.container}
-          data={data}
-          keyExtractor={(_, index) => index.toString()}
+          sections={sections}
+          keyExtractor={(item, index) => `${item.via_codigo}_${index}_${item.via_data}`}
+
           ListHeaderComponent={<Text style={styles.title}>Últimas atividades</Text>}
           showsVerticalScrollIndicator={false}
+          renderSectionHeader={renderSectionHeader}
           ListEmptyComponent={
             loading && !error ? (
-              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <View style={styles.loadingContainer}>
                 <LottieView
                   ref={animationRef}
                   source={loadingAnimation}
                   autoPlay
                   loop
-                  style={{ width: 220, height: 220 }}
+                  style={styles.loadingAnimation}
                 />
-                <Text style={{ fontFamily: "Righteous", fontSize: 18, color: "#000" }}>
-                  Carregando atividades...
-                </Text>
+                <Text style={styles.loadingText}>Carregando atividades...</Text>
               </View>
             ) : error ? (
-              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <View style={styles.errorContainer}>
                 <LottieView
                   ref={animationRef}
                   source={errorAnimation}
@@ -125,8 +173,7 @@ export default function Travels() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <Image source={require("@images/empty.png")} style={styles.iconEmpty} />
+              <View style={styles.emptyContainer}>
                 <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
                 <TouchableOpacity
                   style={styles.newRequest}
@@ -137,8 +184,9 @@ export default function Travels() {
               </View>
             )
           }
-          renderItem={({ item, index }) => {
-            const isExpanded = expandedIndex === index;
+          renderItem={({ item, index, section }) => {
+            const isExpanded = expandedIndex?.sectionIndex === sections.indexOf(section) && 
+                              expandedIndex?.itemIndex === index;
             const icone =
               item.via_servico === "Mototáxi"
                 ? require("@images/motorcycle.png")
@@ -156,7 +204,7 @@ export default function Travels() {
             return (
               <TouchableOpacity
                 style={[styles.card, isExpanded && styles.cardExpanded]}
-                onPress={() => toggleExpand(index)}
+                onPress={() => toggleExpand(sections.indexOf(section), index)}
                 activeOpacity={0.9}
               >
                 <Image source={icone} style={styles.icon} />
@@ -186,10 +234,13 @@ export default function Travels() {
                     </>
                   )}
                 </View>
-                <View style={styles.dateContainer}>
-                  <Text style={styles.label}>Data:</Text>
-                  <Text style={styles.text}>{dataFormatada}</Text>
-                </View>
+                { !isExpanded && (
+                  <View style={styles.dateContainer}>
+                    <Text style={styles.label}>Valor:</Text>
+                    <Text style={styles.text}>R$ {item.via_valor}</Text>
+                  </View>
+                )}
+
               </TouchableOpacity>
             );
           }}

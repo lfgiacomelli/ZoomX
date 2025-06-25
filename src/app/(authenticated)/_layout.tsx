@@ -29,7 +29,7 @@ export default function AuthenticatedLayout() {
 
   if (isAuthenticated === null || isAuthenticated === false) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000" }}>
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >

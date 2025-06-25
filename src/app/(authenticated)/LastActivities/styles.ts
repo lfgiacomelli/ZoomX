@@ -115,6 +115,43 @@ const styles = StyleSheet.create({
         textAlign: "center",
         paddingHorizontal: 20,
     },
+    sectionHeader: {
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginTop: 15,
+    marginBottom: 5,
+    borderRadius: 8,
+  },
+  sectionHeaderText: {
+    fontFamily: 'Righteous',
+    fontSize: 16,
+    color: '#333',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingAnimation: {
+    width: 220,
+    height: 220,
+  },
+  loadingText: {
+    fontFamily: "Righteous",
+    fontSize: 18,
+    color: "#000",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
 
 export default styles;

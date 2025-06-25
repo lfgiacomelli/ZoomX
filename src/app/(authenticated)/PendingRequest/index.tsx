@@ -476,7 +476,7 @@ export default function PendingRequest() {
               />
               <Text style={styles.modalTitle}>Solicitação Recusada</Text>
               <Text style={styles.modalText}>
-                Infelizmente, sua solicitação foi recusada.{"\n\n"}
+                Infelizmente sua solicitação foi recusada.{"\n\n"}
                 Veja possíveis motivos e tente novamente.
               </Text>
 
@@ -495,16 +495,6 @@ export default function PendingRequest() {
                   }}
                 >
                   <Text style={styles.modalButtonText}>OK</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.modalButton, { flex: 1, marginLeft: 5 }]}
-                  onPress={() => {
-                    setShowRecusaModal(false);
-                    router.push("/motivos");
-                  }}
-                >
-                  <Text style={styles.modalButtonText}>Ver Motivos</Text>
                 </TouchableOpacity>
               </View>
             </View>

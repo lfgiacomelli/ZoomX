@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, RefreshControl } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+  Image,
+} from "react-native";
+import styles from "./styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@components/Header";
 import Tab from "@components/Tab";
-
-import styles from "./styles";
 
 interface Payment {
   pix_pagamento_codigo: number;
@@ -22,13 +28,12 @@ export default function MyPaymentsApproveds() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       const usu_codigo = await AsyncStorage.getItem("id");
-      if (!usu_codigo) throw new Error("Usuário não autenticado");
-
       const token = await AsyncStorage.getItem("token");
-      if (!token) throw new Error("Token não encontrado");
+
+      if (!usu_codigo || !token) throw new Error("Usuário não autenticado");
 
       const response = await fetch(
         `https://backend-turma-a-2025.onrender.com/api/payments/get-payments/${usu_codigo}`,
@@ -42,13 +47,11 @@ export default function MyPaymentsApproveds() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao buscar pagamentos");
+        return;
       }
 
       const data: Payment[] = await response.json();
       setPayments(data);
-
     } catch (error: any) {
       console.error("Erro ao buscar pagamentos:", error.message);
       setPayments([]);
@@ -56,17 +59,16 @@ export default function MyPaymentsApproveds() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     fetchPayments();
   };
-
-  useEffect(() => {
-    fetchPayments();
-  }, []);
 
   const renderStatus = (status: string) => {
     switch (status.toLowerCase()) {
@@ -77,88 +79,78 @@ export default function MyPaymentsApproveds() {
       case "rejected":
         return <Text style={styles.statusRejected}>REJEITADO</Text>;
       default:
-        return <Text>{status}</Text>;
+        return <Text style={styles.statusUnknown}>{status}</Text>;
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0066ff" />
-        <Text style={{ fontFamily: "Righteous", fontSize: 18, color: "#000", marginTop: 15 }}>
-          Carregando pagamentos...
+  const renderItem = ({ item }: { item: Payment }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>Pagamento #{item.pix_pagamento_codigo}</Text>
+        <Text style={styles.cardDate}>
+          {new Date(item.pix_data_pagamento).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </Text>
       </View>
-    );
-  }
+      <View style={styles.cardBody}>
+        <View style={styles.infoBlock}>
+          <Text style={styles.infoLabel}>Status</Text>
+          {renderStatus(item.pix_status)}
+        </View>
+        <View style={styles.infoBlock}>
+          <Text style={styles.infoLabel}>Valor</Text>
+          <Text style={styles.amountText}>R$ {item.pix_valor.toFixed(2)}</Text>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <>
       <Header />
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>MEUS PAGAMENTOS</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>Meus Pagamentos</Text>
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={styles.loadingText}>Carregando pagamentos...</Text>
         </View>
-
-        {payments.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>Nenhum pagamento encontrado</Text>
-            <Text style={styles.emptyText}>
-              Você ainda não possui pagamentos aprovados. Volte mais tarde para verificar.
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={payments}
-            keyExtractor={(item) => item.pix_pagamento_codigo.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>Pagamento #{item.pix_pagamento_codigo}</Text>
-                  <Text style={styles.cardDate}>
-                    {new Date(item.pix_data_pagamento).toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                </View>
-
-                <View style={styles.paymentInfo}>
-                  <View>
-                    <Text style={{ fontFamily: "Righteous", color: "#666", marginBottom: 5 }}>
-                      Status:
-                    </Text>
-                    {renderStatus(item.pix_status)}
-                  </View>
-                  <View>
-                    <Text style={{ fontFamily: "Righteous", color: "#666", marginBottom: 5 }}>
-                      Valor:
-                    </Text>
-                    <Text style={styles.amountText}>R$ {item.pix_valor.toFixed(2)}</Text>
-                  </View>
-                </View>
-              </View>
-            )}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                colors={["#0066ff"]}
-                tintColor="#0066ff"
-                progressBackgroundColor="#ffffff"
-                style={styles.refreshControl}
-              />
-            }
-          />
-        )}
-
-        <Tab />
-      </SafeAreaView>
+      ) : payments.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Image source={require("@images/empty.png")} style={styles.emptyImage} />
+          <Text style={styles.emptyTitle}>Nenhum pagamento encontrado</Text>
+          <Text style={styles.emptyText}>
+            Você ainda não possui pagamentos aprovados. Volte mais tarde para verificar.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={payments}
+          keyExtractor={(item) => item.pix_pagamento_codigo.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={["#0066ff"]}
+              tintColor="#0066ff"
+              progressBackgroundColor="#ffffff"
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+      <Tab />
     </>
   );
 }
+
+// styles.ts

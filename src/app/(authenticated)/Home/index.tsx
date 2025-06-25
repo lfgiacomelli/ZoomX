@@ -128,7 +128,7 @@ export default function Home() {
                             {photo ? (
                                 <Image source={{ uri: photo }} style={styles.profileImage} />
                             ) : (
-                                <Ionicons name="person-circle-outline" size={40} color="#000" />
+                                <Ionicons name="person-circle-outline" size={40} color="#fff" />
                             )}
                         </TouchableOpacity>
 
@@ -176,7 +176,6 @@ export default function Home() {
                 )}
 
                 <Help />
-                {/* <AnunciosCarousel /> */}
             </ScrollView>
             <Tab />
         </>
