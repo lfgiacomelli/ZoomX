@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, StatusBar, ScrollView, AccessibilityInfo } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
@@ -32,6 +32,9 @@ export default function Home() {
     const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isMobileData, setIsMobileData] = useState(false);
+    const [photo, setPhoto] = useState<string | null>(null);
+
+    const hasInitialized = useRef(false);
 
     const getFirstNameFromStorage = useCallback(async () => {
         try {
@@ -46,22 +49,26 @@ export default function Home() {
     }, []);
 
     const startWatchingLocation = useCallback(async () => {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-            setErrorMsg("Permissão negada para acessar localização");
-            return;
-        }
-
-        await Location.watchPositionAsync(
-            {
-                accuracy: Location.Accuracy.High,
-                timeInterval: 5000,
-                distanceInterval: 10,
-            },
-            (newLocation) => {
-                setLocation(newLocation.coords);
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== "granted") {
+                setErrorMsg("Permissão negada para acessar localização");
+                return;
             }
-        );
+
+            await Location.watchPositionAsync(
+                {
+                    accuracy: Location.Accuracy.High,
+                    timeInterval: 5000,
+                    distanceInterval: 10,
+                },
+                (newLocation) => {
+                    setLocation(newLocation.coords);
+                }
+            );
+        } catch (err) {
+            console.error("Erro ao obter localização:", err);
+        }
     }, []);
 
     const handleNotificationResponse = useCallback((response: Notifications.NotificationResponse) => {
@@ -72,31 +79,35 @@ export default function Home() {
     }, [router]);
 
     const checkScreenReader = useCallback(async () => {
-        const isEnabled = await AccessibilityInfo.isScreenReaderEnabled();
-        setStatusLeitor(isEnabled);
+        try {
+            const isEnabled = await AccessibilityInfo.isScreenReaderEnabled();
+            setStatusLeitor(isEnabled);
+        } catch (err) {
+            console.error("Erro ao verificar leitor de tela:", err);
+        }
     }, []);
 
     useEffect(() => {
+        if (hasInitialized.current) return;
+
         getFirstNameFromStorage();
         startWatchingLocation();
         checkScreenReader();
 
+        AsyncStorage.getItem("userPhoto").then(setPhoto);
+
         const notificationListener = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
         const screenReaderSubscription = AccessibilityInfo.addEventListener("screenReaderChanged", setStatusLeitor);
         const netInfoUnsubscribe = NetInfo.addEventListener(state => setIsMobileData(state.type === "cellular"));
+
+        hasInitialized.current = true;
 
         return () => {
             notificationListener.remove();
             screenReaderSubscription.remove();
             netInfoUnsubscribe();
         };
-    }, [getFirstNameFromStorage, startWatchingLocation, handleNotificationResponse, checkScreenReader]);
-
-    const [photo, setPhoto] = useState<string | null>(null);
-
-    useEffect(() => {
-        AsyncStorage.getItem("userPhoto").then(setPhoto);
-    }, []);
+    }, [getFirstNameFromStorage, startWatchingLocation, checkScreenReader, handleNotificationResponse]);
 
     if (!fontLoaded) {
         return (
@@ -131,7 +142,6 @@ export default function Home() {
                                 <Ionicons name="person-circle-outline" size={40} color="#fff" />
                             )}
                         </TouchableOpacity>
-
                     </View>
 
                     {isMobileData && (

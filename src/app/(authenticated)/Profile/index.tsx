@@ -265,7 +265,7 @@ export default function Profile() {
 
           <TouchableOpacity
             style={styles.boxButton}
-            onPress={() => Linking.openURL("https://wa.me/5518988179199")}
+            onPress={() => Linking.openURL("https://wa.me/111111111111")}
             accessibilityRole="link"
             accessibilityLabel="Contato via WhatsApp"
           >

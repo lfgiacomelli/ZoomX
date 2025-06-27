@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "notification": {
-      "icon": "./src/app/assets/images/icon_zoomx.png",
+      "icon": "./src/app/assets/images/logo.png",
       "color": "#000000"
     },
     "splash": {

@@ -63,7 +63,8 @@ export default function LastActivity() {
       }
 
       if (!response.ok) {
-        return;
+        const json = await response.json();
+        throw new Error(json.message || "Erro ao buscar viagem");
       }
 
       const json = await response.json();
@@ -76,8 +77,13 @@ export default function LastActivity() {
         setError(null);
       }
     } catch (err: any) {
-      setError(err.message || "Erro ao carregar dados");
-      setData(null);
+      if (err.message?.includes("404")) {
+        setError(null);
+        setData(null);
+      } else {
+        setError(err.message || "Erro ao carregar dados");
+        setData(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -161,9 +167,8 @@ export default function LastActivity() {
       );
     }
 
-    // Se não há dados e nem erro, não exibe nada
     if (!data) {
-      return null;
+      return null; // ou retornar uma View personalizada vazia
     }
 
     return (
@@ -197,7 +202,9 @@ export default function LastActivity() {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Serviço:</Text>
-            <Text style={styles.infoValue}>{data.via_servico || "Mototáxi"}</Text>
+            <Text style={styles.infoValue}>
+              {data.via_servico || "Mototáxi"}
+            </Text>
           </View>
         </View>
 
