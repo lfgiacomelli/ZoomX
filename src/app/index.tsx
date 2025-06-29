@@ -1,17 +1,63 @@
 import { useRouter } from 'expo-router';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Alert } from 'react-native';
 import LottieView from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
 
+const BASE_URL = 'https://backend-turma-a-2025.onrender.com';
+
 export default function Index() {
   const router = useRouter();
+
+  const verificarBanimento = async () => {
+    const id = await AsyncStorage.getItem("id");
+    const token = await AsyncStorage.getItem("token");
+
+    if (!id || !token) return false;
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/usuarios/${id}/banimento`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await res.json();
+
+      if (json.banido) {
+        await AsyncStorage.clear();
+        Alert.alert(
+          "Você teve sua conta suspensa",
+          "Acreditamos que você possa ter violado nossas políticas."
+        );
+        router.replace("/login");
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Erro ao verificar banimento:", error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
+
       const token = await AsyncStorage.getItem('token');
-      router.replace(token ? '/(authenticated)/Home' : '/login');
+
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
+
+      // Verifica se está banido
+      const banido = await verificarBanimento();
+
+      if (!banido) {
+        router.replace('/(authenticated)/Home');
+      }
+      // Se banido, já redirecionou pra login dentro da função verificarBanimento
     };
 
     checkAuth();

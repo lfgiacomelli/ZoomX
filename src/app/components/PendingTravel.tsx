@@ -8,6 +8,7 @@ import {
   Platform,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -25,6 +26,7 @@ type Viagem = {
   mot_placa?: string;
   mot_modelo?: string;
   sol_codigo: number;
+  fun_telefone?: string;
 };
 
 const ProgressBar = ({ duration = 3000 }: { duration?: number }) => {
@@ -138,16 +140,24 @@ export default function PendingTravel() {
         setData((prev) =>
           prev
             ? {
-                ...prev,
-                fun_nome: json.funcionario.fun_nome,
-                mot_modelo: json.funcionario.mot_modelo,
-                mot_placa: json.funcionario.mot_placa,
-              }
+              ...prev,
+              fun_nome: json.funcionario.fun_nome,
+              fun_telefone: json.funcionario.fun_telefone,
+              mot_modelo: json.funcionario.mot_modelo,
+              mot_placa: json.funcionario.mot_placa,
+            }
             : prev
         );
       }
     } catch (error) {
       console.error("Erro ao buscar informações do funcionário:", error);
+    }
+  };
+
+  const handleLigarFuncionario = () => {
+    const telefone = data?.fun_telefone;
+    if (telefone) {
+      Linking.openURL(`tel:${telefone}`);
     }
   };
 
@@ -164,7 +174,7 @@ export default function PendingTravel() {
   if (loading) {
     return (
       <View />
-        
+
     );
   }
 
@@ -172,7 +182,7 @@ export default function PendingTravel() {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.retryButton}
           onPress={fetchData}
         >
@@ -203,12 +213,21 @@ export default function PendingTravel() {
           <InfoRow label="Origem" value={data.via_origem} />
           <InfoRow label="Destino" value={data.via_destino} />
           <InfoRow label="Status" value={data.via_status.toUpperCase()} isStatus />
-          
+
           <View style={styles.divider} />
-          
+
           <InfoRow label="Mototaxista" value={data.fun_nome || "---"} />
           <InfoRow label="Modelo" value={data.mot_modelo || "---"} />
           <InfoRow label="Placa" value={data.mot_placa || "---"} />
+          <TouchableOpacity
+            onPress={handleLigarFuncionario}
+            style={styles.callButton}
+            accessibilityRole="button"
+            accessibilityLabel="Ligar para o mototaxista"
+          >
+            <Text style={styles.callButtonText}>LIGAR PARA O MOTOTAXISTA</Text>
+          </TouchableOpacity>
+
         </View>
 
         <TouchableOpacity
@@ -235,9 +254,9 @@ const InfoRow = ({
 }) => (
   <View style={styles.infoRow}>
     <Text style={styles.label}>{label}</Text>
-    <Text 
+    <Text
       style={[
-        styles.value, 
+        styles.value,
         isStatus && styles.statusValue,
         value === "---" && styles.unavailableValue
       ]}
@@ -294,7 +313,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#212121",
     letterSpacing: 0.8,
-    fontWeight: "500",
   },
   statusIndicator: {
     flexDirection: "row",
@@ -364,7 +382,6 @@ const styles = StyleSheet.create({
   },
   statusValue: {
     color: "#FFA000",
-    fontWeight: "500",
   },
   unavailableValue: {
     color: "#9E9E9E",
@@ -387,6 +404,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.5,
     textAlign: "center",
-    fontWeight: "500",
   },
+  callButton: {
+  backgroundColor: "#FFA000",
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  borderRadius: 10,
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 10,
+},
+callButtonText: {
+  color: "#FFFFFF",
+  fontFamily: "Righteous",
+  fontSize: 14,
+  letterSpacing: 0.6,
+},
+
 });
