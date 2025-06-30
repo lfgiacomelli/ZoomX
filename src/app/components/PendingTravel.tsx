@@ -90,8 +90,9 @@ export default function PendingTravel() {
         }
       );
 
-      if (!response.ok)
-        throw new Error(`Erro de API: ${response.status} ${response.statusText}`);
+      if (!response.ok){
+        return;
+      }
 
       const json = await response.json();
 

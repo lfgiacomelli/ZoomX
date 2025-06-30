@@ -51,13 +51,11 @@ export default function Index() {
         return;
       }
 
-      // Verifica se está banido
       const banido = await verificarBanimento();
 
       if (!banido) {
         router.replace('/(authenticated)/Home');
       }
-      // Se banido, já redirecionou pra login dentro da função verificarBanimento
     };
 
     checkAuth();

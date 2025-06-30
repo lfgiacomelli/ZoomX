@@ -145,30 +145,15 @@ export default function LastActivity() {
 
   const renderContent = () => {
     if (loading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <LottieView
-            ref={animationRef}
-            source={loadingDataAnimation}
-            autoPlay
-            loop
-            style={{ width: 230, height: 230 }}
-          />
-          <Text style={styles.loadingText}>Carregando sua última viagem...</Text>
-        </View>
-      );
+      return;
     }
 
     if (error) {
-      return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Houve algum erro por aqui.</Text>
-        </View>
-      );
+      return;
     }
 
     if (!data) {
-      return null; // ou retornar uma View personalizada vazia
+      return null;
     }
 
     return (

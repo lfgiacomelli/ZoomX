@@ -82,10 +82,6 @@ export default function AnunciosCarousel() {
                             style={styles.image}
                             resizeMode="cover"
                         />
-                        {/* Opcional: overlay para texto */}
-                        {/* <View style={styles.overlay}>
-              <Text style={styles.text}>Descrição do anúncio</Text>
-            </View> */}
                     </View>
                 </View>
             ))}
