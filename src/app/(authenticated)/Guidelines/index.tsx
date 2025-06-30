@@ -2,7 +2,6 @@ import { View, Text, ScrollView } from 'react-native';
 import styles from './styles';
 
 import Header from '@components/Header';
-import Tab from '@components/Tab';
 import useRighteousFont from '@hooks/Font/Righteous';
 import useInterFont from '@hooks/Font/Inter';
 
@@ -68,7 +67,6 @@ export default function Guidelines() {
           Agradecemos por confiar no ZoomX. Juntos, construímos uma comunidade segura e eficiente.
         </Text>
       </ScrollView>
-      <Tab />
     </>
   );
 }

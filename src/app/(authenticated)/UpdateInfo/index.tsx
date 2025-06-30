@@ -1,4 +1,4 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal, ScrollView } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -7,7 +7,6 @@ import styles from "./styles";
 import LottieView from "lottie-react-native";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -105,7 +104,7 @@ export default function EditProfile() {
   return (
     <>
       <Header />
-      <View style={styles.container}>
+      <ScrollView style={styles.container}>
         <Text style={styles.title}>Tem algo de errado?{"\n"}Corrija aqui!</Text>
 
         <Text style={styles.label}>Nome completo:</Text>
@@ -142,7 +141,6 @@ export default function EditProfile() {
           />
           <Ionicons name="call" size={22} color="black" />
         </View>
-
         <Text style={styles.label}>Senha:</Text>
         <View style={styles.inputContainer}>
           <TextInput
@@ -174,7 +172,7 @@ export default function EditProfile() {
             <Text style={styles.buttonText}>Atualizar Informações</Text>
           )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
@@ -183,7 +181,7 @@ export default function EditProfile() {
               autoPlay
               loop={false}
               ref={animationRef}
-              style={{ width: 100, height: 100, alignSelf: "center" }}/>
+              style={{ width: 100, height: 100, alignSelf: "center" }} />
             <Text style={styles.modalText}>
               Informações atualizadas com sucesso!
             </Text>
@@ -199,7 +197,6 @@ export default function EditProfile() {
           </View>
         </View>
       </Modal>
-      <Tab />
     </>
   );
 }

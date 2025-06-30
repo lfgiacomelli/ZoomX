@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import styles from './styles';
 
 import Header from '@components/Header';
-import Tab from '@components/Tab';
 import useRighteousFont from '@hooks/Font/Righteous';
 
 
@@ -32,7 +31,6 @@ export default function AboutApp() {
                     <Text style={styles.storyText}>1.0.0 BETA</Text>
                 </View>
             </View>
-            <Tab />
         </>
     );
 }

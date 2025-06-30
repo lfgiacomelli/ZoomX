@@ -6,7 +6,6 @@ import styles from "./styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 
 import Constants from "expo-constants";
@@ -246,7 +245,6 @@ export default function Travels() {
           }}
         />
 
-        <Tab />
       </View>
     </>
   );

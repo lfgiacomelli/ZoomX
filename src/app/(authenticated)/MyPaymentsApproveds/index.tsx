@@ -12,7 +12,6 @@ import styles from "./styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 
 interface Payment {
   pix_pagamento_codigo: number;
@@ -148,9 +147,6 @@ export default function MyPaymentsApproveds() {
           showsVerticalScrollIndicator={false}
         />
       )}
-      <Tab />
     </>
   );
 }
-
-// styles.ts

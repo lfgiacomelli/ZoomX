@@ -5,7 +5,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 
 
 interface Avaliacao {
@@ -134,7 +133,6 @@ export default function MyReviews() {
                         onRefresh={handleRefresh}
                     />
                 )}
-                <Tab />
             </SafeAreaView>
         </>
     );

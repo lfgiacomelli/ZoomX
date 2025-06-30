@@ -12,7 +12,6 @@ import { useLocalSearchParams } from "expo-router";
 import Header from "@components/Header";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import Tab from "@components/Tab";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function TravelDetails() {
@@ -286,7 +285,6 @@ export default function TravelDetails() {
           </View>
         )}
       </ScrollView>
-      <Tab />
     </>
   );
 }

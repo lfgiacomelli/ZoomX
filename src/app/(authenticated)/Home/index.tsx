@@ -11,7 +11,6 @@ import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 import Benefits from "@components/Benefits";
 import LastActivity from "@components/LastActivity";
 import Services from "@components/Services";
@@ -187,7 +186,6 @@ export default function Home() {
 
                 <Help />
             </ScrollView>
-            <Tab />
         </>
     );
 }

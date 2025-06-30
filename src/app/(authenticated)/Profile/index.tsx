@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Linking,
   Modal,
   Pressable,
+  StyleSheet,
 } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,12 +21,11 @@ import {
   Entypo,
   MaterialCommunityIcons,
   Octicons,
-  EvilIcons,
   Ionicons,
 } from "@expo/vector-icons";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 
 import styles from "./styles";
@@ -50,17 +50,23 @@ export default function Profile() {
   });
 
   const [loadingUserData, setLoadingUserData] = useState(true);
-
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const photoSheetRef = useRef<BottomSheet>(null);
+  const openPhotoSheet = () => photoSheetRef.current?.expand();
+  const closePhotoSheet = () => photoSheetRef.current?.close();
+
+  const snapPoints = useMemo(() => ["15%", "30%"], []);
 
   useEffect(() => {
     loadUserPhoto();
     loadUserDataFromStorageAndUpdate();
   }, []);
 
-  // Carrega foto do AsyncStorage
+  const openLogoutSheet = () => bottomSheetRef.current?.expand();
+  const closeLogoutSheet = () => bottomSheetRef.current?.close();
+
   async function loadUserPhoto() {
     try {
       const photoUri = await AsyncStorage.getItem("userPhoto");
@@ -70,10 +76,8 @@ export default function Profile() {
     }
   }
 
-  // Carrega dados do AsyncStorage e depois atualiza do backend
   async function loadUserDataFromStorageAndUpdate() {
     try {
-      // Primeiro carrega do AsyncStorage para exibir rápido
       const storedUsername = (await AsyncStorage.getItem("nome")) || "Usuário";
       const storedEmail = (await AsyncStorage.getItem("email")) || "";
       const storedTelefone =
@@ -88,23 +92,19 @@ export default function Profile() {
         since: storedSince,
       });
 
-      // Agora atualiza do backend
       await fetchUsuarioAndUpdateStorage();
-
     } catch (error) {
       console.error("Erro ao carregar dados do AsyncStorage:", error);
       setLoadingUserData(false);
     }
   }
 
-  // Busca dados do usuário no backend e atualiza AsyncStorage e estado
   async function fetchUsuarioAndUpdateStorage() {
     try {
       const userId = await AsyncStorage.getItem("id");
       const token = await AsyncStorage.getItem("token");
 
       if (!userId || !token) {
-        console.error("ID ou token não encontrados");
         setLoadingUserData(false);
         return;
       }
@@ -112,7 +112,6 @@ export default function Profile() {
       const response = await fetch(
         `https://backend-turma-a-2025.onrender.com/api/usuarios/${userId}`,
         {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -124,12 +123,10 @@ export default function Profile() {
 
       const data = await response.json();
 
-      // Formata data de criação
       const sinceFormatted = data.usu_created_at
         ? new Date(data.usu_created_at).toLocaleDateString()
         : "Desconhecido";
 
-      // Atualiza estado
       setUserData({
         username: data.usu_nome || "Usuário",
         email: data.usu_email || "",
@@ -137,7 +134,6 @@ export default function Profile() {
         since: sinceFormatted,
       });
 
-      // Atualiza AsyncStorage para futuras consultas rápidas
       await AsyncStorage.multiSet([
         ["nome", data.usu_nome || "Usuário"],
         ["email", data.usu_email || ""],
@@ -190,7 +186,7 @@ export default function Profile() {
   async function handleLogout() {
     setIsLoggingOut(true);
     try {
-      const keysToRemove = [
+      await AsyncStorage.multiRemove([
         "token",
         "id",
         "nome",
@@ -200,8 +196,7 @@ export default function Profile() {
         "cpf",
         "startAddress",
         "userPhoto",
-      ];
-      await AsyncStorage.multiRemove(keysToRemove);
+      ]);
       router.replace("/login");
     } catch (error) {
       console.error("Erro ao deslogar:", error);
@@ -226,10 +221,10 @@ export default function Profile() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.profileHeader}>
           <TouchableOpacity
-            onPress={() => setShowPhotoModal(true)}
+            onPress={openPhotoSheet}
             style={styles.photoContainer}
-            accessibilityLabel="Editar foto de perfil"
           >
+
             {userPhoto ? (
               <Image source={{ uri: userPhoto }} style={styles.profilePhoto} />
             ) : (
@@ -245,7 +240,6 @@ export default function Profile() {
             <Text style={styles.userEmail}>{userData.email}</Text>
           </View>
         </View>
-
         <View style={styles.userSinceContainer}>
           <Text style={styles.userSince}>
             Você é usuário desde: {userData.since}
@@ -256,8 +250,6 @@ export default function Profile() {
           <TouchableOpacity
             style={styles.boxButton}
             onPress={() => router.push("/Configuration")}
-            accessibilityRole="button"
-            accessibilityLabel="Ir para Configurações"
           >
             <Octicons name="gear" size={20} color="black" />
             <Text style={styles.boxText}>Configurações</Text>
@@ -265,9 +257,7 @@ export default function Profile() {
 
           <TouchableOpacity
             style={styles.boxButton}
-            onPress={() => Linking.openURL("https://wa.me/111111111111")}
-            accessibilityRole="link"
-            accessibilityLabel="Contato via WhatsApp"
+            onPress={() => Linking.openURL("https://wa.me/")}
           >
             <Entypo name="phone" size={20} color="black" />
             <Text style={styles.boxText}>Contato</Text>
@@ -278,13 +268,10 @@ export default function Profile() {
           <TouchableOpacity
             style={styles.boxButton}
             onPress={() => router.push("/LastActivities")}
-            accessibilityRole="button"
-            accessibilityLabel="Ver viagens realizadas"
           >
             <Image
               source={require("@images/motorcycle.png")}
               style={styles.icon}
-              resizeMode="contain"
             />
             <Text style={styles.iconText}>Viagens</Text>
           </TouchableOpacity>
@@ -292,14 +279,8 @@ export default function Profile() {
           <TouchableOpacity
             style={styles.boxButton}
             onPress={() => router.push("/Guidelines")}
-            accessibilityRole="button"
-            accessibilityLabel="Ver diretrizes do aplicativo"
           >
-            <Image
-              source={require("@images/list.png")}
-              style={styles.icon}
-              resizeMode="contain"
-            />
+            <Image source={require("@images/list.png")} style={styles.icon} />
             <Text style={styles.iconText}>Diretrizes</Text>
           </TouchableOpacity>
         </View>
@@ -308,13 +289,10 @@ export default function Profile() {
           <TouchableOpacity
             style={styles.boxButton}
             onPress={() => router.push("/MyReviews")}
-            accessibilityRole="button"
-            accessibilityLabel="Ver suas avaliações"
           >
             <Image
               source={require("@images/avaliacao_icon.png")}
               style={styles.icon}
-              resizeMode="contain"
             />
             <Text style={styles.iconText}>Avaliações</Text>
           </TouchableOpacity>
@@ -322,115 +300,110 @@ export default function Profile() {
           <TouchableOpacity
             style={styles.boxButton}
             onPress={() => router.push("/UpdateInfo")}
-            accessibilityRole="button"
-            accessibilityLabel="Atualizar informações"
           >
             <Image
               source={require("@images/updateicon.png")}
               style={styles.icon}
-              resizeMode="contain"
             />
             <Text style={styles.iconText}>Informações</Text>
           </TouchableOpacity>
         </View>
+
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={() => setShowLogoutModal(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Encerrar sessão"
+          onPress={openLogoutSheet}
         >
           <MaterialCommunityIcons name="logout" size={22} color="#fff" />
           <Text style={styles.logoutText}>Encerrar Sessão</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      <Tab />
 
-      <Modal
-        animationType="fade"
-        transparent
-        visible={showLogoutModal}
-        onRequestClose={() => setShowLogoutModal(false)}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        detached={false}
+        backgroundStyle={styles.sheetBackground}
+        handleIndicatorStyle={styles.sheetHandle}
+
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Confirmar Logout</Text>
-            <Text style={styles.modalMessage}>
-              Tem certeza que deseja sair? Nos vemos em breve!
-            </Text>
+        <BottomSheetView style={styles.sheetContainer}>
+          <Text style={styles.modalTitle}>Confirmar Logout</Text>
+          <Text style={styles.modalMessage}>
+            Tem certeza que deseja sair? Nos vemos em breve!
+          </Text>
 
-            <View style={styles.modalButtonsContainer}>
-              <Pressable
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowLogoutModal(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Cancelar logout"
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </Pressable>
-
-              <Pressable
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleLogout}
-                disabled={isLoggingOut}
-                accessibilityRole="button"
-                accessibilityLabel="Confirmar logout"
-              >
-                {isLoggingOut ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.confirmButtonText}>Sair</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent
-        visible={showPhotoModal}
-        onRequestClose={() => setShowPhotoModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.photoModalContainer}>
-            <View style={styles.row}>
-              <Text style={styles.modalTitle}>Foto de Perfil</Text>
-              <Ionicons
-                name="close"
-                size={20}
-                color="#000"
-                onPress={() => setShowPhotoModal(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar modal de foto"
-              />
-            </View>
-
+          <View style={styles.modalButtonsContainer}>
             <Pressable
-              style={styles.photoModalOption}
-              onPress={handleChoosePhoto}
-              accessibilityRole="button"
-              accessibilityLabel="Escolher foto da galeria"
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={closeLogoutSheet}
             >
-              <Ionicons name="image" size={24} color="#000" />
-              <Text style={styles.photoModalOptionText}>Escolher da Galeria</Text>
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
             </Pressable>
 
-            {userPhoto && (
-              <Pressable
-                style={styles.photoModalOption}
-                onPress={handleRemovePhoto}
-                accessibilityRole="button"
-                accessibilityLabel="Remover foto atual"
-              >
-                <Ionicons name="trash" size={24} color="#000" />
-                <Text style={styles.photoModalOptionText}>Remover Foto</Text>
-              </Pressable>
-            )}
+            <Pressable
+              style={[styles.modalButton, styles.confirmButton]}
+              onPress={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.confirmButtonText}>Sair</Text>
+              )}
+            </Pressable>
           </View>
-        </View>
-      </Modal>
+        </BottomSheetView>
+      </BottomSheet>
+
+      <BottomSheet
+        ref={photoSheetRef}
+        index={-1}
+        snapPoints={["30%"]}
+        enablePanDownToClose
+        detached={false}
+        backgroundStyle={styles.sheetBackground}
+        handleIndicatorStyle={styles.sheetHandle}
+      >
+        <BottomSheetView style={styles.sheetContainer}>
+          <View style={styles.row}>
+            <Text style={styles.modalTitle}>Foto de Perfil</Text>
+            <Ionicons
+              name="close"
+              size={20}
+              color="#000"
+              onPress={closePhotoSheet}
+            />
+          </View>
+
+          <Pressable
+            style={styles.photoModalOption}
+            onPress={() => {
+              handleChoosePhoto();
+              closePhotoSheet();
+            }}
+          >
+            <Ionicons name="image" size={24} color="#000" />
+            <Text style={styles.photoModalOptionText}>Escolher da Galeria</Text>
+          </Pressable>
+
+          {userPhoto && (
+            <Pressable
+              style={styles.photoModalOption}
+              onPress={() => {
+                handleRemovePhoto();
+                closePhotoSheet();
+              }}
+            >
+              <Ionicons name="trash" size={24} color="#000" />
+              <Text style={styles.photoModalOptionText}>Remover Foto</Text>
+            </Pressable>
+          )}
+        </BottomSheetView>
+      </BottomSheet>
+
     </>
   );
 }

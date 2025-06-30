@@ -553,7 +553,7 @@ export default function RequestTravel() {
         enablePanDownToClose
         backgroundStyle={styles.bottomSheetBackground}
         handleIndicatorStyle={styles.handleIndicator}
-        detached={true}
+        detached={false}
       >
         <BottomSheetView style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (

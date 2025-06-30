@@ -14,7 +14,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import Header from "@components/Header";
-import Tab from '@components/Tab';
 
 import reviewsAnimation from '@animations/reviews_animation.json';
 const StarRating = ({ rating, setRating }: { rating: number; setRating: (value: number) => void }) => {
@@ -159,7 +158,6 @@ export default function AvaliarViagem() {
           </View>
         </Modal>
       </View>
-      <Tab />
     </>
   );
 }

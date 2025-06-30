@@ -9,7 +9,6 @@ import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 
 import Header from "@components/Header";
-import Tab from "@components/Tab";
 import useRighteousFont from "@hooks/Font/Righteous";
 
 import { FontAwesome6, MaterialCommunityIcons, Entypo, EvilIcons } from "@expo/vector-icons";
@@ -100,7 +99,7 @@ export default function SettingsScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={toggleNotifications}
-            trackColor={{ false: "#ccc", true: "#48d16f" }}
+            trackColor={{ false: "#ccc", true: "#000" }}
             thumbColor="#fff"
           />
         </View>
@@ -110,7 +109,7 @@ export default function SettingsScreen() {
           <Switch
             value={locationEnabled}
             onValueChange={toggleLocation}
-            trackColor={{ false: "#ccc", true: "#48d16f" }}
+            trackColor={{ false: "#ccc", true: "#000" }}
             thumbColor="#fff"
           />
         </View>
@@ -128,7 +127,6 @@ export default function SettingsScreen() {
           <Text style={styles.logoutText}>Encerrar Sessão</Text>
         </TouchableOpacity>
       </ScrollView>
-      <Tab />
     </>
   );
 }

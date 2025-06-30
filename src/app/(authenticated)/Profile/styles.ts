@@ -209,6 +209,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
   },
+  sheetBackground: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 1,
+    borderColor: "#ddd"
+  },
+  sheetHandle: {
+    backgroundColor: "#ccc",
+    width: 40,
+    height: 5,
+    borderRadius: 2.5,
+    alignSelf: "center",
+    marginVertical: 10,
+  },
+  sheetContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    flex: 1,
+    justifyContent: "center",
+  },
 });
 
 export default styles;
