@@ -13,24 +13,14 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     backgroundColor: "#f0f0f0",
   },
-  iconColumn: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  row:{
+ 
+  row: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
     marginBottom: 12,
   },
-  line: {
-    width: 2,
-    height: 30,
-    backgroundColor: "#000",
-    marginVertical: 4,
-  },
+  
   inputColumn: {
     flexDirection: "column",
     justifyContent: "center",
@@ -332,5 +322,30 @@ const styles = StyleSheet.create({
   lupaTextPressed: {
     color: "#fff",
   },
+  menuTrigger: {
+    fontSize: 24,
+    padding: 10,
+  },
+  menuOption: {
+    padding: 10,
+    fontSize: 16,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  itemSubtitle: {
+    fontSize: 14,
+    color: '#555',
+  },
+  savedAddresses: {
+    fontFamily: "Righteous",
+    fontSize: 12,
+    color: "#000",
+    marginRight: 10,
+    textDecorationLine: "underline",
+
+  }
 });
 export default styles;

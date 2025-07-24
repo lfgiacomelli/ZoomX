@@ -5,25 +5,28 @@
     "baseUrl": "./",
     "paths": {
       "@assets/*": [
-        "src/app/assets/*"
+        "src/assets/*"
       ],
       "@components/*": [
-        "src/app/components/*"
+        "src/components/*"
       ],
       "@hooks/*": [
-        "src/app/hooks/*"
+        "src/hooks/*"
       ],
       "@animations/*": [
-        "src/app/assets/animations/*"
+        "src/assets/animations/*"
+      ],
+      "@contexts/*": [
+        "src/contexts/*"
       ],
       "@images/*": [
-        "src/app/assets/images/*"
+        "src/assets/images/*"
       ],
       "@fonts/*": [
-        "src/app/assets/fonts/*"
+        "src/assets/fonts/*"
       ],
       "@utils/*": [
-        "src/app/utils/*"
+        "src/utils/*"
       ],
     }
   }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
     View,
     Text,
@@ -18,46 +18,53 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 
 import Header from "@components/Header";
+import ToastMessage from "@components/ToastMessage";
+
+type PaymentStatus = "pending" | "approved" | "rejected";
 
 export default function PaymentPending() {
-    const params = useLocalSearchParams();
-    const { paymentId, solicitacaoId } = params;
-    const [status, setStatus] = useState<"pending" | "approved" | "rejected">("pending");
+    const params = useLocalSearchParams() as {
+        paymentId?: string;
+        solicitacaoId?: string;
+        shouldCreateSolicitacao?: string;
+        startAddress?: string;
+        endAddress?: string;
+        distance?: string;
+        price?: string;
+        userId?: string;
+        formaPagamento?: string;
+    };
+
+    const router = useRouter();
+    const [showToast, setShowToast] = useState(false);
+    const [showToastPayment, setShowToastPayment] = useState(false);
+    const [showToastExpired, setShowToastExpired] = useState(false);
+    const [showToastError, setShowToastError] = useState(false);
+    const [status, setStatus] = useState<PaymentStatus>("pending");
     const [loading, setLoading] = useState(true);
     const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null);
     const [pixCopy, setPixCopy] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState(300);
-    const router = useRouter();
+
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
-    useEffect(() => {
-        const backAction = () => {
-            if (status === "pending") {
-                ToastAndroid.showWithGravity(
-                    "Finalize o pagamento ou aguarde.",
-                    ToastAndroid.SHORT,
-                    ToastAndroid.CENTER
-                );
+    const showMessage = useCallback((message: string) => {
+        if (Platform.OS === "android") {
+            ToastAndroid.show(message, ToastAndroid.SHORT);
+        } else {
+            Alert.alert("", message);
+        }
+    }, []);
 
-                return true;
-            }
-            return false;
-        };
-
-        const backHandler = BackHandler.addEventListener(
-            "hardwareBackPress",
-            backAction
-        );
-
-        return () => backHandler.remove();
-    }, [status]);
-
-    const createSolicitacaoAfterPayment = async () => {
+    const createSolicitacaoAfterPayment = useCallback(async () => {
         try {
             const token = await AsyncStorage.getItem("token");
             const response = await fetch(
@@ -93,76 +100,127 @@ export default function PaymentPending() {
             console.error("Erro ao criar solicitação após pagamento:", error);
             throw error;
         }
-    };
+    }, [
+        params.startAddress,
+        params.endAddress,
+        params.distance,
+        params.price,
+        params.userId,
+        params.formaPagamento,
+    ]);
+
+    const handleTimeout = useCallback(() => {
+        clearAllTimers();
+        setShowToastExpired(true);
+    }, [router]);
+
+    const clearAllTimers = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+        }
+    }, []);
+
+    const fetchStatus = useCallback(async () => {
+        try {
+            if (!params.paymentId) return;
+
+            const token = await AsyncStorage.getItem("token");
+            const response = await fetch(
+                `https://backend-turma-a-2025.onrender.com/api/payments/status/${params.paymentId}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                    },
+                }
+            );
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("Erro ao buscar status:", data);
+                return;
+            }
+
+            setStatus(data.status);
+            setLoading(false);
+            setQrCodeBase64(data.qr_code_base64 ?? null);
+            setPixCopy(data.qr_code ?? null);
+
+            if (data.status === "approved") {
+                clearAllTimers();
+
+                try {
+                    if (params.shouldCreateSolicitacao === "true") {
+                        const newSolicitacaoId = await createSolicitacaoAfterPayment();
+                        router.push(`/PendingRequest?solicitacaoId=${newSolicitacaoId}`);
+                    } else if (params.solicitacaoId) {
+                        router.push(`/PendingRequest?solicitacaoId=${params.solicitacaoId}`);
+                    } else {
+                        router.back();
+                    }
+                } catch (error) {
+                    showMessage("Erro ao criar solicitação após pagamento.");
+                    setTimeout(() => {
+                        router.back();
+                    }, 3000);
+                }
+            } else if (data.status === "rejected") {
+                clearAllTimers();
+                showMessage("Pagamento rejeitado. Por favor, tente novamente.");
+                setTimeout(() => {
+                    router.back();
+                }, 3000);
+            }
+        } catch (error) {
+            console.error("Erro ao consultar pagamento:", error);
+        }
+    }, [
+        params.paymentId,
+        params.shouldCreateSolicitacao,
+        params.solicitacaoId,
+        createSolicitacaoAfterPayment,
+        router,
+        showMessage,
+        clearAllTimers,
+    ]);
 
     useEffect(() => {
-        if (!paymentId) return;
-
-        let interval: NodeJS.Timeout;
-        let timeout: NodeJS.Timeout;
-
-        const fetchStatus = async () => {
-            try {
-                const token = await AsyncStorage.getItem("token");
-                const response = await fetch(
-                    `https://backend-turma-a-2025.onrender.com/api/payments/status/${paymentId}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: "application/json",
-                        },
-                    }
-                );
-                const data = await response.json();
-
-                if (!response.ok) {
-                    console.error("Erro ao buscar status:", data);
-                    return;
-                }
-
-                setStatus(data.status);
-                setLoading(false);
-
-                setQrCodeBase64(data.qr_code_base64 ?? null);
-                setPixCopy(data.qr_code ?? null);
-
-                if (data.status === "approved") {
-                    clearInterval(interval);
-                    clearTimeout(timeout);
-
-                    try {
-                        if (params.shouldCreateSolicitacao === "true") {
-                            const newSolicitacaoId = await createSolicitacaoAfterPayment();
-                            router.push(`/PendingRequest?solicitacaoId=${newSolicitacaoId}`);
-                        } else {
-                            router.push(`/PendingRequest?solicitacaoId=${solicitacaoId}`);
-                        }
-                    } catch (error) {
-                        Alert.alert(
-                            "Erro",
-                            "Pagamento aprovado, mas não foi possível criar a solicitação.",
-                            [{ text: "OK", onPress: () => router.back() }]
-                        );
-                    }
-                } else if (data.status === "rejected") {
-                    clearInterval(interval);
-                    clearTimeout(timeout);
-                    Alert.alert(
-                        "Pagamento rejeitado",
-                        "Tente novamente com outro método.",
-                        [{ text: "OK", onPress: () => router.back() }]
-                    );
-                }
-            } catch (error) {
-                console.error("Erro ao consultar pagamento:", error);
+        const backAction = () => {
+            if (status === "pending") {
+                setShowToastPayment(true);
+                setTimeout(() => setShowToastPayment(false), 2000); // <- Adicionado!
+                return true;
             }
+
+            return false;
         };
 
-        const countdown = setInterval(() => {
+        const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+
+        return () => backHandler.remove();
+    }, [status]);
+
+
+    useEffect(() => {
+        if (!params.paymentId) return;
+
+        countdownRef.current = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
-                    clearInterval(countdown);
+                    if (countdownRef.current) {
+                        clearInterval(countdownRef.current);
+                        countdownRef.current = null;
+                    }
                     handleTimeout();
                     return 0;
                 }
@@ -170,56 +228,31 @@ export default function PaymentPending() {
             });
         }, 1000);
 
-        timeout = setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
             handleTimeout();
         }, 300000);
 
         fetchStatus();
-        interval = setInterval(fetchStatus, 5000);
-
-        const handleTimeout = () => {
-            clearInterval(interval);
-            Alert.alert(
-                "Tempo esgotado",
-                "O tempo para realizar o pagamento PIX expirou. Por favor, inicie um novo pagamento.",
-                [
-                    {
-                        text: "OK",
-                        onPress: () => router.back(),
-                    }
-                ]
-            );
-        };
+        intervalRef.current = setInterval(fetchStatus, 5000);
 
         return () => {
-            clearInterval(interval);
-            clearInterval(countdown);
-            clearTimeout(timeout);
+            clearAllTimers();
         };
-    }, [paymentId]);
+    }, [fetchStatus, handleTimeout, params.paymentId, clearAllTimers]);
 
     const handleCopyPix = useCallback(async () => {
         if (!pixCopy) return;
 
-        if (Platform.OS !== "ios" && Platform.OS !== "android") {
-            Alert.alert("Aviso", "Copiar código PIX está disponível apenas em dispositivos móveis.");
-            return;
-        }
-
         try {
-            if (Platform.OS === "ios") {
-                await Clipboard.setStringAsync(pixCopy);
-                Alert.alert("Sucesso", "Código PIX copiado para a área de transferência!");
-            } else {
-                await Clipboard.setStringAsync(pixCopy);
-                ToastAndroid.show("Código PIX copiado!", ToastAndroid.SHORT);
-            }
+            await Clipboard.setStringAsync(pixCopy);
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
         } catch (err) {
             console.error("Erro ao copiar PIX:", err);
-            Alert.alert("Erro", "Não foi possível copiar o código PIX.");
+            setShowToastError(true);
+            setTimeout(() => setShowToastError(false), 2000);
         }
     }, [pixCopy]);
-
     return (
         <>
             <Header disableNavigation />
@@ -256,7 +289,7 @@ export default function PaymentPending() {
                                     onPress={handleCopyPix}
                                     style={({ pressed }) => [
                                         styles.copyContainer,
-                                        pressed && styles.copyContainerPressed
+                                        pressed && styles.copyContainerPressed,
                                     ]}
                                 >
                                     <Text selectable style={styles.pixText}>
@@ -268,14 +301,19 @@ export default function PaymentPending() {
 
                             <View style={styles.statusContainer}>
                                 <Text style={styles.statusLabel}>Status do pagamento:</Text>
-                                <Text style={[
-                                    styles.statusValue,
-                                    status === 'pending' && styles.statusPending,
-                                    status === 'approved' && styles.statusApproved,
-                                    status === 'rejected' && styles.statusRejected
-                                ]}>
-                                    {status === 'pending' ? 'Pendente' :
-                                        status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                                <Text
+                                    style={[
+                                        styles.statusValue,
+                                        status === "pending" && styles.statusPending,
+                                        status === "approved" && styles.statusApproved,
+                                        status === "rejected" && styles.statusRejected,
+                                    ]}
+                                >
+                                    {status === "pending"
+                                        ? "Pendente"
+                                        : status === "approved"
+                                            ? "Aprovado"
+                                            : "Rejeitado"}
                                 </Text>
                             </View>
                         </>
@@ -287,6 +325,21 @@ export default function PaymentPending() {
                     )}
                 </View>
             </SafeAreaView>
+            {showToast && <ToastMessage message="Código PIX copiado!" status="SUCCESS" onHide={() => setShowToast(false)} />}
+            {showToastPayment && <ToastMessage message="Finalize o pagamento ou aguarde." status="DEFAULT" onHide={() => setShowToastPayment(false)} />}
+            {showToastError && (
+                <ToastMessage message="Erro ao copiar o código PIX." status="ERROR" onHide={() => setShowToastError(false)} />
+            )}
+            {showToastExpired && (
+                <ToastMessage
+                    message="O tempo para realizar o pagamento PIX expirou. Por favor, inicie um novo pagamento."
+                    status="ERROR"
+                    onHide={() => {
+                        setShowToastExpired(false);
+                        router.back();
+                    }}
+                />
+            )}
         </>
     );
 }
@@ -294,7 +347,7 @@ export default function PaymentPending() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f0f0f0"
+        backgroundColor: "#f0f0f0",
     },
     content: {
         flex: 1,
@@ -307,7 +360,7 @@ const styles = StyleSheet.create({
         fontFamily: "Righteous",
         color: "#000",
         marginBottom: 16,
-        textAlign: "center"
+        textAlign: "center",
     },
     timerContainer: {
         backgroundColor: "#000",
@@ -316,13 +369,13 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 24,
         flexDirection: "row",
-        alignItems: "center"
+        alignItems: "center",
     },
     timerText: {
         color: "#fff",
         fontFamily: "Righteous",
         fontSize: 14,
-        marginRight: 8
+        marginRight: 8,
     },
     timer: {
         color: "#fff",
@@ -338,11 +391,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-        marginBottom: 20
+        marginBottom: 20,
     },
     qrCode: {
         width: 220,
-        height: 220
+        height: 220,
     },
     instructions: {
         fontSize: 14,
@@ -350,7 +403,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 20,
         maxWidth: "80%",
-        lineHeight: 20
+        lineHeight: 20,
     },
     pixText: {
         fontSize: 14,
@@ -362,73 +415,73 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#ddd"
+        borderColor: "#ddd",
     },
     copyText: {
         fontSize: 12,
         color: "#0066cc",
         textDecorationLine: "underline",
         textAlign: "center",
-        fontFamily: "Righteous"
+        fontFamily: "Righteous",
     },
     copyContainer: {
         marginBottom: 24,
         paddingHorizontal: 10,
-        alignItems: "center"
+        alignItems: "center",
     },
     copyContainerPressed: {
-        opacity: 0.7
+        opacity: 0.7,
     },
     statusContainer: {
         flexDirection: "row",
         alignItems: "center",
-        marginTop: 16
+        marginTop: 16,
     },
     statusLabel: {
         fontFamily: "Righteous",
         color: "#555",
         fontSize: 14,
-        marginRight: 8
+        marginRight: 8,
     },
     statusValue: {
         fontFamily: "Righteous",
         fontSize: 16,
     },
     statusPending: {
-        color: "#FFA500"
+        color: "#FFA500",
     },
     statusApproved: {
-        color: "#008000"
+        color: "#008000",
     },
     statusRejected: {
-        color: "#FF0000"
+        color: "#FF0000",
     },
     loadingContainer: {
         alignItems: "center",
         justifyContent: "center",
-        padding: 40
+        padding: 40,
     },
     loadingText: {
         marginTop: 16,
         fontFamily: "Righteous",
         color: "#555",
-        textAlign: "center"
+        textAlign: "center",
     },
     errorContainer: {
         alignItems: "center",
         justifyContent: "center",
-        padding: 40
+        padding: 40,
     },
     errorText: {
         fontFamily: "Righteous",
         color: "#FF0000",
         fontSize: 16,
-        marginBottom: 8
+        marginBottom: 8,
     },
     errorSubtext: {
         fontFamily: "Righteous",
         color: "#555",
         fontSize: 14,
-        textAlign: "center"
-    }
+        textAlign: "center",
+    },
 });

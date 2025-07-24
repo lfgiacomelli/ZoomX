@@ -1,6 +1,9 @@
-import { Stack } from 'expo-router';
-import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import React from "react";
+import { Stack } from "expo-router";
+import { Platform } from "react-native";
+import * as Notifications from "expo-notifications";
+
+import { AuthProvider } from "@contexts/useAuth";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,12 +16,14 @@ Notifications.setNotificationHandler({
 
 export default function Layout() {
   return (
-    <Stack
-      screenOptions={{
-        animation: Platform.OS === 'ios' ? 'slide_from_right' : 'fade',
-        headerShown: false,
-        contentStyle: { backgroundColor: '#000' },
-      }}
-    />
+    <AuthProvider>
+      <Stack
+        screenOptions={{
+          animation: Platform.OS === "ios" ? "slide_from_right" : "fade",
+          headerShown: false,
+          contentStyle: { backgroundColor: "#000" },
+        }}
+      />
+    </AuthProvider>
   );
 }

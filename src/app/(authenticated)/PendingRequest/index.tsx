@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Image, ScrollView, Modal } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image, ScrollView, Modal } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -16,6 +16,7 @@ import boxAnimation from "@animations/box_animation.json";
 import motorAnimation from "@animations/motor_animation.json";
 import requestMarketAccepted from "@animations/request_market_accepted.json";
 import timerAnimation from "@animations/timer_animation.json";
+import ToastMessage from "@components/ToastMessage";
 
 type Solicitacao = {
   sol_codigo: number;
@@ -35,6 +36,7 @@ export default function PendingRequest() {
   const params = useLocalSearchParams();
   const id = Number(params.solicitacaoId);
 
+  const [showToastCancel, setShowToastCancel] = useState(false);
   const [solicitacao, setSolicitacao] = useState<Solicitacao | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,10 +47,20 @@ export default function PendingRequest() {
   const [showModal, setShowModal] = useState(false);
   const [mototaxista, setMototaxista] = useState<any>(null);
   const [showRecusaModal, setShowRecusaModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastStatus, setToastStatus] = useState<"SUCCESS" | "ERROR" | "WARNING">("SUCCESS");
+  const [showToast, setShowToast] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animationRef = useRef(null);
+
+  const showToastWithMessage = (message: string, status: "SUCCESS" | "ERROR" | "WARNING") => {
+    setToastMessage(message);
+    setToastStatus(status);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
 
   const playSound = async () => {
     try {
@@ -75,7 +87,7 @@ export default function PendingRequest() {
       const userId = await AsyncStorage.getItem("id");
 
       if (!token || !userId) {
-        Alert.alert("Erro", "Usuário não autenticado.");
+        showToastWithMessage("Usuário não autenticado", "ERROR");
         setLoading(false);
         return;
       }
@@ -91,8 +103,9 @@ export default function PendingRequest() {
         }
       );
 
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(`Erro ao buscar solicitação: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -177,10 +190,9 @@ export default function PendingRequest() {
           }, 3000);
         } catch (error) {
           console.error("Erro ao buscar informações do funcionário:", error);
-          Alert.alert(
-            "Erro",
+          showToastWithMessage(
             "Não foi possível carregar as informações do mototaxista no momento.",
-            [{ text: "OK" }]
+            "ERROR"
           );
         }
       } else if (data.sol_status === "recusada") {
@@ -199,11 +211,9 @@ export default function PendingRequest() {
         }, 3000);
       }
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message || "Erro desconhecido");
-      } else {
-        setError("Erro desconhecido");
-      }
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      setError(errorMessage);
+      showToastWithMessage(errorMessage, "ERROR");
     } finally {
       setLoading(false);
     }
@@ -211,26 +221,36 @@ export default function PendingRequest() {
 
   const handleCancel = async () => {
     try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        showToastWithMessage("Usuário não autenticado", "ERROR");
+        return;
+      }
+
       const response = await fetch(
         `https://backend-turma-a-2025.onrender.com/api/solicitacoes/${id}`,
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
+      
       await AsyncStorage.removeItem("startAddress");
-      if (!response.ok)
+      
+      if (!response.ok) {
         throw new Error(`Erro ao cancelar solicitação: ${response.status}`);
+      }
 
-      Alert.alert(
-        "Solicitação Cancelada",
-        "Sua solicitação foi cancelada com sucesso",
-        [{ text: "OK", onPress: () => router.push("/Home") }]
-      );
+      showToastWithMessage("Solicitação cancelada com sucesso", "SUCCESS");
+      setShowToastCancel(true);
+      
     } catch (err: any) {
-      Alert.alert("Erro", err.message || "Erro ao cancelar solicitação");
+      showToastWithMessage(
+        err.message || "Erro ao cancelar solicitação",
+        "ERROR"
+      );
     }
   };
 
@@ -257,6 +277,16 @@ export default function PendingRequest() {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [id]);
+
+  useEffect(() => {
+    if (showToastCancel) {
+      const timer = setTimeout(() => {
+        router.push("/Home");
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showToastCancel]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -294,7 +324,7 @@ export default function PendingRequest() {
 
   return (
     <View style={styles.mainContainer}>
-      <Header />
+      <Header disableNavigation />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
@@ -501,6 +531,20 @@ export default function PendingRequest() {
           </View>
         </Modal>
       </ScrollView>
+      {showToastCancel && (
+        <ToastMessage
+          message="Solicitação cancelada com sucesso."
+          status="SUCCESS"
+          onHide={() => {}}
+        />
+      )}
+      {showToast && (
+        <ToastMessage
+          message={toastMessage}
+          status={toastStatus}
+          onHide={() => setShowToast(false)}
+        />
+      )}
     </View>
   );
 }

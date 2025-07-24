@@ -11,6 +11,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 
+import { useAuth } from "@contexts/useAuth";
+
 import loadingDataAnimation from "@animations/loading_data.json";
 
 type Viagem = {
@@ -28,6 +30,7 @@ type Viagem = {
 };
 
 export default function LastActivity() {
+  const { user, token } = useAuth();
   const [data, setData] = useState<Viagem | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,49 +44,42 @@ export default function LastActivity() {
     setLoading(true);
     setError(null);
     try {
-      const usuarioId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
-      if (!usuarioId) throw new Error("ID do usuário não encontrado");
 
-      const response = await fetch(
-        `${baseURL}/api/viagens/andamento/${usuarioId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      if (!user?.id || !token) throw new Error("ID ou token não encontrado");
+
+      const storedData = await AsyncStorage.getItem("ultimaViagem");
+
+      if (storedData) {
+        const parsed = JSON.parse(storedData);
+        setData(parsed);
+      }
+
+      const response = await fetch(`${baseURL}/api/viagens/andamento/${user.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.status === 404) {
         setData(null);
-        setError(null);
+        await AsyncStorage.removeItem("ultimaViagem");
         return;
-      }
-
-      if (!response.ok) {
-        const json = await response.json();
-        throw new Error(json.message || "Erro ao buscar viagem");
       }
 
       const json = await response.json();
 
       if (json.sucesso && json.viagem) {
         setData(json.viagem);
-        setError(null);
+        await AsyncStorage.setItem("ultimaViagem", JSON.stringify(json.viagem));
       } else {
         setData(null);
-        setError(null);
+        await AsyncStorage.removeItem("ultimaViagem");
       }
     } catch (err: any) {
-      if (err.message?.includes("404")) {
-        setError(null);
-        setData(null);
-      } else {
-        setError(err.message || "Erro ao carregar dados");
-        setData(null);
-      }
+      setError(err.message || "Erro ao carregar dados");
+      setData(null);
     } finally {
       setLoading(false);
     }

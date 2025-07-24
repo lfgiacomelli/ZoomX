@@ -87,13 +87,7 @@ export default function MyPaymentsApproveds() {
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Pagamento #{item.pix_pagamento_codigo}</Text>
         <Text style={styles.cardDate}>
-          {new Date(item.pix_data_pagamento).toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {item.pix_data_pagamento}
         </Text>
       </View>
       <View style={styles.cardBody}>
@@ -103,7 +97,7 @@ export default function MyPaymentsApproveds() {
         </View>
         <View style={styles.infoBlock}>
           <Text style={styles.infoLabel}>Valor</Text>
-          <Text style={styles.amountText}>R$ {item.pix_valor.toFixed(2)}</Text>
+          <Text style={styles.amountText}>R$ {item.pix_valor}</Text>
         </View>
       </View>
     </View>

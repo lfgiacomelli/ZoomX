@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, StatusBar, ScrollView, AccessibilityInfo } from "react-native";
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, StatusBar, ScrollView, AccessibilityInfo, Button } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -20,13 +20,17 @@ import AvaliarViagem from "@components/AvaliarViagem";
 import AnunciosCarousel from "@components/Anuncios";
 import StoriesView from "@components/StoriesView";
 
+import { useAuth } from "@contexts/useAuth";
 import useRighteousFont from "@hooks/Font/Righteous";
 
 export default function Home() {
     const router = useRouter();
     const fontLoaded = useRighteousFont();
 
-    const [userFirstName, setUserFirstName] = useState('');
+    const { user } = useAuth();
+
+    const userFirstName = user?.nome?.split(" ")[0] || "Usuário";
+
     const [statusLeitor, setStatusLeitor] = useState(false);
     const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -34,18 +38,6 @@ export default function Home() {
     const [photo, setPhoto] = useState<string | null>(null);
 
     const hasInitialized = useRef(false);
-
-    const getFirstNameFromStorage = useCallback(async () => {
-        try {
-            const fullName = await AsyncStorage.getItem("nome");
-            if (fullName) {
-                const firstName = fullName.trim().split(" ")[0];
-                setUserFirstName(firstName);
-            }
-        } catch (error) {
-            console.error("Erro ao buscar o nome:", error);
-        }
-    }, []);
 
     const startWatchingLocation = useCallback(async () => {
         try {
@@ -89,7 +81,6 @@ export default function Home() {
     useEffect(() => {
         if (hasInitialized.current) return;
 
-        getFirstNameFromStorage();
         startWatchingLocation();
         checkScreenReader();
 
@@ -106,7 +97,7 @@ export default function Home() {
             screenReaderSubscription.remove();
             netInfoUnsubscribe();
         };
-    }, [getFirstNameFromStorage, startWatchingLocation, checkScreenReader, handleNotificationResponse]);
+    }, [startWatchingLocation, checkScreenReader, handleNotificationResponse]);
 
     if (!fontLoaded) {
         return (
@@ -147,7 +138,6 @@ export default function Home() {
                         <Text style={styles.welcomeSubtitle}>Você está usando dados móveis</Text>
                     )}
                 </View>
-
                 <Services />
                 <AvaliarViagem />
                 <PendingTravel />

@@ -42,7 +42,7 @@ export default function Travels() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedIndex, setExpandedIndex] = useState<{sectionIndex: number, itemIndex: number} | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<{ sectionIndex: number, itemIndex: number } | null>(null);
   const baseURL = "https://backend-turma-a-2025.onrender.com";
 
   const capitalizeFirstLetter = (text: string) => {
@@ -51,8 +51,8 @@ export default function Travels() {
   };
 
   const groupByDate = (activities: Atividade[]): Section[] => {
-    const grouped: {[key: string]: Atividade[]} = {};
-    
+    const grouped: { [key: string]: Atividade[] } = {};
+
     activities.forEach(activity => {
       const date = new Date(activity.via_data);
       const dateKey = date.toLocaleDateString('pt-BR', {
@@ -60,20 +60,20 @@ export default function Travels() {
         month: '2-digit',
         year: 'numeric'
       });
-      
+
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
-      
+
       grouped[dateKey].push(activity);
     });
-    
+
     // Sort dates in descending order (newest first)
     const sortedDates = Object.keys(grouped).sort((a, b) => {
-      return new Date(b.split('/').reverse().join('-')).getTime() - 
-             new Date(a.split('/').reverse().join('-')).getTime();
+      return new Date(b.split('/').reverse().join('-')).getTime() -
+        new Date(a.split('/').reverse().join('-')).getTime();
     });
-    
+
     return sortedDates.map(date => ({
       title: date,
       data: grouped[date]
@@ -115,9 +115,9 @@ export default function Travels() {
 
   const toggleExpand = (sectionIndex: number, itemIndex: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedIndex(prev => 
-      prev?.sectionIndex === sectionIndex && prev?.itemIndex === itemIndex 
-        ? null 
+    setExpandedIndex(prev =>
+      prev?.sectionIndex === sectionIndex && prev?.itemIndex === itemIndex
+        ? null
         : { sectionIndex, itemIndex }
     );
   };
@@ -173,6 +173,10 @@ export default function Travels() {
               </View>
             ) : (
               <View style={styles.emptyContainer}>
+                <Image
+                  source={require("@images/empty.png")}
+                  style={styles.emptyImage}
+                />
                 <Text style={styles.empty}>Nenhuma viagem encontrada.</Text>
                 <TouchableOpacity
                   style={styles.newRequest}
@@ -184,8 +188,8 @@ export default function Travels() {
             )
           }
           renderItem={({ item, index, section }) => {
-            const isExpanded = expandedIndex?.sectionIndex === sections.indexOf(section) && 
-                              expandedIndex?.itemIndex === index;
+            const isExpanded = expandedIndex?.sectionIndex === sections.indexOf(section) &&
+              expandedIndex?.itemIndex === index;
             const icone =
               item.via_servico === "Mototáxi"
                 ? require("@images/motorcycle.png")
@@ -233,7 +237,7 @@ export default function Travels() {
                     </>
                   )}
                 </View>
-                { !isExpanded && (
+                {!isExpanded && (
                   <View style={styles.dateContainer}>
                     <Text style={styles.label}>Valor:</Text>
                     <Text style={styles.text}>R$ {item.via_valor}</Text>

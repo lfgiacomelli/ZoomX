@@ -1,18 +1,36 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard } from "react-native";
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, FlatList } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
 
 import LottieView from "lottie-react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import {
+  MenuProvider,
+} from 'react-native-popup-menu';
+
 
 import Header from "@components/Header";
 
+import { useAuth } from "@contexts/useAuth";
 import { useRouter } from "expo-router";
+
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 import loadingMotorcycleAnimation from "@animations/loading_motorcycle.json";
+import ToastMessage from "@components/ToastMessage";
+
+
+type SavedAddress = {
+  end_codigo: number;
+  end_apelido: string;
+  end_logradouro: string;
+  end_numero: string;
+  end_complemento: string;
+  end_bairro: string;
+  end_cep: string;
+}
 
 type Coordinates = {
   latitude: number;
@@ -119,8 +137,15 @@ const paymentMethods = [
 ];
 
 export default function RequestTravel() {
+  const [showToastErrorAllFields, setShowToastErrorAllFields] = useState(false);
+  const [showToastNext, setShowToastNext] = useState(false);
+  const [showToastErrorOrigin, setShowToastErrorOrigin] = useState(false);
+  const [showToastErrorDestination, setShowToastErrorDestination] = useState(false);
+  const [showToastSameAddress, setShowToastSameAddress] = useState(false);
+  const [showToastErrorUnauthorized, setShowToastErrorUnauthorized] = useState(false);
+  const [showToastError, setShowToastError] = useState(false);
   const [startAddress, setStartAddress] = useState("");
-  const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
+  const [formaPagamento, setFormaPagamento] = useState(paymentMethods[0].name);
   const [endAddress, setEndAddress] = useState("");
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
   const [markers, setMarkers] = useState<Coordinates[]>([]);
@@ -130,6 +155,7 @@ export default function RequestTravel() {
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
+  const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
   const [observacoes, setObservacoes] = useState<string>("");
   const animationRef = useRef(null);
@@ -155,11 +181,11 @@ export default function RequestTravel() {
 
   const calcularRota = async () => {
     if (!startAddress.trim() || !endAddress.trim()) {
-      Alert.alert("Erro", "Por favor, preencha ambos os endereços.");
+      setShowToastErrorAllFields(true);
       return;
     }
     if (startAddress.toLowerCase() === endAddress.toLowerCase()) {
-      Alert.alert("Erro", "Os endereços de partida e destino são iguais.");
+     setShowToastSameAddress(true);
       return;
     }
     Keyboard.dismiss();
@@ -168,7 +194,7 @@ export default function RequestTravel() {
     setMarkers([]);
     setDistance(null);
     setPrice(null);
-
+    setIsPressed(false);
     try {
       const [origin, destination] = await Promise.all([
         getCoordsFromAddress(startAddress),
@@ -176,12 +202,12 @@ export default function RequestTravel() {
       ]);
 
       if (!origin) {
-        Alert.alert("Endereço não encontrado", `O endereço de origem "${startAddress}" não foi encontrado.`);
+        setShowToastErrorOrigin(true);
         setIsLoading(false);
         return;
       }
       if (!destination) {
-        Alert.alert("Endereço não encontrado", `O endereço de destino "${endAddress}" não foi encontrado.`);
+        setShowToastErrorDestination(true);
         setIsLoading(false);
         return;
       }
@@ -189,10 +215,7 @@ export default function RequestTravel() {
       const distanceBetween = calculateHaversineDistance(origin, destination);
 
       if (distanceBetween < 50) {
-        Alert.alert(
-          "Endereços muito próximos",
-          "Os endereços devem estar a pelo menos 50 metros de distância."
-        );
+        setShowToastNext(true)
         setIsLoading(false);
         return;
       }
@@ -238,25 +261,28 @@ export default function RequestTravel() {
 
   const handleSolicitar = async () => {
     if (distance === null || price === null) {
-      Alert.alert("Erro", "Calcule a rota antes de solicitar.");
+      calcularRota();
+      return;
+    }
+
+    if (!user || !token) {
+      setShowToastErrorUnauthorized(true);
       return;
     }
 
     try {
-      const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
-      const nome = await AsyncStorage.getItem("nome");
-      const cpf = await AsyncStorage.getItem("cpf");
-      const email = await AsyncStorage.getItem("email");
-
-      if (!userId || !token || !nome || !email || !cpf) {
-        Alert.alert("Erro", "Usuário não autenticado.");
-        return;
-      }
-      AsyncStorage.setItem("startAddress", startAddress);
-      console.log("Endereço de partida salvo:", startAddress);
-
       setIsLoading(true);
+
+      const valor = Number(price.toFixed(2));
+      const distancia = Number(distance.toFixed(2));
+
+      const handleUnauthorized = async () => {
+        setShowToastErrorUnauthorized(true);
+        setTimeout(async () => {
+          await AsyncStorage.clear();
+          router.replace("/login");
+        }, 2000);
+      };
 
       if (formaPagamento?.toLowerCase() === "pix") {
         const pagamentoResponse = await fetch(
@@ -268,18 +294,23 @@ export default function RequestTravel() {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              sol_valor: Number(price.toFixed(2)),
-              sol_descricao: "Solicitação de corrida pelo Aplicativo ZoomX ",
+              sol_valor: valor,
+              sol_descricao: "Solicitação de corrida pelo Aplicativo ZoomX",
               sol_servico: "Mototáxi",
-              usu_codigo: Number(userId),
-              usu_nome: nome,
-              usu_cpf: cpf,
-              usu_email: email,
+              usu_codigo: Number(user.id),
+              usu_nome: user.nome,
+              usu_email: user.email,
+              usu_cpf: user.cpf,
             }),
           }
         );
 
         const pagamentoData = await pagamentoResponse.json();
+
+        if (pagamentoResponse.status === 403) {
+          await handleUnauthorized();
+          return;
+        }
 
         if (!pagamentoResponse.ok) {
           throw new Error(pagamentoData.error || "Erro ao gerar pagamento.");
@@ -293,18 +324,17 @@ export default function RequestTravel() {
             qrCodeBase64: pagamentoData.qr_code_base64,
             startAddress,
             endAddress,
-            distance: Number(distance.toFixed(2)),
-            price: Number(price.toFixed(2)),
+            distance: distancia,
+            price: valor,
             formaPagamento,
-            userId: Number(userId),
-            nome,
-            cpf,
-            email,
-            shouldCreateSolicitacao: "true"
+            userId: Number(user.id),
+            nome: user.nome,
+            email: user.email,
+            shouldCreateSolicitacao: "true",
           },
         });
-
       } else {
+        // Criar solicitação normal (não PIX)
         const solicitacaoResponse = await fetch(
           "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
           {
@@ -316,10 +346,10 @@ export default function RequestTravel() {
             body: JSON.stringify({
               sol_origem: startAddress,
               sol_destino: endAddress,
-              sol_distancia: Number(distance.toFixed(2)),
-              sol_valor: Number(price.toFixed(2)),
+              sol_distancia: distancia,
+              sol_valor: valor,
               sol_servico: "Mototáxi",
-              usu_codigo: Number(userId),
+              usu_codigo: Number(user.id),
               sol_data: new Date().toISOString(),
               sol_formapagamento: formaPagamento,
               sol_observacoes: "Pedido via App",
@@ -328,6 +358,11 @@ export default function RequestTravel() {
         );
 
         const solicitacaoData = await solicitacaoResponse.json();
+
+        if (solicitacaoResponse.status === 403) {
+          await handleUnauthorized();
+          return;
+        }
 
         if (!solicitacaoResponse.ok) {
           throw new Error(solicitacaoData.message || "Erro ao criar solicitação.");
@@ -340,13 +375,17 @@ export default function RequestTravel() {
           },
         });
       }
-    } catch (error) {
-      console.error("Erro ao solicitar corrida:", error);
-      Alert.alert("Erro", "Não foi possível processar a solicitação.");
+
+      await AsyncStorage.setItem("startAddress", startAddress);
+      console.log("Endereço de partida salvo:", startAddress);
+    } catch (error: any) {
+      console.error("Erro ao solicitar:", error?.message || error);
+      setShowToastError(true);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const checkScreenReader = async () => {
     const status = await AccessibilityInfo.isScreenReaderEnabled();
@@ -412,7 +451,7 @@ export default function RequestTravel() {
     setModalVisible(false);
   };
   const renderLupa = () => {
-    if (endAddress) {
+    if (startAddress && endAddress) {
       return (
         <TouchableOpacity
           style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
@@ -435,246 +474,292 @@ export default function RequestTravel() {
     return null;
   };
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <Header />
-      <StatusBar barStyle="light-content" />
-      <View style={styles.form}>
-        <View style={styles.iconColumn}>
-          <Ionicons name="location-outline" size={24} color="#000" />
-          <View style={styles.line} />
-          <Ionicons name="flag-outline" size={24} color="#000" />
-        </View>
+    <MenuProvider>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      >
+        <Header />
+        <StatusBar barStyle="light-content" />
+        <View style={styles.form}>
+          <View style={styles.inputColumn}>
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de partida (ex: Rua A, 123)"
+              value={startAddress}
+              onChangeText={setStartAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="next"
+              autoFocus
+            />
+            {suggestedAddress && !startAddress.trim() && (
+              <TouchableOpacity
+                style={styles.suggestionBox}
+                onPress={handleUseSuggested}
+              >
+                <View style={styles.column}>
+                  <Text style={styles.suggestionTitle}>
+                    Usar esse endereço novamente:
+                  </Text>
+                  <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
+                </View>
+                <Ionicons name="arrow-up-outline" size={24} color="#000" />
+              </TouchableOpacity>
+            )}
 
-        <View style={styles.inputColumn}>
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de partida (ex: Rua A, 123)"
-            value={startAddress}
-            onChangeText={setStartAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="next"
-            autoFocus
-          />
-          {suggestedAddress && startAddress !== suggestedAddress && (
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço de destino (ex: Av. B, 456)"
+              value={endAddress}
+              onChangeText={setEndAddress}
+              clearButtonMode="while-editing"
+              returnKeyType="done"
+            />
+            <View style={styles.row}>{renderLupa()}</View>
+          </View>
+        </View>
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <LottieView
+              ref={animationRef}
+              source={loadingMotorcycleAnimation}
+              autoPlay
+              loop
+              style={{ width: 50, height: 50 }}
+            />
+            <Text style={styles.loadingText}>Calculando rota...</Text>
+          </View>
+        )}
+
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            region={region}
+            onRegionChangeComplete={setRegion}
+            showsUserLocation
+            showsMyLocationButton
+          >
+            {markers.map((marker, idx) => (
+              <Marker key={idx} coordinate={marker}>
+                <Image
+                  source={
+                    idx === 0
+                      ? require("@images/partida.png")
+                      : require("@images/destino.png")
+                  }
+                  style={{ width: 40, height: 40 }}
+                  resizeMode="contain"
+                />
+              </Marker>
+            ))}
+            {routeCoords.length > 0 && (
+              <Polyline
+                coordinates={routeCoords}
+                strokeColor="#000"
+                strokeWidth={4}
+              />
+            )}
+          </MapView>
+          {routeCoords.length > 0 && !isBottomSheetActive && (
             <TouchableOpacity
-              style={styles.suggestionBox}
-              onPress={handleUseSuggested}
+              style={styles.floatingButton}
+              onPress={() => bottomSheetRef.current?.expand()}
             >
-              <View style={styles.column}>
-                <Text style={styles.suggestionTitle}>
-                  Usar esse endereço novamente:
-                </Text>
-                <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
-              </View>
-              <Ionicons name="arrow-up-outline" size={24} color="#000" />
+              <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
+              <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
             </TouchableOpacity>
           )}
-          <TextInput
-            style={styles.input}
-            placeholder="Endereço de destino (ex: Av. B, 456)"
-            value={endAddress}
-            onChangeText={setEndAddress}
-            clearButtonMode="while-editing"
-            returnKeyType="done"
-          />
-          <View style={styles.row}>{renderLupa()}</View>
+          {!isBottomSheetActive && !startAddress && !endAddress && (
+            <TouchableOpacity
+              style={styles.comeBack}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
         </View>
-      </View>
-      {isLoading && (
-        <View style={styles.loadingContainer}>
-          <LottieView
-            ref={animationRef}
-            source={loadingMotorcycleAnimation}
-            autoPlay
-            loop
-            style={{ width: 50, height: 50 }}
-          />
-          <Text style={styles.loadingText}>Calculando rota...</Text>
-        </View>
-      )}
-
-      <View style={styles.mapContainer}>
-        <MapView
-          ref={mapRef}
-          style={styles.map}
-          region={region}
-          onRegionChangeComplete={setRegion}
-          showsUserLocation
-          showsMyLocationButton
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1}
+          snapPoints={snapPoints}
+          onChange={handleSheetChanges}
+          enablePanDownToClose
+          backgroundStyle={styles.bottomSheetBackground}
+          handleIndicatorStyle={styles.handleIndicator}
+          detached={false}
         >
-          {markers.map((marker, idx) => (
-            <Marker key={idx} coordinate={marker}>
-              <Image
-                source={
-                  idx === 0
-                    ? require("@images/partida.png")
-                    : require("@images/destino.png")
-                }
-                style={{ width: 40, height: 40 }}
-                resizeMode="contain"
-              />
-            </Marker>
-          ))}
-          {routeCoords.length > 0 && (
-            <Polyline
-              coordinates={routeCoords}
-              strokeColor="#000"
-              strokeWidth={4}
-            />
-          )}
-        </MapView>
-        {routeCoords.length > 0 && !isBottomSheetActive && (
-          <TouchableOpacity
-            style={styles.floatingButton}
-            onPress={() => bottomSheetRef.current?.expand()}
-          >
-            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
-            <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        {!isBottomSheetActive && !startAddress && !endAddress && (
-          <TouchableOpacity
-            style={styles.comeBack}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-        )}
-      </View>
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.handleIndicator}
-        detached={false}
-      >
-        <BottomSheetView style={styles.bottomSheetContent}>
-          {distance !== null && price !== null && (
-            <>
-              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Origem:</Text>
-                <Text style={styles.detailValue}>{startAddress}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Destino:</Text>
-                <Text style={styles.detailValue}>{endAddress}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Distância:</Text>
-                <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Tempo Estimado:</Text>
-                <Text style={styles.detailValue}>
-                  {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Preço:</Text>
-                <Text style={[styles.detailValue, styles.priceText]}>
-                  R$ {price.toFixed(2)}
-                </Text>
-              </View>
-
-              <View style={styles.paymentMethodContainer}>
-                <Text style={styles.paymentMethodLabel}>
-                  Forma de Pagamento:
-                </Text>
-                <TouchableOpacity
-                  style={styles.paymentMethodButton}
-                  onPress={() => setModalVisible(true)}
-                >
-                  <Text style={styles.paymentMethodButtonText}>
-                    {formaPagamento}
-                  </Text>
-                  <Ionicons name="chevron-down" size={20} color="#666" />
-                </TouchableOpacity>
-              </View>
-
-              <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-              >
-                <View style={styles.modalOverlay}>
-                  <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>
-                      Selecione a forma de pagamento
-                    </Text>
-
-                    <ScrollView style={styles.paymentMethodsList}>
-                      {paymentMethods.map((method) => (
-                        <Pressable
-                          key={method.id}
-                          style={({ pressed }) => [
-                            styles.paymentMethodItem,
-                            pressed && styles.paymentMethodItemPressed,
-                            formaPagamento === method.name &&
-                            styles.paymentMethodItemSelected,
-                          ]}
-                          onPress={() => handlePaymentMethodSelect(method.name)}
-                        >
-                          <Ionicons
-                            name={method.icon as any}
-                            size={24}
-                            color={
-                              formaPagamento === method.name ? "#000" : "#666"
-                            }
-                          />
-                          <Text
-                            style={[
-                              styles.paymentMethodText,
-                              formaPagamento === method.name &&
-                              styles.paymentMethodTextSelected,
-                            ]}
-                          >
-                            {method.name}
-                          </Text>
-                          {formaPagamento === method.name && (
-                            <Ionicons name="checkmark" size={20} color="#000" />
-                          )}
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-
-                    <TouchableOpacity
-                      style={styles.modalCloseButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <Text style={styles.modalCloseButtonText}>Fechar</Text>
-                    </TouchableOpacity>
-                  </View>
+          <BottomSheetView style={styles.bottomSheetContent}>
+            {distance !== null && price !== null && (
+              <>
+                <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Origem:</Text>
+                  <Text style={styles.detailValue}>{startAddress}</Text>
                 </View>
-              </Modal>
 
-              <TouchableOpacity
-                style={styles.solicitarButton}
-                onPress={handleSolicitar}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.solicitarButtonText}>
-                    Solicitar Corrida
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Destino:</Text>
+                  <Text style={styles.detailValue}>{endAddress}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Distância:</Text>
+                  <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Tempo Estimado:</Text>
+                  <Text style={styles.detailValue}>
+                    {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
                   </Text>
-                )}
-              </TouchableOpacity>
-            </>
-          )}
-        </BottomSheetView>
-      </BottomSheet>
-    </KeyboardAvoidingView>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Preço:</Text>
+                  <Text style={[styles.detailValue, styles.priceText]}>
+                    R$ {price.toFixed(2)}
+                  </Text>
+                </View>
+
+                <View style={styles.paymentMethodContainer}>
+                  <Text style={styles.paymentMethodLabel}>
+                    Forma de Pagamento:
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.paymentMethodButton}
+                    onPress={() => setModalVisible(true)}
+                  >
+                    <Text style={styles.paymentMethodButtonText}>
+                      {formaPagamento}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color="#666" />
+                  </TouchableOpacity>
+                </View>
+
+                <Modal
+                  animationType="slide"
+                  transparent={true}
+                  visible={modalVisible}
+                  onRequestClose={() => setModalVisible(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                      <Text style={styles.modalTitle}>
+                        Selecione a forma de pagamento
+                      </Text>
+
+                      <ScrollView style={styles.paymentMethodsList}>
+                        {paymentMethods.map((method) => (
+                          <Pressable
+                            key={method.id}
+                            style={({ pressed }) => [
+                              styles.paymentMethodItem,
+                              pressed && styles.paymentMethodItemPressed,
+                              formaPagamento === method.name &&
+                              styles.paymentMethodItemSelected,
+                            ]}
+                            onPress={() => handlePaymentMethodSelect(method.name)}
+                          >
+                            <Ionicons
+                              name={method.icon as any}
+                              size={24}
+                              color={
+                                formaPagamento === method.name ? "#000" : "#666"
+                              }
+                            />
+                            <Text
+                              style={[
+                                styles.paymentMethodText,
+                                formaPagamento === method.name &&
+                                styles.paymentMethodTextSelected,
+                              ]}
+                            >
+                              {method.name}
+                            </Text>
+                            {formaPagamento === method.name && (
+                              <Ionicons name="checkmark" size={20} color="#000" />
+                            )}
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+
+                      <TouchableOpacity
+                        style={styles.modalCloseButton}
+                        onPress={() => setModalVisible(false)}
+                      >
+                        <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+
+                <TouchableOpacity
+                  style={styles.solicitarButton}
+                  onPress={handleSolicitar}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.solicitarButtonText}>
+                      Solicitar Corrida
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+          </BottomSheetView>
+        </BottomSheet>
+      </KeyboardAvoidingView>
+      {showToastError && (
+        <ToastMessage
+          message="Não foi possível processar a solicitação."
+          status="ERROR"
+          onHide={() => setShowToastError(false)}
+        />
+      )}
+      {showToastErrorUnauthorized && (
+        <ToastMessage
+          message="Sessão expirada. Faça login novamente."
+          status="ERROR"
+          onHide={() => setShowToastErrorUnauthorized(false)}
+        />
+      )}
+      {showToastErrorAllFields && (
+        <ToastMessage
+          message="Por favor, preencha todos os campos."
+          status="ERROR"
+          onHide={() => setShowToastErrorAllFields(false)}
+        />
+      )}
+      {showToastErrorOrigin && (
+        <ToastMessage
+          message="Endereço de origem não encontrado."
+          status="ERROR"
+          onHide={() => setShowToastErrorOrigin(false)}
+        />
+      )}
+      {showToastErrorDestination && (
+        <ToastMessage
+          message="Endereço de destino não encontrado."
+          status="ERROR"
+          onHide={() => setShowToastErrorDestination(false)}
+        />
+      )}
+      {showToastNext && (
+        <ToastMessage
+          message="Os endereços devem estar a pelo menos 50 metros de distância."
+          status="ERROR"
+          onHide={() => setShowToastNext(false)}
+        />
+      )}
+      {showToastSameAddress && (
+        <ToastMessage
+          message="Os endereços de partida e destino são iguais."
+          status="ERROR"
+          onHide={() => setShowToastSameAddress(false)}
+        />
+      )}
+    </MenuProvider>
   );
 }

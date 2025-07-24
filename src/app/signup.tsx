@@ -5,32 +5,39 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
   ScrollView,
   ActivityIndicator,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from "react-native";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
-import useRighteousFont from "./hooks/Font/Righteous";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Modal } from "react-native";
-import LottieView from "lottie-react-native";
+import useRighteousFont from "@hooks/Font/Righteous";
+import { useAuth } from "@contexts/useAuth";
+import ToastMessage from "@components/ToastMessage";
 
-export default function SignIn() {
+export default function SignUp() {
   const fontLoaded = useRighteousFont();
   const router = useRouter();
+  const { login } = useAuth();
+
+  const [showToastAllFields, setShowToastAllFields] = useState(false);
+  const [showToastError, setShowToastError] = useState(false);
+  const [showToastErrorEmail, setShowToastErrorEmail] = useState(false);
+  const [showToastErrorPassword, setShowToastErrorPassword] = useState(false);
+  const [showToastServerError, setShowToastServerError] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  // const animationRef = useRef(null);
   const [passwordVisibility, setPasswordVisibility] = useState(true);
 
   const togglePasswordVisibility = () => {
     setPasswordVisibility(!passwordVisibility);
   };
+
   const [form, setForm] = useState({
     usu_nome: "",
     usu_email: "",
@@ -39,9 +46,7 @@ export default function SignIn() {
     usu_senha: "",
   });
 
-  if (!fontLoaded) {
-    return null;
-  }
+  if (!fontLoaded) return null;
 
   const handleChange = (field: string, value: string) => {
     setForm({ ...form, [field]: value });
@@ -49,108 +54,63 @@ export default function SignIn() {
 
   const formatarTelefone = (text: string) => {
     const numeros = text.replace(/\D/g, "");
-    let telefoneFormatado = "";
-
-    if (numeros.length <= 2) {
-      telefoneFormatado = `(${numeros}`;
-    } else if (numeros.length <= 7) {
-      telefoneFormatado = `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
-    } else if (numeros.length <= 11) {
-      telefoneFormatado = `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
-    } else {
-      telefoneFormatado = `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
-    }
-    return telefoneFormatado;
+    if (numeros.length <= 2) return `(${numeros}`;
+    if (numeros.length <= 7) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+    if (numeros.length <= 11) return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
   };
 
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async () => {
-    if (
-      !form.usu_nome ||
-      !form.usu_email ||
-      !form.usu_telefone ||
-      !form.usu_senha
-    ) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos");
+    if (!form.usu_nome || !form.usu_email || !form.usu_telefone || !form.usu_senha) {
+      setShowToastAllFields(true);
       return;
     }
 
     if (!validateEmail(form.usu_email)) {
-      Alert.alert("Erro", "Por favor, insira um e-mail válido");
+      setShowToastErrorEmail(true);
       return;
     }
 
     if (form.usu_senha.length < 6) {
-      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres");
+      setShowToastErrorPassword(true);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://backend-turma-a-2025.onrender.com/api/usuarios",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            usu_nome: form.usu_nome,
-            usu_telefone: form.usu_telefone.replace(/\D/g, ""),
-            usu_ativo: true,
-            usu_email: form.usu_email,
-            usu_senha: form.usu_senha,
-            usu_cpf: form.usu_cpf.replace(/\D/g, ""),
-            usu_created_at: new Date().toISOString(),
-            usu_updated_at: new Date().toISOString(),
-          }),
-        }
-      );
+      const response = await fetch("https://backend-turma-a-2025.onrender.com/api/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          usu_nome: form.usu_nome,
+          usu_telefone: form.usu_telefone.replace(/\D/g, ""),
+          usu_ativo: true,
+          usu_email: form.usu_email,
+          usu_senha: form.usu_senha,
+          usu_cpf: form.usu_cpf.replace(/\D/g, ""),
+          usu_created_at: new Date().toISOString(),
+          usu_updated_at: new Date().toISOString(),
+        }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        let errorMsg = data.message || "Erro ao criar usuário";
-        if (data.errors) {
-          errorMsg +=
-            "\n" + data.errors.map((err: any) => err.message).join("\n");
-        }
-        Alert.alert("Erro", errorMsg);
+        setShowToastError(true);
         return;
       }
 
-      if (data.token) {
-        await AsyncStorage.setItem("token", data.token);
-      }
-
-      if (data.usuario) {
-        await AsyncStorage.setItem("id", data.usuario.id.toString());
-        await AsyncStorage.setItem("nome", data.usuario.nome);
-        await AsyncStorage.setItem("email", data.usuario.email);
-        await AsyncStorage.setItem("telefone", data.usuario.telefone);
-        await AsyncStorage.setItem("cpf", data.usuario.cpf);
-        await AsyncStorage.setItem(
-          "criado_em",
-          data.usuario.criado_em.toString()
-        );
+      if (data.token && data.usuario) {
+        login(data.usuario, data.token);
       }
 
       setModalVisible(true);
-
-      console.log("Usuário criado com sucesso:", data);
-
-      router.replace("/(authenticated)/Home");
     } catch (error: any) {
       console.error("Erro completo:", error);
-      Alert.alert(
-        "Erro",
-        error.message || "Não foi possível conectar ao servidor."
-      );
+      setShowToastServerError(true);
     } finally {
       setIsLoading(false);
     }
@@ -165,29 +125,17 @@ export default function SignIn() {
       >
         <StatusBar backgroundColor={"#000"} barStyle="light-content" />
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContainer,
-            { flexGrow: 1, justifyContent: "center" },
-          ]}
+          contentContainerStyle={[styles.scrollContainer, { flexGrow: 1, justifyContent: "center" }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => setModalVisible(false)}
-          >
+          <Modal animationType="slide" transparent visible={modalVisible}>
             <View style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>Conta criada com sucesso!</Text>
+                <Text style={styles.modalMessage}>Seus dados já foram criptografados!</Text>
                 <Text style={styles.modalMessage}>
-                  Seus dados já foram criptografados!
-                </Text>
-                <Text style={styles.modalMessage}>
-                  Comece a usar o{" "}
-                  <Text style={{ fontFamily: "Righteous" }}>ZoomX</Text> agora
-                  mesmo!
+                  Comece a usar o <Text style={{ fontFamily: "Righteous" }}>ZoomX</Text> agora mesmo!
                 </Text>
                 <TouchableOpacity
                   style={styles.modalButton}
@@ -204,18 +152,7 @@ export default function SignIn() {
 
           <View style={styles.container}>
             <View style={styles.logo}>
-              <Image
-                source={require("@images/logo.png")}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-              {/* <LottieView
-              source={require("../assets/splash.json")}
-              ref={animationRef}
-              autoPlay
-              loop
-              style={styles.logoImage}
-            /> */}
+              <Image source={require("@images/logo.png")} style={styles.logoImage} resizeMode="contain" />
             </View>
             <Text style={styles.title}>Crie sua conta:</Text>
             <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
@@ -251,12 +188,11 @@ export default function SignIn() {
                 placeholderTextColor="#aaa"
                 keyboardType="phone-pad"
                 value={form.usu_telefone}
-                onChangeText={(text) =>
-                  handleChange("usu_telefone", formatarTelefone(text))
-                }
+                onChangeText={(text) => handleChange("usu_telefone", formatarTelefone(text))}
                 style={styles.input}
               />
             </View>
+
             <View style={styles.inputWrapper}>
               <Feather name="file-text" size={20} color="#fff" />
               <TextInput
@@ -288,11 +224,7 @@ export default function SignIn() {
               />
             </View>
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleSubmit}
-              disabled={isLoading}
-            >
+            <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={isLoading}>
               {isLoading ? (
                 <ActivityIndicator color="#000" />
               ) : (
@@ -306,6 +238,46 @@ export default function SignIn() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {showToastAllFields && (
+        <ToastMessage
+          message="Por favor, preencha todos os campos."
+          status="ERROR"
+          onHide={() => setShowToastAllFields(false)}
+        />
+      )}
+
+      {showToastError && (
+        <ToastMessage
+          message="E-mail já cadastrado."
+          status="ERROR"
+          onHide={() => setShowToastError(false)}
+        />
+      )}
+
+      {showToastErrorEmail && (
+        <ToastMessage
+          message="E-mail inválido."
+          status="ERROR"
+          onHide={() => setShowToastErrorEmail(false)}
+        />
+      )}
+
+      {showToastErrorPassword && (
+        <ToastMessage
+          message="A senha deve ter no mínimo 6 caracteres."
+          status="ERROR"
+          onHide={() => setShowToastErrorPassword(false)}
+        />
+      )}
+
+      {showToastServerError && (
+        <ToastMessage
+          message="Não foi possível conectar ao servidor."
+          status="ERROR"
+          onHide={() => setShowToastServerError(false)}
+        />
+      )}
     </>
   );
 }

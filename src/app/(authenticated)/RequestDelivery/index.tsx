@@ -11,9 +11,9 @@ import LottieView from "lottie-react-native";
 import Header from "@components/Header";
 
 import { useRouter } from "expo-router";
+import { useAuth } from "@contexts/useAuth";
 
-import {MaterialIcons, Ionicons} from "@expo/vector-icons";
-
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 import loadingBoxAnimation from "@animations/loading_box.json";
 
@@ -128,6 +128,7 @@ export default function RequestDelivery() {
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
+  const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
   const [peso, setPeso] = useState("");
   const [comprimento, setComprimento] = useState("");
@@ -191,7 +192,7 @@ export default function RequestDelivery() {
       );
       const hora = new Date().getHours();
       let calculatedPrice = 0;
-      const tempo = distanceKm * 2; 
+      const tempo = distanceKm * 2;
       if (hora < 6 || hora >= 22) {
         calculatedPrice = 5.6 + distanceKm * 0.85;
       } else {
@@ -230,22 +231,21 @@ export default function RequestDelivery() {
       return;
     }
 
-    try {
-      const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem('token')
-      if (!userId || !token) {
-        Alert.alert("Erro", "Usuário não autenticado.");
-        return;
-      }
+    if (!user || !token) {
+      Alert.alert("Erro", "Usuário não autenticado.");
+      return;
+    }
 
+    try {
       setIsLoading(true);
+
       const response = await fetch(
         "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             sol_origem: startAddress,
@@ -253,7 +253,7 @@ export default function RequestDelivery() {
             sol_distancia: distance,
             sol_valor: price,
             sol_servico: "Entrega",
-            usu_codigo: Number(userId),
+            usu_codigo: Number(user.id), // ← vindo do context
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
             sol_peso: parseFloat(peso),

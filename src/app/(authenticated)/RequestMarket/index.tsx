@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard} from "react-native";
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import LottieView from "lottie-react-native";
 import styles from "./styles";
@@ -12,9 +12,9 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import Header from "@components/Header";
 
 import { useRouter } from "expo-router";
+import { useAuth } from "@contexts/useAuth"
 
-
-import {MaterialIcons, Ionicons} from "@expo/vector-icons";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 
 import loadingBoxAnimation from "@animations/loading_box.json";
@@ -131,6 +131,7 @@ export default function RequestMarket() {
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
+  const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
   const [showInputs, setShowInputs] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -168,9 +169,9 @@ export default function RequestMarket() {
       const origin = supermarketAddress.trim()
         ? await getCoordsFromAddress(supermarketAddress)
         : {
-            latitude: -21.8756,
-            longitude: -51.8437,
-          };
+          latitude: -21.8756,
+          longitude: -51.8437,
+        };
 
       const destination = await getCoordsFromAddress(endAddress);
 
@@ -194,7 +195,7 @@ export default function RequestMarket() {
       let calculatedPrice = 0;
       const tempoDeCompra = 15;
       const tempo = tempoDeCompra + distanceKm * 2;
-      calculatedPrice = 3.9 + (distanceKm * 0.54) ;
+      calculatedPrice = 3.9 + (distanceKm * 0.54);
 
       const valorCompra = parseFloat(valorEstimado) || 0;
       const totalPrice = calculatedPrice + valorCompra;
@@ -232,14 +233,12 @@ export default function RequestMarket() {
       return;
     }
 
-    try {
-      const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem('token');
-      if (!userId || !token) {
-        Alert.alert("Erro", "Usuário não autenticado.");
-        return;
-      }
+    if (!user || !token) {
+      Alert.alert("Erro", "Usuário não autenticado.");
+      return;
+    }
 
+    try {
       setIsLoading(true);
 
       const response = await fetch(
@@ -248,7 +247,7 @@ export default function RequestMarket() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             sol_origem: supermarketAddress.trim()
@@ -258,16 +257,18 @@ export default function RequestMarket() {
             sol_distancia: distance,
             sol_valor: price,
             sol_servico: "Compras",
-            usu_codigo: Number(userId),
+            usu_codigo: Number(user.id),
             sol_data: new Date().toISOString(),
             sol_formapagamento: formaPagamento,
             sol_observacoes: `Itens a comprar: ${observacoes}\nValor estimado de compras: R$ ${parseFloat(valorEstimado) || 0}`,
           }),
         }
       );
+
       if (supermarketAddress.trim() === "") {
         setModalMessage(true);
       }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -423,7 +424,7 @@ export default function RequestMarket() {
               strokeWidth={4}
             />
           )}
-          
+
         </MapView>
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity
