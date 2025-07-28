@@ -11,8 +11,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  ImageBackground,
 } from "react-native";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "@hooks/Font/Righteous";
@@ -33,6 +34,15 @@ export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [passwordVisibility, setPasswordVisibility] = useState(true);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const inputRefs = {
+    usu_nome: useRef<TextInput>(null),
+    usu_email: useRef<TextInput>(null),
+    usu_telefone: useRef<TextInput>(null),
+    usu_cpf: useRef<TextInput>(null),
+    usu_senha: useRef<TextInput>(null),
+  };
 
   const togglePasswordVisibility = () => {
     setPasswordVisibility(!passwordVisibility);
@@ -61,6 +71,14 @@ export default function SignUp() {
   };
 
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleFocus = (field: string) => {
+    setFocusedField(field);
+  };
+
+  const handleBlur = () => {
+    setFocusedField(null);
+  };
 
   const handleSubmit = async () => {
     if (!form.usu_nome || !form.usu_email || !form.usu_telefone || !form.usu_senha) {
@@ -150,27 +168,37 @@ export default function SignUp() {
             </View>
           </Modal>
 
-          <View style={styles.container}>
+          <ImageBackground source={require("@images/background.png")} style={styles.container}>
             <View style={styles.logo}>
               <Image source={require("@images/logo.png")} style={styles.logoImage} resizeMode="contain" />
             </View>
             <Text style={styles.title}>Crie sua conta:</Text>
             <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
 
-            <View style={styles.inputWrapper}>
-              <FontAwesome name="user" size={20} color="#fff" />
+            <View style={[
+              styles.inputWrapper,
+              focusedField === 'usu_nome' && styles.inputWrapperFocused
+            ]}>
+              <FontAwesome name="user" size={20} color={focusedField === 'usu_nome' ? "#FFD700" : "#fff"} />
               <TextInput
+                ref={inputRefs.usu_nome}
                 placeholder="Insira seu Nome Completo"
                 placeholderTextColor="#aaa"
                 onChangeText={(text) => handleChange("usu_nome", text)}
                 style={styles.input}
                 value={form.usu_nome}
+                onFocus={() => handleFocus('usu_nome')}
+                onBlur={handleBlur}
               />
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Feather name="mail" size={20} color="#fff" />
+            <View style={[
+              styles.inputWrapper,
+              focusedField === 'usu_email' && styles.inputWrapperFocused
+            ]}>
+              <Feather name="mail" size={20} color={focusedField === 'usu_email' ? "#FFD700" : "#fff"} />
               <TextInput
+                ref={inputRefs.usu_email}
                 placeholder="Insira seu E-mail"
                 placeholderTextColor="#aaa"
                 keyboardType="email-address"
@@ -178,24 +206,36 @@ export default function SignUp() {
                 onChangeText={(text) => handleChange("usu_email", text)}
                 style={styles.input}
                 value={form.usu_email}
+                onFocus={() => handleFocus('usu_email')}
+                onBlur={handleBlur}
               />
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Feather name="phone" size={20} color="#fff" />
+            <View style={[
+              styles.inputWrapper,
+              focusedField === 'usu_telefone' && styles.inputWrapperFocused
+            ]}>
+              <Feather name="phone" size={20} color={focusedField === 'usu_telefone' ? "#FFD700" : "#fff"} />
               <TextInput
+                ref={inputRefs.usu_telefone}
                 placeholder="Insira seu Telefone"
                 placeholderTextColor="#aaa"
                 keyboardType="phone-pad"
                 value={form.usu_telefone}
                 onChangeText={(text) => handleChange("usu_telefone", formatarTelefone(text))}
                 style={styles.input}
+                onFocus={() => handleFocus('usu_telefone')}
+                onBlur={handleBlur}
               />
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Feather name="file-text" size={20} color="#fff" />
+            <View style={[
+              styles.inputWrapper,
+              focusedField === 'usu_cpf' && styles.inputWrapperFocused
+            ]}>
+              <Feather name="file-text" size={20} color={focusedField === 'usu_cpf' ? "#FFD700" : "#fff"} />
               <TextInput
+                ref={inputRefs.usu_cpf}
                 placeholder="Insira seu CPF (apenas números)"
                 placeholderTextColor="#aaa"
                 keyboardType="numeric"
@@ -203,23 +243,35 @@ export default function SignUp() {
                 onChangeText={(text) => handleChange("usu_cpf", text)}
                 style={styles.input}
                 value={form.usu_cpf}
+                onFocus={() => handleFocus('usu_cpf')}
+                onBlur={handleBlur}
               />
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#fff" />
+            <View style={[
+              styles.inputWrapper,
+              focusedField === 'usu_senha' && styles.inputWrapperFocused
+            ]}>
+              <Ionicons 
+                name="lock-closed-outline" 
+                size={20} 
+                color={focusedField === 'usu_senha' ? "#FFD700" : "#fff"} 
+              />
               <TextInput
+                ref={inputRefs.usu_senha}
                 placeholder="Insira sua Senha (mínimo 6 caracteres)"
                 placeholderTextColor="#aaa"
                 secureTextEntry={passwordVisibility}
                 onChangeText={(text) => handleChange("usu_senha", text)}
                 style={styles.input}
                 value={form.usu_senha}
+                onFocus={() => handleFocus('usu_senha')}
+                onBlur={handleBlur}
               />
               <Ionicons
                 name={passwordVisibility ? "eye" : "eye-off-outline"}
                 size={24}
-                color="#fff"
+                color={focusedField === 'usu_senha' ? "#FFD700" : "#fff"}
                 onPress={togglePasswordVisibility}
               />
             </View>
@@ -235,7 +287,7 @@ export default function SignUp() {
             <TouchableOpacity onPress={() => router.push("/login")}>
               <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
             </TouchableOpacity>
-          </View>
+          </ImageBackground>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -327,6 +379,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     marginBottom: 15,
+  },
+  inputWrapperFocused: {
+    borderColor: "#FFD700",
+    backgroundColor: "#222",
   },
   input: {
     flex: 1,

@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
     color: "#000",
     marginRight: 10,
     textDecorationLine: "underline",
-
-  }
+  },
 });
 export default styles;

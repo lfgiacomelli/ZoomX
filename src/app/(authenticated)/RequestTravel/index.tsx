@@ -173,7 +173,7 @@ export default function RequestTravel() {
   };
   const [region, setRegion] = useState(initialRegion);
 
-  const snapPoints = useMemo(() => ["35%", "50%"], []);
+  const snapPoints = useMemo(() => ["35%", "40%"], []);
 
   const handleSheetChanges = useCallback((index: number) => {
     setIsBottomSheetActive(index >= 0);
@@ -185,7 +185,7 @@ export default function RequestTravel() {
       return;
     }
     if (startAddress.toLowerCase() === endAddress.toLowerCase()) {
-     setShowToastSameAddress(true);
+      setShowToastSameAddress(true);
       return;
     }
     Keyboard.dismiss();
@@ -334,7 +334,6 @@ export default function RequestTravel() {
           },
         });
       } else {
-        // Criar solicitação normal (não PIX)
         const solicitacaoResponse = await fetch(
           "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
           {
@@ -378,6 +377,7 @@ export default function RequestTravel() {
 
       await AsyncStorage.setItem("startAddress", startAddress);
       console.log("Endereço de partida salvo:", startAddress);
+
     } catch (error: any) {
       console.error("Erro ao solicitar:", error?.message || error);
       setShowToastError(true);
@@ -385,6 +385,7 @@ export default function RequestTravel() {
       setIsLoading(false);
     }
   };
+
 
 
   const checkScreenReader = async () => {
@@ -451,28 +452,33 @@ export default function RequestTravel() {
     setModalVisible(false);
   };
   const renderLupa = () => {
-    if (startAddress && endAddress) {
-      return (
-        <TouchableOpacity
-          style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
-          onPress={calcularRota}
-          onPressIn={() => setIsPressed(true)}
-          onPressOut={() => setIsPressed(false)}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
-            Ver trajeto
-          </Text>
-          <Ionicons
-            name="search"
-            size={20}
-            color={isPressed ? "#fff" : "#000"}
-          />
-        </TouchableOpacity>
-      );
+    if (!price || !distance) {
+      if (startAddress && endAddress) {
+        return (
+          <TouchableOpacity
+            style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
+            onPress={calcularRota}
+            onPressIn={() => setIsPressed(true)}
+            onPressOut={() => setIsPressed(false)}
+            activeOpacity={0.8}
+
+          >
+            <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
+              Ver trajeto
+            </Text>
+            <Ionicons
+              name="search"
+              size={20}
+              color={isPressed ? "#fff" : "#000"}
+            />
+          </TouchableOpacity>
+        );
+      }
     }
     return null;
   };
+
+
   return (
     <MenuProvider>
       <KeyboardAvoidingView
@@ -591,6 +597,7 @@ export default function RequestTravel() {
           detached={false}
         >
           <BottomSheetView style={styles.bottomSheetContent}>
+           
             {distance !== null && price !== null && (
               <>
                 <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
@@ -760,6 +767,7 @@ export default function RequestTravel() {
           onHide={() => setShowToastSameAddress(false)}
         />
       )}
+     
     </MenuProvider>
   );
 }

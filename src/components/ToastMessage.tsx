@@ -47,7 +47,7 @@ export default function ToastMessage({ message, onHide, status = 'DEFAULT' }: To
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 59,
+    top: 60,
     left: 20,
     right: 20,
     paddingVertical: 12,

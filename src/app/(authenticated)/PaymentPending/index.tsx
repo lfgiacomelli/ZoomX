@@ -60,7 +60,6 @@ export default function PaymentPending() {
         if (Platform.OS === "android") {
             ToastAndroid.show(message, ToastAndroid.SHORT);
         } else {
-            Alert.alert("", message);
         }
     }, []);
 
@@ -247,6 +246,7 @@ export default function PaymentPending() {
             await Clipboard.setStringAsync(pixCopy);
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
+            // throw new Error('Erro ao copiar PIX'); // Simulando erro para teste
         } catch (err) {
             console.error("Erro ao copiar PIX:", err);
             setShowToastError(true);
@@ -259,6 +259,10 @@ export default function PaymentPending() {
             <SafeAreaView style={styles.container}>
                 <View style={styles.content}>
                     <Text style={styles.title}>Pagamento via PIX</Text>
+                    
+                    <Text style={styles.title}>
+                        {params.price ? `R$ ${parseFloat(params.price).toFixed(2)}` : "R$ 0,00"}
+                    </Text>
 
                     <View style={styles.timerContainer}>
                         <Text style={styles.timerText}>Tempo restante:</Text>

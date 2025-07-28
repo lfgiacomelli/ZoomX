@@ -3,6 +3,8 @@ import { View, StyleSheet, Dimensions, Alert } from 'react-native';
 import LottieView from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
+import { agendarNotificacoes } from '@utils/notifications';
 
 const BASE_URL = 'https://backend-turma-a-2025.onrender.com';
 
@@ -41,6 +43,14 @@ export default function Index() {
   };
 
   useEffect(() => {
+    Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Precisando de uma corrida ou entrega?",
+        body: "O ZoomX está pronto pra te levar ou entregar onde for preciso, garantindo a agilidade e segurança.",
+      },
+       trigger: null,
+    });
+
     const checkAuth = async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
 

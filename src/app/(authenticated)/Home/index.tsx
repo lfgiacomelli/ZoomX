@@ -6,22 +6,18 @@ import * as Notifications from "expo-notifications";
 import NetInfo from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 
 import styles from "./styles";
 
 import Header from "@components/Header";
-import Benefits from "@components/Benefits";
 import LastActivity from "@components/LastActivity";
 import Services from "@components/Services";
-import Help from "@components/Help";
 import PendingTravel from "@components/PendingTravel";
 import AvaliarViagem from "@components/AvaliarViagem";
-import AnunciosCarousel from "@components/Anuncios";
-import StoriesView from "@components/StoriesView";
 
 import { useAuth } from "@contexts/useAuth";
 import useRighteousFont from "@hooks/Font/Righteous";
+import { agendarNotificacoes } from "@utils/notifications";
 
 export default function Home() {
     const router = useRouter();
@@ -97,6 +93,7 @@ export default function Home() {
             screenReaderSubscription.remove();
             netInfoUnsubscribe();
         };
+
     }, [startWatchingLocation, checkScreenReader, handleNotificationResponse]);
 
     if (!fontLoaded) {
@@ -115,7 +112,7 @@ export default function Home() {
     return (
         <>
             <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-            <Header />
+            <Header disableNavigation />
             <ScrollView
                 style={styles.container}
                 contentContainerStyle={{ paddingBottom: 100 }}
@@ -129,7 +126,7 @@ export default function Home() {
                             {photo ? (
                                 <Image source={{ uri: photo }} style={styles.profileImage} />
                             ) : (
-                                <Ionicons name="person-circle-outline" size={40} color="#fff" />
+                                <Image source={require("@images/userPhotoDefault.png")} style={styles.profileImage} />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -141,7 +138,6 @@ export default function Home() {
                 <Services />
                 <AvaliarViagem />
                 <PendingTravel />
-                <StoriesView />
                 <LastActivity />
 
                 {location && (
@@ -173,8 +169,6 @@ export default function Home() {
                         </View>
                     </View>
                 )}
-
-                <Help />
             </ScrollView>
         </>
     );

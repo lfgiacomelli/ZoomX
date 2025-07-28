@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
@@ -11,6 +11,7 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
 } from "react-native";
 import axios from "axios";
 import { useRouter } from "expo-router";
@@ -31,9 +32,21 @@ export default function Login() {
   const router = useRouter();
   const fontLoaded = useRighteousFont();
   const [passwordVisibility, setPasswordVisibility] = useState(true);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
 
   const togglePasswordVisibility = () => {
     setPasswordVisibility(!passwordVisibility);
+  };
+
+  const handleFocus = (field: string) => {
+    setFocusedField(field);
+  };
+
+  const handleBlur = () => {
+    setFocusedField(null);
   };
 
   if (!fontLoaded) return null;
@@ -76,13 +89,13 @@ export default function Login() {
       style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
-      <StatusBar backgroundColor="#000" barStyle="light-content" />
+      <StatusBar backgroundColor="white" barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
+        <ImageBackground source={require("@images/background_2.png")} style={styles.container}>
           <View style={styles.logo}>
             <Image
               source={require("@images/logo.png")}
@@ -94,9 +107,17 @@ export default function Login() {
           <Text style={styles.title}>Faça login:</Text>
           <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
 
-          <View style={styles.inputWrapper}>
-            <Feather name="mail" size={20} color="#fff" />
+          <View style={[
+            styles.inputWrapper,
+            focusedField === 'email' && styles.inputWrapperFocused
+          ]}>
+            <Feather 
+              name="mail" 
+              size={20} 
+              color={focusedField === 'email' ? "#FFD700" : "#fff"} 
+            />
             <TextInput
+              ref={emailInputRef}
               placeholder="E-mail"
               placeholderTextColor="#aaa"
               style={styles.input}
@@ -104,23 +125,35 @@ export default function Login() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              onFocus={() => handleFocus('email')}
+              onBlur={handleBlur}
             />
           </View>
 
-          <View style={styles.inputWrapper}>
-            <Ionicons name="lock-closed-outline" size={20} color="#fff" />
+          <View style={[
+            styles.inputWrapper,
+            focusedField === 'password' && styles.inputWrapperFocused
+          ]}>
+            <Ionicons 
+              name="lock-closed-outline" 
+              size={20} 
+              color={focusedField === 'password' ? "#FFD700" : "#fff"} 
+            />
             <TextInput
+              ref={passwordInputRef}
               placeholder="Senha"
               placeholderTextColor="#aaa"
               style={styles.input}
               value={usu_senha}
               onChangeText={setSenha}
               secureTextEntry={passwordVisibility}
+              onFocus={() => handleFocus('password')}
+              onBlur={handleBlur}
             />
             <Ionicons
               name={passwordVisibility ? "eye" : "eye-off-outline"}
               size={24}
-              color="#fff"
+              color={focusedField === 'password' ? "#FFD700" : "#fff"}
               onPress={togglePasswordVisibility}
             />
           </View>
@@ -142,7 +175,7 @@ export default function Login() {
               Ainda não tem uma conta? Cadastre-se!
             </Text>
           </TouchableOpacity>
-        </View>
+        </ImageBackground>
       </ScrollView>
       {showToastError && (
         <ToastMessage
@@ -206,6 +239,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     marginBottom: 15,
+  },
+  inputWrapperFocused: {
+    borderColor: "#FFD700",
+    backgroundColor: "#222",
   },
   input: {
     flex: 1,

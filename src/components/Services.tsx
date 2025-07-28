@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 export default function Services() {
   const router = useRouter();
   const hora = new Date().getHours();
-  const isNight = hora < 6 || hora >= 18; 
+  const isNight = hora < 6 || hora >= 18;
   const services = [
     {
       id: 1,
@@ -45,10 +45,26 @@ export default function Services() {
     return true;
   });
 
+  const horario = () => {
+    const hora = new Date().getHours();
+    if (hora < 6 || hora >= 23) {
+      return (
+        <View style={styles.nightWarning}>
+          <Text style={styles.nightWarningTitle}>Atenção!</Text>
+          <Text style={styles.nightWarningText}>Solicitações noturnas possuem disponibilidade limitada.</Text>
+        </View>
+      )
+    }
+  };
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>O que você precisa hoje?</Text>
+      {horario() ? (
+        <Text style={styles.sectionTitle}>Precisando de algo na madruga?</Text>
+      ) : (
+        <Text style={styles.sectionTitle}>O que você precisa hoje?</Text>
+      )}
+
       <View style={styles.servicesGrid}>
         {services.map((service) => (
           <TouchableOpacity
@@ -84,6 +100,7 @@ export default function Services() {
         />
         <Text style={styles.mainActionText}>SOLICITAR AGORA</Text>
       </TouchableOpacity>
+      {horario()}
     </View>
   );
 }
@@ -186,5 +203,24 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     tintColor: "#fff",
+  },
+  nightWarning: {
+    backgroundColor: "#f8d7da",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    alignItems: "center",
+  },
+  nightWarningTitle: {
+    fontFamily: "Righteous",
+    fontSize: 16,
+    color: "#721c24",
+    marginBottom: 4,
+  },
+  nightWarningText: {
+    fontFamily: "Righteous",
+    fontSize: 14,
+    color: "#721c24",
+    textAlign: "center",
   },
 });

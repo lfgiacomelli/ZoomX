@@ -36,6 +36,8 @@ export default function PendingRequest() {
   const params = useLocalSearchParams();
   const id = Number(params.solicitacaoId);
 
+  const [showToastHorario, setToastHorario] = useState(false);
+
   const [showToastCancel, setShowToastCancel] = useState(false);
   const [solicitacao, setSolicitacao] = useState<Solicitacao | null>(null);
   const [loading, setLoading] = useState(true);
@@ -210,6 +212,12 @@ export default function PendingRequest() {
           });
         }, 3000);
       }
+
+
+      const hora = new Date().getHours();
+      if (hora < 6 || hora >= 22) {
+        setToastHorario(true)
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
@@ -236,16 +244,16 @@ export default function PendingRequest() {
           },
         }
       );
-      
+
       await AsyncStorage.removeItem("startAddress");
-      
+
       if (!response.ok) {
         throw new Error(`Erro ao cancelar solicitação: ${response.status}`);
       }
 
       showToastWithMessage("Solicitação cancelada com sucesso", "SUCCESS");
       setShowToastCancel(true);
-      
+
     } catch (err: any) {
       showToastWithMessage(
         err.message || "Erro ao cancelar solicitação",
@@ -283,7 +291,7 @@ export default function PendingRequest() {
       const timer = setTimeout(() => {
         router.push("/Home");
       }, 2000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [showToastCancel]);
@@ -434,20 +442,20 @@ export default function PendingRequest() {
                 solicitacao?.sol_servico === "Mototáxi" ||
                 solicitacao?.sol_servico === "Compras"
               ) && (
-                <LottieView
-                  ref={animationRef}
-                  source={
-                    solicitacao?.sol_servico === "Entrega"
-                      ? boxAnimation
-                      : solicitacao?.sol_servico === "Mototáxi"
-                        ? motorAnimation
-                        : requestMarketAccepted
-                  }
-                  autoPlay
-                  loop
-                  style={styles.lottie}
-                />
-              )}
+                  <LottieView
+                    ref={animationRef}
+                    source={
+                      solicitacao?.sol_servico === "Entrega"
+                        ? boxAnimation
+                        : solicitacao?.sol_servico === "Mototáxi"
+                          ? motorAnimation
+                          : requestMarketAccepted
+                    }
+                    autoPlay
+                    loop
+                    style={styles.lottie}
+                  />
+                )}
 
               <Text style={styles.modalTitle}>
                 {solicitacao?.sol_servico === "Entrega"
@@ -535,7 +543,7 @@ export default function PendingRequest() {
         <ToastMessage
           message="Solicitação cancelada com sucesso."
           status="SUCCESS"
-          onHide={() => {}}
+          onHide={() => { }}
         />
       )}
       {showToast && (
@@ -543,6 +551,13 @@ export default function PendingRequest() {
           message={toastMessage}
           status={toastStatus}
           onHide={() => setShowToast(false)}
+        />
+      )}
+      {showToastHorario && (
+        <ToastMessage
+          message="Disponibilidade limitada. Cancele após 1 minuto de espera."
+          status="DEFAULT"
+          onHide={() => setToastHorario(false)}
         />
       )}
     </View>

@@ -28,7 +28,7 @@ const Tab = () => {
     };
 
     fetchStatus();
-  }, []);
+  }, [statusLeitor]);
 
   return (
     <View style={styles.container}>
