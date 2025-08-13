@@ -28,7 +28,7 @@ export default function AboutApp() {
                 <Image source={require('@images/fordevslogo.png')} style={styles.logo} />
                 <View style={styles.versionBox}>
                     <Text style={styles.storyText}>Versão:</Text>
-                    <Text style={styles.storyText}>1.0.0 BETA</Text>
+                    <Text style={styles.storyText}>1.0.6 BETA</Text>
                 </View>
             </View>
         </>

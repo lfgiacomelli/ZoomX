@@ -58,7 +58,6 @@ export default function Login() {
     return status === "granted";
   };
 
-  // Função para obter e enviar o Push Token
   const getPushToken = async (loggedUser: any, authToken: string) => {
     try {
       const savedToken = await AsyncStorage.getItem("pushToken");
