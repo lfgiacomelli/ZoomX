@@ -17,6 +17,7 @@ import AvaliarViagem from "@components/AvaliarViagem";
 
 import { useAuth } from "@contexts/useAuth";
 import useRighteousFont from "@hooks/useFont/Righteous";
+import { registerPushToken } from "@utils/registerPushToken";
 
 export default function Home() {
     const router = useRouter();
@@ -71,6 +72,12 @@ export default function Home() {
             console.error("Erro ao verificar leitor de tela:", err);
         }
     }, []);
+
+    useEffect(() => {
+        if (user && token) {
+            registerPushToken(user, token);
+        }
+    }, [user, token]);
 
     useEffect(() => {
         if (hasInitialized.current) return;

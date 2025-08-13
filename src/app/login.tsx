@@ -19,13 +19,11 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "@hooks/useFont/Righteous";
 import { useAuth } from "@contexts/useAuth";
 import ToastMessage from "@components/ToastMessage";
-import * as Notifications from "expo-notifications";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
 export default function Login() {
-  const { login, user, token } = useAuth();
+  const { login } = useAuth();
   const [showToastError, setShowToastError] = useState(false);
   const [showToastErrorLogin, setShowToastErrorLogin] = useState(false);
   const [usu_email, setEmail] = useState("");
@@ -53,58 +51,6 @@ export default function Login() {
 
   if (!fontLoaded) return null;
 
-  const requestNotificationPermission = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    return status === "granted";
-  };
-
-  const getPushToken = async (loggedUser: any, authToken: string) => {
-    try {
-      const savedToken = await AsyncStorage.getItem("pushToken");
-
-      if (savedToken) {
-        return savedToken;
-      }
-
-      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
-
-      if (!expoPushToken) {
-        console.warn("Não foi possível obter o Expo Push Token.");
-        return null;
-      }
-
-      await AsyncStorage.setItem("pushToken", expoPushToken);
-      console.log("Push token salvo no AsyncStorage:", expoPushToken);
-
-      if (!loggedUser?.id || !authToken) {
-        console.warn("Usuário não autenticado, não enviando token para backend.");
-        return expoPushToken;
-      }
-
-      const url = `${API_BASE_URL}/api/usuarios/${loggedUser.id}/push-token`;
-
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ pushToken: expoPushToken }),
-      });
-
-      if (!response.ok) {
-        console.error("Erro ao enviar push token para backend:", response.status);
-      } else {
-        console.log("Push token enviado para backend com sucesso");
-      }
-
-      return expoPushToken;
-    } catch (error) {
-      console.error("Erro ao obter/enviar push token:", error);
-      return null;
-    }
-  };
-
   const handleLogin = async () => {
     if (!usu_email.trim() || !usu_senha.trim()) {
       setShowToastErrorLogin(true);
@@ -127,13 +73,6 @@ export default function Login() {
       }
 
       await login(data.usuario, data.token);
-
-      const granted = await requestNotificationPermission();
-      if (granted) {
-        await getPushToken(data.usuario, data.token);
-      } else {
-        console.log("Permissão de notificação negada");
-      }
 
       router.replace("/(authenticated)/Home");
     } catch (error: any) {
@@ -264,9 +203,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-  },
+  scrollContainer: { flexGrow: 1 },
   container: {
     flex: 1,
     backgroundColor: "#000",
@@ -274,15 +211,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 60,
   },
-  logo: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  logoImage: {
-    width: 400,
-    height: 400,
-    marginBottom: -120,
-  },
+  logo: { alignItems: "center", marginBottom: 20 },
+  logoImage: { width: 400, height: 400, marginBottom: -120 },
   title: {
     fontFamily: "Righteous",
     fontSize: 30,
@@ -308,17 +238,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
   },
-  inputWrapperFocused: {
-    borderColor: "#FFD700",
-    backgroundColor: "#222",
-  },
-  input: {
-    flex: 1,
-    color: "#fff",
-    fontFamily: "Righteous",
-    marginLeft: 10,
-    minHeight: 20,
-  },
+  inputWrapperFocused: { borderColor: "#FFD700", backgroundColor: "#222" },
+  input: { flex: 1, color: "#fff", fontFamily: "Righteous", marginLeft: 10, minHeight: 20 },
   button: {
     backgroundColor: "#fff",
     paddingVertical: 14,
@@ -328,17 +249,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 50,
   },
-  buttonText: {
-    color: "#000",
-    fontFamily: "Righteous",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  linkText: {
-    color: "#fff",
-    textAlign: "center",
-    textDecorationLine: "underline",
-    fontFamily: "Righteous",
-    marginTop: 10,
-  },
+  buttonText: { color: "#000", fontFamily: "Righteous", fontSize: 16, textAlign: "center" },
+  linkText: { color: "#fff", textAlign: "center", textDecorationLine: "underline", fontFamily: "Righteous", marginTop: 10 },
 });
