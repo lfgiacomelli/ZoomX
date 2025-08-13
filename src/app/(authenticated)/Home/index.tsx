@@ -74,9 +74,12 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        if (user && token) {
-            registerPushToken(user, token);
-        }
+        const registerToken = async () => {
+            if (user && token) {
+                await registerPushToken(user, token);
+            }
+        };
+        registerToken();
     }, [user, token]);
 
     useEffect(() => {
