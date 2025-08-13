@@ -20,11 +20,12 @@ import useRighteousFont from "@hooks/useFont/Righteous";
 import { useAuth } from "@contexts/useAuth";
 import ToastMessage from "@components/ToastMessage";
 import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, user, token } = useAuth();
   const [showToastError, setShowToastError] = useState(false);
   const [showToastErrorLogin, setShowToastErrorLogin] = useState(false);
   const [usu_email, setEmail] = useState("");
@@ -57,6 +58,54 @@ export default function Login() {
     return status === "granted";
   };
 
+  // Função para obter e enviar o Push Token
+  const getPushToken = async (loggedUser: any, authToken: string) => {
+    try {
+      const savedToken = await AsyncStorage.getItem("pushToken");
+
+      if (savedToken) {
+        return savedToken;
+      }
+
+      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
+
+      if (!expoPushToken) {
+        console.warn("Não foi possível obter o Expo Push Token.");
+        return null;
+      }
+
+      await AsyncStorage.setItem("pushToken", expoPushToken);
+      console.log("Push token salvo no AsyncStorage:", expoPushToken);
+
+      if (!loggedUser?.id || !authToken) {
+        console.warn("Usuário não autenticado, não enviando token para backend.");
+        return expoPushToken;
+      }
+
+      const url = `${API_BASE_URL}/api/usuarios/${loggedUser.id}/push-token`;
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ pushToken: expoPushToken }),
+      });
+
+      if (!response.ok) {
+        console.error("Erro ao enviar push token para backend:", response.status);
+      } else {
+        console.log("Push token enviado para backend com sucesso");
+      }
+
+      return expoPushToken;
+    } catch (error) {
+      console.error("Erro ao obter/enviar push token:", error);
+      return null;
+    }
+  };
+
   const handleLogin = async () => {
     if (!usu_email.trim() || !usu_senha.trim()) {
       setShowToastErrorLogin(true);
@@ -82,6 +131,7 @@ export default function Login() {
 
       const granted = await requestNotificationPermission();
       if (granted) {
+        await getPushToken(data.usuario, data.token);
       } else {
         console.log("Permissão de notificação negada");
       }
@@ -189,7 +239,9 @@ export default function Login() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push("/signup")}>
-            <Text style={styles.linkText}>Ainda não tem uma conta? Cadastre-se!</Text>
+            <Text style={styles.linkText}>
+              Ainda não tem uma conta? Cadastre-se!
+            </Text>
           </TouchableOpacity>
         </ImageBackground>
       </ScrollView>
