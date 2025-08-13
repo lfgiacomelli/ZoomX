@@ -24,6 +24,8 @@
       "package": "com.smithgg.zoomx",
       "permissions": [
         "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "config": {
@@ -46,7 +48,9 @@
         {
           "icon": "./src/assets/images/logo.png",
           "color": "#000000",
-          "sounds": ["./src/assets/sound/notificacao.wav"]
+          "sounds": [
+            "./src/assets/sound/notificacao.wav"
+          ]
         }
       ]
     ],
@@ -57,6 +61,12 @@
       "eas": {
         "projectId": "9046af95-c23e-4a4b-9205-25e2b7e5d3cf"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9046af95-c23e-4a4b-9205-25e2b7e5d3cf"
     }
   }
 }
