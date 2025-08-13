@@ -9,7 +9,7 @@ import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 
 import Header from "@components/Header";
-import useRighteousFont from "@hooks/Font/Righteous";
+import useRighteousFont from "@hooks/useFont/Righteous";
 
 import { FontAwesome6, MaterialCommunityIcons, Entypo, EvilIcons } from "@expo/vector-icons";
 

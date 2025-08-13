@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import styles from './styles';
 
 import Header from '@components/Header';
-import useRighteousFont from '@hooks/Font/Righteous';
+import useRighteousFont from '@hooks/useFont/Righteous';
 
 
 export default function AboutApp() {

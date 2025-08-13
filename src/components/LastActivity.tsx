@@ -6,13 +6,12 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 
 import { useAuth } from "@contexts/useAuth";
-
 import loadingDataAnimation from "@animations/loading_data.json";
 
 type Viagem = {
@@ -40,17 +39,20 @@ export default function LastActivity() {
 
   const baseURL = "https://backend-turma-a-2025.onrender.com";
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (!user?.id || !token) {
+      setError("ID ou token não encontrado");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-
-      if (!user?.id || !token) throw new Error("ID ou token não encontrado");
-
       const storedData = await AsyncStorage.getItem("ultimaViagem");
-
       if (storedData) {
-        const parsed = JSON.parse(storedData);
+        const parsed: Viagem = JSON.parse(storedData);
         setData(parsed);
       }
 
@@ -71,8 +73,13 @@ export default function LastActivity() {
       const json = await response.json();
 
       if (json.sucesso && json.viagem) {
-        setData(json.viagem);
-        await AsyncStorage.setItem("ultimaViagem", JSON.stringify(json.viagem));
+        const newData: Viagem = json.viagem;
+
+        const currentData = await AsyncStorage.getItem("ultimaViagem");
+        if (!currentData || currentData !== JSON.stringify(newData)) {
+          setData(newData);
+          await AsyncStorage.setItem("ultimaViagem", JSON.stringify(newData));
+        }
       } else {
         setData(null);
         await AsyncStorage.removeItem("ultimaViagem");
@@ -83,13 +90,13 @@ export default function LastActivity() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, token]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const handleSolicitarNovamente = async () => {
+  const handleSolicitarNovamente = useCallback(async () => {
     if (!data) {
       Alert.alert("Erro", "Nenhuma viagem disponível para solicitar.");
       return;
@@ -98,9 +105,7 @@ export default function LastActivity() {
     setIsSubmitting(true);
 
     try {
-      const userId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
-      if (!userId || !token) {
+      if (!user?.id || !token) {
         Alert.alert("Erro", "Usuário não autenticado.");
         return;
       }
@@ -116,8 +121,8 @@ export default function LastActivity() {
           sol_destino: data.via_destino,
           sol_distancia: Number(data.sol_distancia),
           sol_valor: Number(data.via_valor),
-          sol_servico: "Mototáxi",
-          usu_codigo: Number(userId),
+          sol_servico: data.via_servico || "Mototáxi",
+          usu_codigo: Number(user.id),
           sol_data: new Date().toISOString(),
           sol_formapagamento: data.via_formapagamento || "Dinheiro",
           sol_observacoes: "Solicitado novamente via histórico do App",
@@ -137,19 +142,15 @@ export default function LastActivity() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [data, user?.id, token]);
 
   const renderContent = () => {
     if (loading) {
       return;
     }
 
-    if (error) {
-      return;
-    }
-
     if (!data) {
-      return null;
+      return;
     }
 
     return (
@@ -157,44 +158,17 @@ export default function LastActivity() {
         <Text style={styles.screenTitle}>Última Viagem</Text>
 
         <View style={styles.infoContainer}>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Origem:</Text>
-            <Text style={styles.infoValue}>{data.via_origem}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Destino:</Text>
-            <Text style={styles.infoValue}>{data.via_destino}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Valor:</Text>
-            <Text style={styles.infoValue}>
-              R$ {Number(data.via_valor).toFixed(2)}
-            </Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Pagamento:</Text>
-            <Text style={styles.infoValue}>
-              {data.via_formapagamento || "Dinheiro"}
-            </Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Serviço:</Text>
-            <Text style={styles.infoValue}>
-              {data.via_servico || "Mototáxi"}
-            </Text>
-          </View>
+          <InfoItem label="Origem:" value={data.via_origem} />
+          <InfoItem label="Destino:" value={data.via_destino} />
+          <InfoItem label="Valor:" value={`R$ ${Number(data.via_valor).toFixed(2)}`} />
+          <InfoItem label="Pagamento:" value={data.via_formapagamento || "Dinheiro"} />
+          <InfoItem label="Serviço:" value={data.via_servico || "Mototáxi"} />
         </View>
 
         <TouchableOpacity
           style={[styles.button, isSubmitting && styles.buttonDisabled]}
           onPress={handleSolicitarNovamente}
           disabled={isSubmitting}
-          accessibilityRole="button"
-          accessibilityLabel="Solicitar a última viagem novamente"
         >
           {isSubmitting ? (
             <ActivityIndicator color="#000" />
@@ -209,6 +183,13 @@ export default function LastActivity() {
   return <View style={styles.container}>{renderContent()}</View>;
 }
 
+const InfoItem = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.infoItem}>
+    <Text style={styles.infoLabel}>{label}</Text>
+    <Text style={styles.infoValue}>{value}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -217,7 +198,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontSize: 24,
     fontFamily: "Righteous",
-    color: "#000000",
+    color: "#000",
     marginBottom: 24,
     textAlign: "left",
   },
@@ -238,16 +219,16 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontFamily: "Righteous",
     fontSize: 16,
-    color: "#000000",
+    color: "#000",
     opacity: 0.7,
   },
   infoValue: {
     fontFamily: "Righteous",
     fontSize: 16,
-    color: "#000000",
+    color: "#000",
   },
   button: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFF",
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: "center",
@@ -261,21 +242,9 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: "Righteous",
     fontSize: 16,
-    color: "#000000",
+    color: "#000",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
-  loadingText: {
-    fontFamily: "Righteous",
-    fontSize: 16,
-    color: "#000000",
-    marginTop: 16,
-    opacity: 0.7,
-  },
+
   errorContainer: {
     flex: 1,
     justifyContent: "center",
@@ -284,7 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFF",
   },
   errorText: {
     fontFamily: "Righteous",

@@ -16,7 +16,7 @@ import {
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
-import useRighteousFont from "@hooks/Font/Righteous";
+import useRighteousFont from "@hooks/useFont/Righteous";
 import { useAuth } from "@contexts/useAuth";
 import ToastMessage from "@components/ToastMessage";
 

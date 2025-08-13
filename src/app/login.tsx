@@ -16,9 +16,10 @@ import {
 import axios from "axios";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import useRighteousFont from "@hooks/Font/Righteous";
+import useRighteousFont from "@hooks/useFont/Righteous";
 import { useAuth } from "@contexts/useAuth";
 import ToastMessage from "@components/ToastMessage";
+import * as Notifications from "expo-notifications";
 
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
@@ -51,6 +52,11 @@ export default function Login() {
 
   if (!fontLoaded) return null;
 
+  const requestNotificationPermission = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === "granted";
+  };
+
   const handleLogin = async () => {
     if (!usu_email.trim() || !usu_senha.trim()) {
       setShowToastErrorLogin(true);
@@ -73,7 +79,12 @@ export default function Login() {
       }
 
       await login(data.usuario, data.token);
-      console.log("Token:", data.token);
+
+      const granted = await requestNotificationPermission();
+      if (granted) {
+      } else {
+        console.log("Permissão de notificação negada");
+      }
 
       router.replace("/(authenticated)/Home");
     } catch (error: any) {
@@ -95,7 +106,10 @@ export default function Login() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ImageBackground source={require("@images/background_2.png")} style={styles.container}>
+        <ImageBackground
+          source={require("@images/background_2.png")}
+          style={styles.container}
+        >
           <View style={styles.logo}>
             <Image
               source={require("@images/logo.png")}
@@ -107,14 +121,16 @@ export default function Login() {
           <Text style={styles.title}>Faça login:</Text>
           <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
 
-          <View style={[
-            styles.inputWrapper,
-            focusedField === 'email' && styles.inputWrapperFocused
-          ]}>
-            <Feather 
-              name="mail" 
-              size={20} 
-              color={focusedField === 'email' ? "#FFD700" : "#fff"} 
+          <View
+            style={[
+              styles.inputWrapper,
+              focusedField === "email" && styles.inputWrapperFocused,
+            ]}
+          >
+            <Feather
+              name="mail"
+              size={20}
+              color={focusedField === "email" ? "#FFD700" : "#fff"}
             />
             <TextInput
               ref={emailInputRef}
@@ -125,19 +141,21 @@ export default function Login() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              onFocus={() => handleFocus('email')}
+              onFocus={() => handleFocus("email")}
               onBlur={handleBlur}
             />
           </View>
 
-          <View style={[
-            styles.inputWrapper,
-            focusedField === 'password' && styles.inputWrapperFocused
-          ]}>
-            <Ionicons 
-              name="lock-closed-outline" 
-              size={20} 
-              color={focusedField === 'password' ? "#FFD700" : "#fff"} 
+          <View
+            style={[
+              styles.inputWrapper,
+              focusedField === "password" && styles.inputWrapperFocused,
+            ]}
+          >
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color={focusedField === "password" ? "#FFD700" : "#fff"}
             />
             <TextInput
               ref={passwordInputRef}
@@ -147,13 +165,13 @@ export default function Login() {
               value={usu_senha}
               onChangeText={setSenha}
               secureTextEntry={passwordVisibility}
-              onFocus={() => handleFocus('password')}
+              onFocus={() => handleFocus("password")}
               onBlur={handleBlur}
             />
             <Ionicons
               name={passwordVisibility ? "eye" : "eye-off-outline"}
               size={24}
-              color={focusedField === 'password' ? "#FFD700" : "#fff"}
+              color={focusedField === "password" ? "#FFD700" : "#fff"}
               onPress={togglePasswordVisibility}
             />
           </View>
@@ -171,12 +189,11 @@ export default function Login() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push("/signup")}>
-            <Text style={styles.linkText}>
-              Ainda não tem uma conta? Cadastre-se!
-            </Text>
+            <Text style={styles.linkText}>Ainda não tem uma conta? Cadastre-se!</Text>
           </TouchableOpacity>
         </ImageBackground>
       </ScrollView>
+
       {showToastError && (
         <ToastMessage
           message="E-mail ou senha incorretos."

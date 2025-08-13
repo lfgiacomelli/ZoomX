@@ -6,12 +6,12 @@ import styles from "./styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@components/Header";
-import useRighteousFont from "@hooks/Font/Righteous";
+import useRighteousFont from "@hooks/useFont/Righteous";
 
 import Constants from "expo-constants";
 import { router } from "expo-router";
 
-import loadingAnimation from "@animations/loading_animation.json";
+import loadingAnimation from "@animations/loading_motorcycle.json";
 import errorAnimation from "@animations/error_animation.json";
 
 interface Atividade {
@@ -68,7 +68,6 @@ export default function Travels() {
       grouped[dateKey].push(activity);
     });
 
-    // Sort dates in descending order (newest first)
     const sortedDates = Object.keys(grouped).sort((a, b) => {
       return new Date(b.split('/').reverse().join('-')).getTime() -
         new Date(a.split('/').reverse().join('-')).getTime();

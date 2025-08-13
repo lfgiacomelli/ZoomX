@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { useAuth } from "@contexts/useAuth";
 
 type Viagem = {
   via_codigo: number;
@@ -64,6 +65,7 @@ const ProgressBar = ({ duration = 3000 }: { duration?: number }) => {
 
 export default function PendingTravel() {
   const router = useRouter();
+  const { user, token } = useAuth();
   const [data, setData] = useState<Viagem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,12 +77,11 @@ export default function PendingTravel() {
       setLoading(true);
       setError(null);
 
-      const usuarioId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
-      if (!usuarioId) throw new Error("ID do usuário não encontrado");
+      const id = user?.id;
+      if (!id) throw new Error("ID do usuário não encontrado");
 
       const response = await fetch(
-        `${baseURL}/api/viagens/andamento/${usuarioId}`,
+        `${baseURL}/api/viagens/andamento/${id}`,
         {
           method: "GET",
           headers: {
@@ -116,8 +117,6 @@ export default function PendingTravel() {
 
   const fetchInfoFuncionario = async (solicitacaoId: number) => {
     try {
-      const token = await AsyncStorage.getItem("token");
-
       const response = await fetch(
         `${baseURL}/api/viagens/solicitacao/${solicitacaoId}/funcionario`,
         {

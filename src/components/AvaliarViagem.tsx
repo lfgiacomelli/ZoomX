@@ -9,6 +9,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useAuth } from "@contexts/useAuth";
 
 type ViagemNaoAvaliada = {
   via_codigo: string;
@@ -22,21 +23,20 @@ const AvaliarViagem: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
   const translateY = useState(new Animated.Value(20))[0];
+  const { user, token } = useAuth();
 
   useEffect(() => {
     const fetchViagemNaoAvaliada = async () => {
       try {
-        const usuarioId = await AsyncStorage.getItem("id");
-        const token = await AsyncStorage.getItem("token");
-
-        if (!usuarioId || !token) {
+        const id = user?.id;
+        if (!id || !token) {
           setError("Usuário não autenticado");
           setLoading(false);
           return;
         }
 
         const response = await fetch(
-          `https://backend-turma-a-2025.onrender.com/api/viagens/naoavaliada/${usuarioId}`,
+          `https://backend-turma-a-2025.onrender.com/api/viagens/naoavaliada/${id}`,
           {
             method: "GET",
             headers: {

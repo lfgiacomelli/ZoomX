@@ -1,27 +1,33 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@contexts/useAuth";
 
 interface ViagemResponse {
     sucesso: boolean;
     viagem?: {
-        via_codigo: string;
+        via_codigo: number;
         via_status: string;
     };
     mensagem?: string;
 }
 
 export default function VerificarAndamento() {
-    const [usuarioId, setUsuarioId] = useState<string | null>(null);
+    const [usuarioId, setUsuarioId] = useState<number | null>(null);
+    const { user } = useAuth();
 
+    // Configura permissões e handler de notificações
     useEffect(() => {
         (async () => {
             const { status } = await Notifications.getPermissionsAsync();
             if (status !== "granted") {
                 const { status: newStatus } = await Notifications.requestPermissionsAsync();
                 if (newStatus !== "granted") {
-                    Alert.alert("Permissão necessária", "Ative as notificações para receber alertas de viagem.");
+                    Alert.alert(
+                        "Permissão necessária",
+                        "Ative as notificações para receber alertas de viagem."
+                    );
                 }
             }
 
@@ -38,16 +44,10 @@ export default function VerificarAndamento() {
     }, []);
 
     useEffect(() => {
-        async function pegarUsuarioId() {
-            try {
-                const id = await AsyncStorage.getItem("id");
-                if (id) setUsuarioId(id);
-            } catch (error) {
-                console.error("Erro ao acessar AsyncStorage:", error);
-            }
+        if (user?.id) {
+            setUsuarioId(user.id);
         }
-        pegarUsuarioId();
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         if (!usuarioId) return;
@@ -71,24 +71,28 @@ export default function VerificarAndamento() {
                 }
 
                 const { via_codigo, via_status } = data.viagem;
+                const codigoString = String(via_codigo);
 
-                if (via_status.toLowerCase() === 'finalizada') {
+                if (via_status.toLowerCase() === "finalizada") {
                     const ultimaNotificada = await AsyncStorage.getItem("ultimaViagemNotificada");
 
-                    if (ultimaNotificada !== via_codigo) {
+                    if (ultimaNotificada !== codigoString) {
                         await Notifications.scheduleNotificationAsync({
                             content: {
                                 title: "Viagem finalizada!",
                                 body: "Sua viagem foi finalizada. Por favor, avalie a corrida para nos ajudar a melhorar.",
-                                data: { viagemId: via_codigo },
-                                sound: 'default',
+                                data: {
+                                    viagemId: via_codigo,
+                                    url: `/AvaliarViagem/${via_codigo}`
+                                },
+                                sound: "default",
                             },
                             trigger: null,
                         });
 
                         console.log("Notificação enviada para viagem:", via_codigo);
 
-                        await AsyncStorage.setItem("ultimaViagemNotificada", via_codigo);
+                        await AsyncStorage.setItem("ultimaViagemNotificada", codigoString);
                     }
                 }
             } catch (error) {

@@ -16,6 +16,7 @@ module.exports = function (api) {
             '@images': './src/assets/images',
             '@fonts': './src/assets/fonts',
             '@utils': './src/utils',
+            '@types': './src/types'
           },
         },
       ],

@@ -25,7 +25,7 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import Header from "@components/Header";
 import Tab from "@components/Tab";
-import useRighteousFont from "@hooks/Font/Righteous";
+import useRighteousFont from "@hooks/useFont/Righteous";
 
 import styles from "./styles";
 
@@ -137,13 +137,6 @@ export default function Profile() {
             <Text style={styles.userEmail}>{user?.email || ""}</Text>
           </View>
         </View>
-
-        <View style={styles.userSinceContainer}>
-          <Text style={styles.userSince}>
-            
-          </Text>
-        </View>
-
         <View style={styles.row}>
           <TouchableOpacity
             style={styles.boxButton}

@@ -452,28 +452,26 @@ export default function RequestTravel() {
     setModalVisible(false);
   };
   const renderLupa = () => {
-    if (!price || !distance) {
-      if (startAddress && endAddress) {
-        return (
-          <TouchableOpacity
-            style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
-            onPress={calcularRota}
-            onPressIn={() => setIsPressed(true)}
-            onPressOut={() => setIsPressed(false)}
-            activeOpacity={0.8}
+    if (startAddress && endAddress) {
+      return (
+        <TouchableOpacity
+          style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
+          onPress={calcularRota}
+          onPressIn={() => setIsPressed(true)}
+          onPressOut={() => setIsPressed(false)}
+          activeOpacity={0.8}
 
-          >
-            <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
-              Ver trajeto
-            </Text>
-            <Ionicons
-              name="search"
-              size={20}
-              color={isPressed ? "#fff" : "#000"}
-            />
-          </TouchableOpacity>
-        );
-      }
+        >
+          <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
+            Ver trajeto
+          </Text>
+          <Ionicons
+            name="search"
+            size={20}
+            color={isPressed ? "#fff" : "#000"}
+          />
+        </TouchableOpacity>
+      );
     }
     return null;
   };
@@ -597,7 +595,7 @@ export default function RequestTravel() {
           detached={false}
         >
           <BottomSheetView style={styles.bottomSheetContent}>
-           
+
             {distance !== null && price !== null && (
               <>
                 <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
@@ -767,7 +765,7 @@ export default function RequestTravel() {
           onHide={() => setShowToastSameAddress(false)}
         />
       )}
-     
+
     </MenuProvider>
   );
 }

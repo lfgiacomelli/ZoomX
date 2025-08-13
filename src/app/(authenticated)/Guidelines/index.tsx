@@ -2,8 +2,8 @@ import { View, Text, ScrollView } from 'react-native';
 import styles from './styles';
 
 import Header from '@components/Header';
-import useRighteousFont from '@hooks/Font/Righteous';
-import useInterFont from '@hooks/Font/Inter';
+import useRighteousFont from '@hooks/useFont/Righteous';
+import useInterFont from '@hooks/useFont/Inter';
 
 export default function Guidelines() {
   const righteousLoaded = useRighteousFont();

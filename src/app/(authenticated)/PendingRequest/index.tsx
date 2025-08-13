@@ -18,18 +18,7 @@ import requestMarketAccepted from "@animations/request_market_accepted.json";
 import timerAnimation from "@animations/timer_animation.json";
 import ToastMessage from "@components/ToastMessage";
 
-type Solicitacao = {
-  sol_codigo: number;
-  sol_origem: string;
-  sol_destino: string;
-  sol_distancia: number;
-  sol_valor: number;
-  sol_servico: string;
-  sol_status: string;
-  sol_data: string;
-  sol_formapagamento: string;
-  usu_codigo?: number;
-};
+import { SolicitacaoProps } from "src/@types/solicitacao";
 
 export default function PendingRequest() {
   const router = useRouter();
@@ -39,7 +28,7 @@ export default function PendingRequest() {
   const [showToastHorario, setToastHorario] = useState(false);
 
   const [showToastCancel, setShowToastCancel] = useState(false);
-  const [solicitacao, setSolicitacao] = useState<Solicitacao | null>(null);
+  const [solicitacao, setSolicitacao] = useState<SolicitacaoProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(90);
@@ -168,13 +157,14 @@ export default function PendingRequest() {
             const veiculoInfo = `\nMoto: ${funcionario.mot_modelo} - Placa: ${funcionario.mot_placa}`;
             let mensagemFinal = "";
 
-            if (data.sol_servico === "Entrega") {
-              mensagemFinal = `${mensagemBase}seu entregador! Aguarde no local indicado.${veiculoInfo}\nEle chegará em ${tempo} minutos`;
-            } else if (data.sol_servico === "Mototáxi") {
-              mensagemFinal = `${mensagemBase}seu mototaxista! Aguarde no local indicado.${veiculoInfo}\nEle chegará em ${tempo} minutos`;
-            } else if (data.sol_servico === "Compras") {
-              mensagemFinal = `${mensagemBase}responsável por suas compras! Aguarde no local indicado.${veiculoInfo}\nTempo estimado de entrega: ${tempo} minutos`;
-            }
+            const mensagensPorServico: Record<string, string> = {
+              Entrega: `seu entregador! Aguarde no local indicado.${veiculoInfo}\nEle chegará em ${tempo} minutos`,
+              Mototáxi: `seu mototaxista! Aguarde no local indicado.${veiculoInfo}\nEle chegará em ${tempo} minutos`,
+              Compras: `responsável por suas compras! Aguarde no local indicado.${veiculoInfo}\nTempo estimado de entrega: ${tempo} minutos`,
+            };
+
+            mensagemFinal = `${mensagemBase}${mensagensPorServico[data.sol_servico] ?? ""}`;
+
 
             await Notifications.scheduleNotificationAsync({
               content: {
@@ -185,10 +175,15 @@ export default function PendingRequest() {
                       ? "Sua solicitação de compras foi aceita!"
                       : "Sua corrida foi aceita!",
                 body: mensagemFinal,
-                data: { solicitacaoId },
+                sound: 'notificacao.wav',
+                data: {
+                  solicitacaoId,
+                  url: `zoomx://TravelDetails/${solicitacaoId}`,
+                },
               },
               trigger: null,
             });
+
           }, 3000);
         } catch (error) {
           console.error("Erro ao buscar informações do funcionário:", error);

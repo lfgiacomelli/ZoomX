@@ -16,15 +16,13 @@ import PendingTravel from "@components/PendingTravel";
 import AvaliarViagem from "@components/AvaliarViagem";
 
 import { useAuth } from "@contexts/useAuth";
-import useRighteousFont from "@hooks/Font/Righteous";
-import { agendarNotificacoes } from "@utils/notifications";
+import useRighteousFont from "@hooks/useFont/Righteous";
 
 export default function Home() {
     const router = useRouter();
     const fontLoaded = useRighteousFont();
 
-    const { user } = useAuth();
-
+    const { user, token } = useAuth();
     const userFirstName = user?.nome?.split(" ")[0] || "Usuário";
 
     const [statusLeitor, setStatusLeitor] = useState(false);

@@ -4,12 +4,13 @@ import LottieView from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
-import { agendarNotificacoes } from '@utils/notifications';
 
 const BASE_URL = 'https://backend-turma-a-2025.onrender.com';
 
 export default function Index() {
   const router = useRouter();
+
+
 
   const verificarBanimento = async () => {
     const id = await AsyncStorage.getItem("id");
