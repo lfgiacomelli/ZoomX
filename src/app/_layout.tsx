@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
@@ -17,6 +17,18 @@ Notifications.setNotificationHandler({
 });
 
 export default function Layout() {
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      Notifications.setNotificationChannelAsync("default", {
+        name: "Default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FFFFFF",
+      });
+
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Stack
