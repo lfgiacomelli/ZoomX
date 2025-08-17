@@ -20,6 +20,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 import loadingMotorcycleAnimation from "@animations/loading_motorcycle.json";
 import ToastMessage from "@components/ToastMessage";
+import { getLocalISOString } from "@utils/getDateTime";
 
 
 type SavedAddress = {
@@ -349,12 +350,13 @@ export default function RequestTravel() {
               sol_valor: valor,
               sol_servico: "Mototáxi",
               usu_codigo: Number(user.id),
-              sol_data: new Date().toISOString(),
+              sol_data: getLocalISOString(),
               sol_formapagamento: formaPagamento,
               sol_observacoes: "Pedido via App",
             }),
           }
         );
+
 
         const solicitacaoData = await solicitacaoResponse.json();
 

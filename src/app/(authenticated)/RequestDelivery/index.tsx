@@ -16,6 +16,7 @@ import { useAuth } from "@contexts/useAuth";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 import loadingBoxAnimation from "@animations/loading_box.json";
+import { getLocalISOString } from "@utils/getDateTime";
 
 type Coordinates = {
   latitude: number;
@@ -253,8 +254,8 @@ export default function RequestDelivery() {
             sol_distancia: distance,
             sol_valor: price,
             sol_servico: "Entrega",
-            usu_codigo: Number(user.id), // ← vindo do context
-            sol_data: new Date().toISOString(),
+            usu_codigo: Number(user.id),
+            sol_data: getLocalISOString(),
             sol_formapagamento: formaPagamento,
             sol_peso: parseFloat(peso),
             sol_comprimento: parseFloat(comprimento),

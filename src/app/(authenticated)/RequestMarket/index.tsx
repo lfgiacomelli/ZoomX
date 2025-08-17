@@ -18,6 +18,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 
 import loadingBoxAnimation from "@animations/loading_box.json";
+import { getLocalISOString } from "@utils/getDateTime";
 
 
 type Coordinates = {
@@ -258,7 +259,7 @@ export default function RequestMarket() {
             sol_valor: price,
             sol_servico: "Compras",
             usu_codigo: Number(user.id),
-            sol_data: new Date().toISOString(),
+            sol_data: getLocalISOString(),
             sol_formapagamento: formaPagamento,
             sol_observacoes: `Itens a comprar: ${observacoes}\nValor estimado de compras: R$ ${parseFloat(valorEstimado) || 0}`,
           }),
