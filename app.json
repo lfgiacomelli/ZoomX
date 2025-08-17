@@ -21,12 +21,12 @@
         "foregroundImage": "./src/assets/images/icon_zx.png",
         "backgroundColor": "#000"
       },
-      "package": "com.smithgg.zoomx",
+      "package": "com.fourdevs.zoomx",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "NOTIFICATIONS"
       ],
       "config": {
         "googleMaps": {
@@ -35,7 +35,7 @@
       }
     },
     "web": {
-      "favicon": "./src/assets/images/icon_zx"
+      "favicon": "./src/assets/images/icon_zx.png"
     },
     "plugins": [
       "expo-router",
