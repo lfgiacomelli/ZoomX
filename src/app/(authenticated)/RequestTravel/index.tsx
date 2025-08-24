@@ -378,7 +378,6 @@ export default function RequestTravel() {
       }
 
       await AsyncStorage.setItem("startAddress", startAddress);
-      console.log("Endereço de partida salvo:", startAddress);
 
     } catch (error: any) {
       console.error("Erro ao solicitar:", error?.message || error);
@@ -498,6 +497,8 @@ export default function RequestTravel() {
               clearButtonMode="while-editing"
               returnKeyType="next"
               autoFocus
+              placeholderTextColor="#000"
+
             />
             {suggestedAddress && !startAddress.trim() && (
               <TouchableOpacity

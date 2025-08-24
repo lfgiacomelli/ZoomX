@@ -17,34 +17,26 @@ const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
  */
 export const registerPushToken = async (user: any, token: string) => {
   try {
-    // Verifica se já existe token salvo
     const savedToken = await AsyncStorage.getItem("pushToken");
     if (savedToken) {
-      console.log("Push token já existente no AsyncStorage:", savedToken);
       return savedToken;
     }
 
-    // Solicita permissão
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== "granted") {
-      console.log("Permissão de notificação negada");
       return null;
     }
 
-    // Obtém o push token do Expo
     const tokenObject = await Notifications.getExpoPushTokenAsync();
-    const expoPushToken = tokenObject?.data || tokenObject; // compatível com diferentes versões
+    const expoPushToken = tokenObject?.data || tokenObject; 
 
     if (!expoPushToken) {
       console.warn("Não foi possível obter o Expo Push Token.");
       return null;
     }
 
-    // Salva localmente
     await AsyncStorage.setItem("pushToken", expoPushToken as string);
-    console.log("Push token salvo no AsyncStorage:", expoPushToken);
 
-    // Envia para o backend
     if (user?.id && token) {
       const url = `${API_BASE_URL}/api/usuarios/${user.id}/push-token`;
       const response = await fetch(url, {
@@ -57,12 +49,11 @@ export const registerPushToken = async (user: any, token: string) => {
       });
 
       const text = await response.text();
-      console.log("Resposta do backend ao enviar push token:", response.status, text);
 
       if (!response.ok) {
         console.error("Erro ao enviar push token para backend:", response.status, text);
       } else {
-        console.log("Push token enviado para backend com sucesso");
+        return;
       }
     }
 

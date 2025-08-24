@@ -5,6 +5,7 @@ import * as Notifications from "expo-notifications";
 
 import { AuthProvider } from "@contexts/useAuth";
 
+// Configuração de notificações
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -25,7 +26,6 @@ export default function Layout() {
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#FFFFFF",
       });
-
     }
   }, []);
 
@@ -37,7 +37,29 @@ export default function Layout() {
           headerShown: false,
           contentStyle: { backgroundColor: "#000" },
         }}
-      />
+      >
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+            animation: Platform.OS === "ios" ? "slide_from_right" : "fade",
+          }}
+        />
+        <Stack.Screen
+          name="login"
+          options={{
+            headerShown: false,
+            animation: "slide_from_right",
+          }}
+        />
+        <Stack.Screen
+          name="signup"
+          options={{
+            headerShown: false,
+            animation: "slide_from_right",
+          }}
+        />
+      </Stack>
     </AuthProvider>
   );
 }

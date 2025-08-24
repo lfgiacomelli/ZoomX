@@ -19,6 +19,7 @@ export default function EditProfile() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [cpf, setCPF] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,6 +51,7 @@ export default function EditProfile() {
         setName(data.usu_nome || "");
         setEmail(data.usu_email || "");
         setPhone(data.usu_telefone || "");
+        setCPF(data.usu_cpf || "");
       } catch (error) {
         console.error("Erro ao carregar dados do usuário:", error);
       }
@@ -82,6 +84,7 @@ export default function EditProfile() {
             usu_email: email,
             usu_telefone: phone,
             usu_senha: password,
+            usu_cpf: cpf
           }),
         }
       );
@@ -111,7 +114,7 @@ export default function EditProfile() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="4ForDevs"
+            placeholder="..."
             value={name}
             onChangeText={setName}
           />
@@ -122,7 +125,7 @@ export default function EditProfile() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="4fordevs@email.com"
+            placeholder="..."
             keyboardType="email-address"
             value={email}
             onChangeText={setEmail}
@@ -146,7 +149,7 @@ export default function EditProfile() {
           <TextInput
             style={styles.input}
             secureTextEntry={!passwordVisible}
-            placeholder="********"
+            placeholder="..."
             value={password}
             onChangeText={setPassword}
           />
@@ -159,6 +162,17 @@ export default function EditProfile() {
               color="black"
             />
           </TouchableOpacity>
+        </View>
+        <Text style={styles.label}>CPF:</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="..."
+            keyboardType="number-pad"
+            value={cpf}
+            onChangeText={setCPF}
+          />
+          <Ionicons name="mail" size={22} color="black" />
         </View>
 
         <TouchableOpacity
@@ -189,7 +203,7 @@ export default function EditProfile() {
               style={styles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                router.push("/profile");
+                router.push("/Profile");
               }}
             >
               <Text style={styles.modalButtonText}>OK</Text>

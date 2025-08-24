@@ -21,7 +21,6 @@ const Tab = () => {
       try {
         const isReducedMotion = await AccessibilityInfo.isReduceMotionEnabled();
         setStatusLeitor(isReducedMotion);
-        console.log("Status do leitor de tela:", isReducedMotion);
       } catch (error) {
         console.error("Erro ao obter o status do leitor de tela:", error);
       }

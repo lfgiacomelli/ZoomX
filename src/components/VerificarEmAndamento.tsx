@@ -66,7 +66,6 @@ export default function VerificarAndamento() {
                 const data: ViagemResponse = await response.json();
 
                 if (!data.sucesso || !data.viagem) {
-                    console.log(data.mensagem || "Nenhuma viagem encontrada");
                     return;
                 }
 
@@ -90,7 +89,6 @@ export default function VerificarAndamento() {
                             trigger: null,
                         });
 
-                        console.log("Notificação enviada para viagem:", via_codigo);
 
                         await AsyncStorage.setItem("ultimaViagemNotificada", codigoString);
                     }
