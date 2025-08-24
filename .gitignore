@@ -17,6 +17,9 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+#chave_firebase
+zoomx_firebase.json
+
 # Metro
 .metro-health-check*
 
