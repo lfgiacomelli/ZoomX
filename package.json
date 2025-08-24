@@ -38,6 +38,7 @@
     "expo-status-bar": "~2.2.3",
     "expo-updates": "~0.28.17",
     "expo-video": "~2.2.2",
+    "git-filter-repo": "^0.0.30",
     "lodash.debounce": "^4.0.8",
     "lottie-react-native": "7.2.2",
     "react": "19.0.0",
