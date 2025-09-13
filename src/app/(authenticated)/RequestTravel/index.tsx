@@ -20,7 +20,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 import loadingMotorcycleAnimation from "@animations/loading_motorcycle.json";
 import ToastMessage from "@components/ToastMessage";
-import { getLocalISOString } from "@utils/getDateTime";
+import { mostrarDataHoraAtual } from "@utils/getDateTime";
 
 
 type SavedAddress = {
@@ -153,6 +153,7 @@ export default function RequestTravel() {
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
@@ -181,6 +182,7 @@ export default function RequestTravel() {
   }, []);
 
   const calcularRota = async () => {
+    Keyboard.dismiss();
     if (!startAddress.trim() || !endAddress.trim()) {
       setShowToastErrorAllFields(true);
       return;
@@ -272,7 +274,7 @@ export default function RequestTravel() {
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
 
       const valor = Number(price.toFixed(2));
       const distancia = Number(distance.toFixed(2));
@@ -350,7 +352,7 @@ export default function RequestTravel() {
               sol_valor: valor,
               sol_servico: "Mototáxi",
               usu_codigo: Number(user.id),
-              sol_data: getLocalISOString(),
+              sol_data: mostrarDataHoraAtual(),
               sol_formapagamento: formaPagamento,
               sol_observacoes: "Pedido via App",
             }),
@@ -383,7 +385,7 @@ export default function RequestTravel() {
       console.error("Erro ao solicitar:", error?.message || error);
       setShowToastError(true);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -453,7 +455,7 @@ export default function RequestTravel() {
     setModalVisible(false);
   };
   const renderLupa = () => {
-    if (startAddress && endAddress) {
+    if (startAddress && endAddress && endAddress.length >= 10) {
       return (
         <TouchableOpacity
           style={[styles.lupaContainer, isPressed && styles.lupaButtonPressed]}
@@ -497,7 +499,7 @@ export default function RequestTravel() {
               clearButtonMode="while-editing"
               returnKeyType="next"
               autoFocus
-              placeholderTextColor="#000"
+              placeholderTextColor="#969696"
 
             />
             {suggestedAddress && !startAddress.trim() && (
@@ -522,6 +524,8 @@ export default function RequestTravel() {
               onChangeText={setEndAddress}
               clearButtonMode="while-editing"
               returnKeyType="done"
+              placeholderTextColor="#969696"
+
             />
             <View style={styles.row}>{renderLupa()}</View>
           </View>
@@ -706,7 +710,7 @@ export default function RequestTravel() {
                   onPress={handleSolicitar}
                   disabled={isLoading}
                 >
-                  {isLoading ? (
+                  {loading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <Text style={styles.solicitarButtonText}>

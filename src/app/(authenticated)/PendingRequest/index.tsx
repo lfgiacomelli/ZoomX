@@ -19,6 +19,7 @@ import timerAnimation from "@animations/timer_animation.json";
 import ToastMessage from "@components/ToastMessage";
 
 import { SolicitacaoProps } from "src/@types/solicitacao";
+import { formatFirstLetter } from "@utils/formatFirstLetter";
 
 export default function PendingRequest() {
   const router = useRouter();
@@ -390,16 +391,18 @@ export default function PendingRequest() {
                   solicitacao.sol_status === "Pendente"
                     ? styles.pendingStatus
                     : styles.acceptedStatus,
+                  solicitacao.sol_status === "recusada" ? styles.refusedStatus : null,
                 ]}
               >
-                {solicitacao.sol_status}
+                {formatFirstLetter(solicitacao.sol_status)}
               </Text>
+
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Data:</Text>
               <Text style={styles.detailValue}>
-                {new Date(solicitacao.sol_data).toLocaleString()}
+                {solicitacao.sol_data}
               </Text>
             </View>
 
@@ -408,7 +411,7 @@ export default function PendingRequest() {
               <Text style={styles.detailValue}>
                 {solicitacao.sol_formapagamento}
               </Text>
-            </View>
+            </View> 
           </View>
 
           <TouchableOpacity

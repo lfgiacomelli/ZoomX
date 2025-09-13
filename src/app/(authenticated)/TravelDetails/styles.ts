@@ -102,6 +102,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
   },
+  goBackButton: {
+    marginTop: 20,
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  goBackButtonText: {
+    fontFamily: "Righteous",
+    color: "#fff",
+    fontSize: 16,
+  }
 });
 
 export default styles;

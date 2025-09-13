@@ -3,20 +3,23 @@ import {
   View,
   Text,
   ActivityIndicator,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
 } from "react-native";
 import styles from "./styles";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@components/Header";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { TravelProps } from "src/@types/travel";
+
 export default function TravelDetails() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [viagem, setViagem] = useState<any>(null);
+  const [viagem, setViagem] = useState<TravelProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -87,13 +90,12 @@ export default function TravelDetails() {
               padding: 5px 10px;
               border-radius: 4px;
               display: inline-block;
-              ${
-                viagem.via_status.toLowerCase() === "finalizada"
-                  ? "background-color: #e8f5e9; color: #2e7d32;"
-                  : viagem.via_status.toLowerCase() === "em andamento"
-                    ? "background-color: #ffebee; color: #c62828;"
-                    : "background-color: #fff8e1; color: #f57f17;"
-              }
+              ${viagem.via_status.toLowerCase() === "finalizada"
+        ? "background-color: #e8f5e9; color: #2e7d32;"
+        : viagem.via_status.toLowerCase() === "em andamento"
+          ? "background-color: #ffebee; color: #c62828;"
+          : "background-color: #fff8e1; color: #f57f17;"
+      }
             }
           </style>
         </head>
@@ -196,6 +198,9 @@ export default function TravelDetails() {
     return (
       <View style={styles.center}>
         <Text style={styles.notFoundText}>Viagem não encontrada.</Text>
+        <Pressable onPress={() => { router.push('/Home') }} style={styles.goBackButton}>
+          <Text style={styles.goBackButtonText}>Voltar para Home</Text>
+        </Pressable>
       </View>
     );
   }
@@ -230,6 +235,12 @@ export default function TravelDetails() {
             <Text style={styles.value}>{viagem.via_servico}</Text>
           </View>
           <View style={styles.separator} />
+
+          <View style={styles.separator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Observações</Text>
+            <Text style={styles.value}>{viagem.via_observacoes}</Text>
+          </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Data</Text>

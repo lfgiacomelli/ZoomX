@@ -13,6 +13,7 @@ import LottieView from "lottie-react-native";
 
 import { useAuth } from "@contexts/useAuth";
 import loadingDataAnimation from "@animations/loading_data.json";
+import AnunciosCarousel from "./Anuncios";
 
 type Viagem = {
   via_codigo: number;
@@ -138,7 +139,6 @@ export default function LastActivity() {
       router.push(`/PendingRequest?solicitacaoId=${json.sol_codigo}`);
     } catch (error) {
       console.error("Erro ao criar solicitação:", error);
-      Alert.alert("Erro", "Não foi possível criar a solicitação.");
     } finally {
       setIsSubmitting(false);
     }
@@ -150,7 +150,9 @@ export default function LastActivity() {
     }
 
     if (!data) {
-      return;
+      return (
+        <AnunciosCarousel />
+      )
     }
 
     return (
@@ -183,12 +185,20 @@ export default function LastActivity() {
   return <View style={styles.container}>{renderContent()}</View>;
 }
 
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.infoItem}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
-  </View>
-);
+const InfoItem = ({ label, value }: { label: string; value: string }) => {
+  const maxLength = 22  ;
+  const displayValue = value.length > maxLength 
+    ? value.substring(0, maxLength) + "..."
+    : value;
+
+  return (
+    <View style={styles.infoItem}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{displayValue}</Text>
+    </View>
+  );
+};
+
 
 const styles = StyleSheet.create({
   container: {

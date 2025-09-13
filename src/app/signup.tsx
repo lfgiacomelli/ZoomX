@@ -121,6 +121,7 @@ export default function SignUp() {
 
       if (data.token && data.usuario) {
         login(data.usuario, data.token);
+        router.replace('/Home')
       }
 
     } catch (error: any) {

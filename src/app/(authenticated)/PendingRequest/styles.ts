@@ -89,6 +89,10 @@ const styles = StyleSheet.create({
     color: "#34C759",
     fontFamily: "Righteous",
   },
+  refusedStatus: {
+    color: "#FF3B30",
+    fontFamily: "Righteous",
+  },
   actionButton: {
     backgroundColor: "#000",
     padding: 16,

@@ -1,11 +1,13 @@
-export function getLocalISOString() {
-  const now = new Date();
-  const tzOffset = -now.getTimezoneOffset();
-  const diff = tzOffset >= 0 ? "+" : "-";
-  const pad = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, "0");
-  const hours = pad(tzOffset / 60);
-  const minutes = pad(tzOffset % 60);
+export function mostrarDataHoraAtual(): string {
+  const agora = new Date();
 
-  const localISO = now.toISOString().slice(0, -1);
-  return `${localISO}${diff}${hours}:${minutes}`;
+  const dia = String(agora.getDate()).padStart(2, "0");
+  const mes = String(agora.getMonth() + 1).padStart(2, "0"); // meses começam em 0
+  const ano = agora.getFullYear();
+
+  const horas = String(agora.getHours()).padStart(2, "0");
+  const minutos = String(agora.getMinutes()).padStart(2, "0");
+  const segundos = String(agora.getSeconds()).padStart(2, "0");
+
+  return `${dia}/${mes}/${ano} ${horas}:${minutos}:${segundos}`;
 }

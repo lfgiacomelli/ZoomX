@@ -3,7 +3,6 @@ import { ActivityIndicator, View, StyleSheet, Alert } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack, usePathname, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
 import Tab from "@components/Tab";
 import { useAuth } from "@contexts/useAuth";
 import { useNotificationObserver } from "@hooks/useNotificationObserver";
@@ -20,7 +19,6 @@ export default function AuthenticatedLayout() {
   const verificarBanimento = async () => {
     try {
       const id = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
 
       if (!id || !token) return;
 

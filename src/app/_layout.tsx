@@ -5,7 +5,6 @@ import * as Notifications from "expo-notifications";
 
 import { AuthProvider } from "@contexts/useAuth";
 
-// Configuração de notificações
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,

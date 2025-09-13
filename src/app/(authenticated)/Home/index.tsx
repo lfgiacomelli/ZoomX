@@ -6,6 +6,7 @@ import * as Notifications from "expo-notifications";
 import NetInfo from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { mostrarDataHoraAtual } from "@utils/getDateTime";
 
 import styles from "./styles";
 
@@ -74,6 +75,8 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
+        mostrarDataHoraAtual();
+        console.log(token);
         const registerToken = async () => {
             if (user && token) {
                 await registerPushToken(user, token);
