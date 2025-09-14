@@ -21,7 +21,8 @@ import {
   Octicons,
   Ionicons,
 } from "@expo/vector-icons";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+
+import { Modalize } from 'react-native-modalize';
 
 import Header from "@components/Header";
 import Tab from "@components/Tab";
@@ -41,20 +42,19 @@ export default function Profile() {
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const photoSheetRef = useRef<BottomSheet>(null);
+  const photoSheetRef = useRef<Modalize>(null);
+  const modalizeRef = useRef<Modalize>(null);
 
-  const snapPoints = useMemo(() => ["15%", "30%"], []);
 
   useEffect(() => {
     loadUserPhoto();
   }, []);
 
-  const openPhotoSheet = () => photoSheetRef.current?.expand();
+  const openPhotoSheet = () => photoSheetRef.current?.open();
   const closePhotoSheet = () => photoSheetRef.current?.close();
 
-  const openLogoutSheet = () => bottomSheetRef.current?.expand();
-  const closeLogoutSheet = () => bottomSheetRef.current?.close();
+  const openLogoutSheet = () => modalizeRef.current?.open();
+  const closeLogoutSheet = () => modalizeRef.current?.close();
 
   async function loadUserPhoto() {
     try {
@@ -208,29 +208,28 @@ export default function Profile() {
 
       <Tab />
 
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backgroundStyle={styles.sheetBackground}
-        handleIndicatorStyle={styles.sheetHandle}
+      <Modalize
+        ref={modalizeRef}
+        modalStyle={{ paddingTop: 30 }}
+        modalHeight={300}
+        useNativeDriver
+        panGestureEnabled
       >
-        <BottomSheetView style={styles.sheetContainer}>
+        <View style={styles.sheetContainer}>
           <Text style={styles.modalTitle}>Confirmar Logout</Text>
           <Text style={styles.modalMessage}>
             Tem certeza que deseja sair? Nos vemos em breve!
           </Text>
 
           <View style={styles.modalButtonsContainer}>
-            <Pressable
+            <TouchableOpacity
               style={[styles.modalButton, styles.cancelButton]}
               onPress={closeLogoutSheet}
             >
               <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </Pressable>
+            </TouchableOpacity>
 
-            <Pressable
+            <TouchableOpacity
               style={[styles.modalButton, styles.confirmButton]}
               onPress={handleLogout}
               disabled={isLoggingOut}
@@ -240,21 +239,20 @@ export default function Profile() {
               ) : (
                 <Text style={styles.confirmButtonText}>Sair</Text>
               )}
-            </Pressable>
+            </TouchableOpacity>
           </View>
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </Modalize>
 
-      {/* BottomSheet: Foto de perfil */}
-      <BottomSheet
+      <Modalize
         ref={photoSheetRef}
-        index={-1}
-        snapPoints={userPhoto ? ["40%"] : ["30%"]}
-        enablePanDownToClose
-        backgroundStyle={styles.sheetBackground}
-        handleIndicatorStyle={styles.sheetHandle}
+        modalStyle={{ paddingTop: 30 }}
+        modalHeight={300}
+        useNativeDriver
+        panGestureEnabled
       >
-        <BottomSheetView style={styles.sheetContainer}>
+
+        <View style={styles.sheetContainer}>
           <View style={styles.row}>
             <Text style={styles.modalTitle}>Foto de Perfil</Text>
             <Ionicons
@@ -282,8 +280,8 @@ export default function Profile() {
               <Text style={styles.photoModalOptionText}>Remover Foto</Text>
             </Pressable>
           )}
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </Modalize>
     </>
   );
 }

@@ -76,7 +76,6 @@ export default function Home() {
 
     useEffect(() => {
         mostrarDataHoraAtual();
-        console.log(token);
         const registerToken = async () => {
             if (user && token) {
                 await registerPushToken(user, token);

@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, FlatList } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, FlatList } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
 
 import LottieView from "lottie-react-native";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import {
-  MenuProvider,
-} from 'react-native-popup-menu';
+
+import { Modalize } from "react-native-modalize";
+
+import { MenuProvider } from 'react-native-popup-menu';
 
 
 import Header from "@components/Header";
@@ -21,17 +21,8 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import loadingMotorcycleAnimation from "@animations/loading_motorcycle.json";
 import ToastMessage from "@components/ToastMessage";
 import { mostrarDataHoraAtual } from "@utils/getDateTime";
+import { useBatteryLevel } from "expo-battery";
 
-
-type SavedAddress = {
-  end_codigo: number;
-  end_apelido: string;
-  end_logradouro: string;
-  end_numero: string;
-  end_complemento: string;
-  end_bairro: string;
-  end_cep: string;
-}
 
 type Coordinates = {
   latitude: number;
@@ -138,6 +129,9 @@ const paymentMethods = [
 ];
 
 export default function RequestTravel() {
+  const batteryLevel = useBatteryLevel();
+  const batteryPercentage = batteryLevel ? batteryLevel * 100 : 100;
+
   const [showToastErrorAllFields, setShowToastErrorAllFields] = useState(false);
   const [showToastNext, setShowToastNext] = useState(false);
   const [showToastErrorOrigin, setShowToastErrorOrigin] = useState(false);
@@ -155,11 +149,10 @@ export default function RequestTravel() {
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const modalizeRef = useRef<Modalize>(null);
   const router = useRouter();
   const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
-  const [observacoes, setObservacoes] = useState<string>("");
   const animationRef = useRef(null);
   const [suggestedAddress, setSuggestedAddress] = useState("");
   const [tempo, setTempo] = useState<number | null>(null);
@@ -174,12 +167,6 @@ export default function RequestTravel() {
     longitudeDelta: 0.1,
   };
   const [region, setRegion] = useState(initialRegion);
-
-  const snapPoints = useMemo(() => ["35%", "40%"], []);
-
-  const handleSheetChanges = useCallback((index: number) => {
-    setIsBottomSheetActive(index >= 0);
-  }, []);
 
   const calcularRota = async () => {
     Keyboard.dismiss();
@@ -228,20 +215,40 @@ export default function RequestTravel() {
       const { coords, distanceKm } = await getRouteFromOSRM(origin, destination);
       const tempo = distanceKm * 2;
       const hora = new Date().getHours();
-      let calculatedPrice = 0;
+      let calculatedPrice;
 
-      if (hora < 6 || hora >= 22) {
-        calculatedPrice = 6.2 + distanceKm * 1;
-      } else {
-        calculatedPrice = 5.8 + distanceKm * 0.8;
+      switch (true) {
+        case (hora <= 6 || hora >= 22) && batteryPercentage < 50:
+          calculatedPrice = 6.2 + distanceKm * 1 + 0.4;
+          break;
+
+        case (hora <= 6 || hora >= 22):
+          calculatedPrice = 6.2 + distanceKm * 1;
+          break;
+
+        case (hora > 6 && hora < 22) && batteryPercentage < 20:
+          calculatedPrice = 5.8 + distanceKm * 0.8 + 0.5;
+          break;
+
+        case (hora > 6 && hora < 22) && batteryPercentage < 50:
+          calculatedPrice = 5.8 + distanceKm * 0.8 + 0.34;
+          break;
+
+        case (hora > 6 && hora < 22):
+          calculatedPrice = 5.8 + distanceKm * 0.8;
+          break;
+
+        default:
+          calculatedPrice = 0;
       }
+
 
       setRouteCoords(coords);
       setDistance(distanceKm);
       setPrice(calculatedPrice);
       setTempo(tempo);
 
-      bottomSheetRef.current?.expand();
+      modalizeRef.current?.open();
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitToCoordinates(coords, {
@@ -305,6 +312,7 @@ export default function RequestTravel() {
               usu_email: user.email,
               usu_cpf: user.cpf,
             }),
+
           }
         );
 
@@ -356,9 +364,10 @@ export default function RequestTravel() {
               sol_formapagamento: formaPagamento,
               sol_observacoes: "Pedido via App",
             }),
-          }
-        );
 
+          }
+
+        );
 
         const solicitacaoData = await solicitacaoResponse.json();
 
@@ -417,13 +426,13 @@ export default function RequestTravel() {
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       if (isBottomSheetActive) {
-        bottomSheetRef.current?.close();
+        modalizeRef.current?.close();
       }
     });
 
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
       if (isBottomSheetActive) {
-        bottomSheetRef.current?.expand();
+        modalizeRef.current?.open();
       }
     });
 
@@ -576,32 +585,25 @@ export default function RequestTravel() {
           {routeCoords.length > 0 && !isBottomSheetActive && (
             <TouchableOpacity
               style={styles.floatingButton}
-              onPress={() => bottomSheetRef.current?.expand()}
+              onPress={() => modalizeRef.current?.open()}
             >
               <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
               <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
             </TouchableOpacity>
           )}
-          {!isBottomSheetActive && !startAddress && !endAddress && (
-            <TouchableOpacity
-              style={styles.comeBack}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.comeBack} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={snapPoints}
-          onChange={handleSheetChanges}
-          enablePanDownToClose
-          backgroundStyle={styles.bottomSheetBackground}
-          handleIndicatorStyle={styles.handleIndicator}
-          detached={false}
+        <Modalize
+          ref={modalizeRef}
+          snapPoint={400}
+          adjustToContentHeight
+          useNativeDriver={true}
+          withHandle={true}
+          panGestureEnabled={true}
         >
-          <BottomSheetView style={styles.bottomSheetContent}>
+          <View style={styles.bottomSheetContent}>
 
             {distance !== null && price !== null && (
               <>
@@ -720,8 +722,8 @@ export default function RequestTravel() {
                 </TouchableOpacity>
               </>
             )}
-          </BottomSheetView>
-        </BottomSheet>
+          </View>
+        </Modalize>
       </KeyboardAvoidingView>
       {showToastError && (
         <ToastMessage

@@ -225,6 +225,7 @@ export default function PendingRequest() {
 
   const handleCancel = async () => {
     try {
+      setLoading(true);
       const token = await AsyncStorage.getItem("token");
       if (!token) {
         showToastWithMessage("Usuário não autenticado", "ERROR");
@@ -248,6 +249,7 @@ export default function PendingRequest() {
       }
 
       showToastWithMessage("Solicitação cancelada com sucesso", "SUCCESS");
+      router.push('/Home')
       setShowToastCancel(true);
 
     } catch (err: any) {
@@ -255,6 +257,8 @@ export default function PendingRequest() {
         err.message || "Erro ao cancelar solicitação",
         "ERROR"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -411,7 +415,7 @@ export default function PendingRequest() {
               <Text style={styles.detailValue}>
                 {solicitacao.sol_formapagamento}
               </Text>
-            </View> 
+            </View>
           </View>
 
           <TouchableOpacity
@@ -423,7 +427,18 @@ export default function PendingRequest() {
             disabled={cancelDisabled}
           >
             <Text style={styles.actionButtonText}>
-              {cancelDisabled ? "Tempo esgotado" : "Cancelar Solicitação"}
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#FFF"
+                  style={{ marginLeft: 10 }}
+                />
+              ) : (
+                <Text style={styles.actionButtonText}>
+                  {cancelDisabled ? "Tempo esgotado" : "Cancelar Solicitação"}
+                </Text>
+              )}
+
             </Text>
           </TouchableOpacity>
         </View>

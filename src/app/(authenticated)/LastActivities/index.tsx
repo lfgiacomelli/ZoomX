@@ -8,7 +8,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "@components/Header";
 import useRighteousFont from "@hooks/useFont/Righteous";
 
-import Constants from "expo-constants";
 import { router } from "expo-router";
 
 import loadingAnimation from "@animations/loading_motorcycle.json";

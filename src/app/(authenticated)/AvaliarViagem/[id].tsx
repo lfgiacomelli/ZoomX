@@ -7,7 +7,8 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
-  Modal
+  Modal,
+  ScrollView
 } from 'react-native';
 import styles from './styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -106,7 +107,7 @@ export default function AvaliarViagem() {
   return (
     <>
       <Header />
-      <View style={styles.container}>
+      <ScrollView style={styles.container}>
         <Text style={styles.title}>Avaliar Viagem</Text>
 
         <View style={styles.ratingSection}>
@@ -157,7 +158,7 @@ export default function AvaliarViagem() {
             </View>
           </View>
         </Modal>
-      </View>
+      </ScrollView>
     </>
   );
 }

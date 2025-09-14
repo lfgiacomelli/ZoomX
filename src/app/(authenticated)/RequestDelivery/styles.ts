@@ -209,6 +209,86 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 5,
   },
+  paymentMethodContainer: {
+    marginTop: 15,
+    marginBottom: 20,
+  },
+  paymentMethodLabel: {
+    fontSize: 16,
+    color: "#000",
+    marginBottom: 8,
+    fontFamily: "Righteous",
+  },
+  paymentMethodButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 15,
+    backgroundColor: "#fff",
+  },
+  paymentMethodButtonText: {
+    fontSize: 16,
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    maxHeight: "60%",
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: "center",
+    fontFamily: "Righteous",
+  },
+  paymentMethodsList: {
+    marginBottom: 20,
+  },
+  paymentMethodItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  paymentMethodItemPressed: {
+    backgroundColor: "#f5f5f5",
+  },
+  paymentMethodItemSelected: {
+    backgroundColor: "#f0f0f0",
+  },
+  paymentMethodText: {
+    flex: 1,
+    marginLeft: 15,
+    fontSize: 16,
+    color: "#666",
+    fontFamily: "Righteous",
+  },
+  paymentMethodTextSelected: {
+    color: "#000",
+    fontFamily: "Righteous",
+  },
+  modalCloseButton: {
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalCloseButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Righteous",
+  },
 });
 
 export default styles;

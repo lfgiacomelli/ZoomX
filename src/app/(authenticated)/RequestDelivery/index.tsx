@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard, Pressable, ScrollView, Modal } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
-import { Picker } from "@react-native-picker/picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+
+
+import { Modalize } from "react-native-modalize";
+
 import styles from "./styles";
 
 import LottieView from "lottie-react-native";
@@ -16,7 +17,10 @@ import { useAuth } from "@contexts/useAuth";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 import loadingBoxAnimation from "@animations/loading_box.json";
-import { getLocalISOString } from "@utils/getDateTime";
+import { mostrarDataHoraAtual } from "@utils/getDateTime";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import ToastMessage from "@components/ToastMessage";
+import { useBatteryLevel } from "expo-battery";
 
 type Coordinates = {
   latitude: number;
@@ -117,6 +121,10 @@ const getRouteFromOSRM = async (
 
 export default function RequestDelivery() {
   const animationRef = useRef(null);
+
+  const batteryLevel = useBatteryLevel();
+  const batteryPercentage = batteryLevel ? batteryLevel * 100 : 100;
+
   const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
@@ -127,7 +135,7 @@ export default function RequestDelivery() {
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const modalizeRef = useRef<Modalize>(null);
   const router = useRouter();
   const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
@@ -138,6 +146,25 @@ export default function RequestDelivery() {
   const [showInputs, setShowInputs] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [showToastErrorAllFields, setShowToastErrorAllFields] = useState(false);
+  const [showToastErrorOrigin, setShowToastErrorOrigin] = useState(false);
+  const [showToastErrorDestination, setShowToastErrorDestination] = useState(false);
+  const [showToastNext, setShowToastNext] = useState(false);
+  const [showToastSameAddress, setShowToastSameAddress] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [showToastError, setShowToastError] = useState(false);
+  const [showToastErrorUnauthorized, setShowToastErrorUnauthorized] = useState(false);
+
+  const paymentMethods = [
+    { id: "1", name: "Dinheiro", icon: "cash-outline" },
+    { id: "2", name: "Cartão de Crédito", icon: "card-outline" },
+    { id: "3", name: "Cartão de Débito", icon: "card-outline" },
+    { id: "4", name: "PIX", icon: "qr-code-outline" },
+  ];
+
   const initialRegion = {
     latitude: -21.8756,
     longitude: -51.8437,
@@ -145,12 +172,6 @@ export default function RequestDelivery() {
     longitudeDelta: 0.1,
   };
   const [region, setRegion] = useState(initialRegion);
-
-  const snapPoints = useMemo(() => ["35%", "50%"], []);
-
-  const handleSheetChanges = useCallback((index: number) => {
-    setIsBottomSheetActive(index >= 0);
-  }, []);
 
   const calcularRota = async () => {
     if (!startAddress.trim() || !endAddress.trim()) {
@@ -192,20 +213,40 @@ export default function RequestDelivery() {
         destination
       );
       const hora = new Date().getHours();
-      let calculatedPrice = 0;
-      const tempo = distanceKm * 2;
-      if (hora < 6 || hora >= 22) {
-        calculatedPrice = 5.6 + distanceKm * 0.85;
-      } else {
-        calculatedPrice = 5 + distanceKm * 0.5;
+      let calculatedPrice: number;
+
+      switch (true) {
+        case (hora <= 6 || hora >= 22) && batteryPercentage < 50:
+          calculatedPrice = 7.5 + distanceKm * 1.2 + 0.5;
+          break;
+
+        case (hora <= 6 || hora >= 22):
+          calculatedPrice = 7.5 + distanceKm * 1.2;
+          break;
+
+        case (hora > 6 && hora < 22) && batteryPercentage < 20:
+          calculatedPrice = 6.5 + distanceKm * 0.9 + 0.5;
+          break;
+
+        case (hora > 6 && hora < 22) && batteryPercentage < 50:
+          calculatedPrice = 6.5 + distanceKm * 0.9 + 0.3;
+          break;
+
+        case (hora > 6 && hora < 22):
+          calculatedPrice = 6.5 + distanceKm * 0.9;
+          break;
+
+        default:
+          calculatedPrice = 0;
       }
+
       setRouteCoords(coords);
       setDistance(distanceKm);
       setPrice(calculatedPrice);
       setShowInputs(false);
       setTempo(tempo);
 
-      bottomSheetRef.current?.expand();
+      modalizeRef.current?.open();
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitToCoordinates(coords, {
@@ -228,68 +269,150 @@ export default function RequestDelivery() {
 
   const handleSolicitar = async () => {
     if (distance === null || price === null) {
-      Alert.alert("Erro", "Calcule a rota antes de solicitar.");
+      calcularRota();
       return;
     }
 
     if (!user || !token) {
-      Alert.alert("Erro", "Usuário não autenticado.");
+      setShowToastErrorUnauthorized(true);
       return;
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
 
-      const response = await fetch(
-        "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            sol_origem: startAddress,
-            sol_destino: endAddress,
-            sol_distancia: distance,
-            sol_valor: price,
-            sol_servico: "Entrega",
-            usu_codigo: Number(user.id),
-            sol_data: getLocalISOString(),
-            sol_formapagamento: formaPagamento,
-            sol_peso: parseFloat(peso),
-            sol_comprimento: parseFloat(comprimento),
-            sol_altura: parseFloat(altura),
-            sol_largura: parseFloat(largura),
-            sol_observacoes: "Pedido via App",
-          }),
+      const valor = Number(price.toFixed(2));
+      const distancia = Number(distance.toFixed(2));
+
+      const handleUnauthorized = async () => {
+        setShowToastErrorUnauthorized(true);
+        setTimeout(async () => {
+          await AsyncStorage.clear();
+          router.replace("/login");
+        }, 2000);
+      };
+
+      if (formaPagamento?.toLowerCase() === "pix") {
+        const pagamentoResponse = await fetch(
+          "https://backend-turma-a-2025.onrender.com/api/payments/create-payment",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              sol_valor: valor,
+              sol_descricao: "Solicitação de corrida pelo Aplicativo ZoomX",
+              sol_servico: "Entrega",
+              usu_codigo: Number(user.id),
+              usu_nome: user.nome,
+              usu_email: user.email,
+              usu_cpf: user.cpf,
+            }),
+
+          }
+        );
+
+        const pagamentoData = await pagamentoResponse.json();
+
+        if (pagamentoResponse.status === 403) {
+          await handleUnauthorized();
+          return;
         }
-      );
 
-      const data = await response.json();
+        if (!pagamentoResponse.ok) {
+          throw new Error(pagamentoData.error || "Erro ao gerar pagamento.");
+        }
 
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao criar solicitação");
+        router.push({
+          pathname: "/PaymentPending",
+          params: {
+            paymentId: pagamentoData.id,
+            qrCode: pagamentoData.qr_code,
+            qrCodeBase64: pagamentoData.qr_code_base64,
+            startAddress,
+            endAddress,
+            distance: distancia,
+            price: valor,
+            comprimento,
+            peso,
+            largura,
+            formaPagamento,
+            userId: Number(user.id),
+            nome: user.nome,
+            email: user.email,
+            shouldCreateSolicitacao: "true",
+          },
+        });
+      } else {
+        const solicitacaoResponse = await fetch(
+          "https://backend-turma-a-2025.onrender.com/api/solicitacoes/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              sol_origem: startAddress,
+              sol_destino: endAddress,
+              sol_distancia: distancia,
+              sol_valor: valor,
+              sol_servico: "Mototáxi",
+              sol_largura: Number(largura) || 0,
+              sol_altura: Number(altura) || 0,
+              sol_comprimento: Number(comprimento) || 0,
+              sol_peso: Number(peso) || 0,
+              usu_codigo: Number(user.id),
+              sol_data: mostrarDataHoraAtual(),
+              sol_formapagamento: formaPagamento,
+              sol_observacoes: "Pedido via App",
+            }),
+
+          }
+
+        );
+
+        const solicitacaoData = await solicitacaoResponse.json();
+
+        if (solicitacaoResponse.status === 403) {
+          await handleUnauthorized();
+          return;
+        }
+
+        if (!solicitacaoResponse.ok) {
+          throw new Error(solicitacaoData.message || "Erro ao criar solicitação.");
+        }
+
+        router.push({
+          pathname: "/PendingRequest",
+          params: {
+            solicitacaoId: solicitacaoData.sol_codigo,
+          },
+        });
       }
 
-      router.push({
-        pathname: "/PendingRequest",
-        params: { solicitacaoId: data.sol_codigo },
-      });
-    } catch (error) {
-      console.error("Erro ao criar solicitação:", error);
-      Alert.alert("Erro", "Não foi possível criar a solicitação.");
+      await AsyncStorage.setItem("startAddress", startAddress);
+
+    } catch (error: any) {
+      console.error("Erro ao solicitar:", error?.message || error);
+      setShowToastError(true);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  const handlePaymentMethodSelect = (method: string) => {
+    setFormaPagamento(method);
+    setModalVisible(false);
+  };
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleEdit = () => {
     setIsEditing(true);
     setShowInputs(true);
-    bottomSheetRef.current?.close();
+    modalizeRef.current?.close();
   };
 
   const handleSaveEdit = async () => {
@@ -455,7 +578,7 @@ export default function RequestDelivery() {
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity
             style={styles.floatingButton}
-            onPress={() => bottomSheetRef.current?.expand()}
+            onPress={() => modalizeRef.current?.open()}
           >
             <Text style={styles.floatingButtonText}>Ver detalhes</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
@@ -471,17 +594,12 @@ export default function RequestDelivery() {
         )}
       </View>
 
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.handleIndicator}
-        detached={true}
+      <Modalize
+        ref={modalizeRef}
+        snapPoint={400}
+        adjustToContentHeight={true}
       >
-        <BottomSheetView style={styles.bottomSheetContent}>
+        <View style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (
             <>
               <View style={styles.headerRow}>
@@ -527,26 +645,76 @@ export default function RequestDelivery() {
                 </Text>
               </View>
 
-              <View style={styles.pickerContainer}>
-                <Text style={styles.pickerLabel}>Forma de Pagamento:</Text>
-                <View style={styles.picker}>
-                  <Picker
-                    selectedValue={formaPagamento}
-                    onValueChange={(itemValue) => setFormaPagamento(itemValue)}
-                  >
-                    <Picker.Item label="Dinheiro" value="Dinheiro" />
-                    <Picker.Item
-                      label="Cartão de Crédito"
-                      value="Cartão de Crédito"
-                    />
-                    <Picker.Item
-                      label="Cartão de Débito"
-                      value="Cartão de Débito"
-                    />
-                    <Picker.Item label="PIX" value="PIX" />
-                  </Picker>
-                </View>
+              <View style={styles.paymentMethodContainer}>
+                <Text style={styles.paymentMethodLabel}>
+                  Forma de Pagamento:
+                </Text>
+                <TouchableOpacity
+                  style={styles.paymentMethodButton}
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Text style={styles.paymentMethodButtonText}>
+                    {formaPagamento}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#666" />
+                </TouchableOpacity>
               </View>
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>
+                      Selecione a forma de pagamento
+                    </Text>
+
+                    <ScrollView style={styles.paymentMethodsList}>
+                      {paymentMethods.map((method) => (
+                        <Pressable
+                          key={method.id}
+                          style={({ pressed }) => [
+                            styles.paymentMethodItem,
+                            pressed && styles.paymentMethodItemPressed,
+                            formaPagamento === method.name &&
+                            styles.paymentMethodItemSelected,
+                          ]}
+                          onPress={() => handlePaymentMethodSelect(method.name)}
+                        >
+                          <Ionicons
+                            name={method.icon as any}
+                            size={24}
+                            color={
+                              formaPagamento === method.name ? "#000" : "#666"
+                            }
+                          />
+                          <Text
+                            style={[
+                              styles.paymentMethodText,
+                              formaPagamento === method.name &&
+                              styles.paymentMethodTextSelected,
+                            ]}
+                          >
+                            {method.name}
+                          </Text>
+                          {formaPagamento === method.name && (
+                            <Ionicons name="checkmark" size={20} color="#000" />
+                          )}
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
 
               <TouchableOpacity
                 style={styles.solicitarButton}
@@ -563,8 +731,57 @@ export default function RequestDelivery() {
               </TouchableOpacity>
             </>
           )}
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </Modalize>
+      {showToastError && (
+        <ToastMessage
+          message="Não foi possível processar a solicitação."
+          status="ERROR"
+          onHide={() => setShowToastError(false)}
+        />
+      )}
+      {showToastErrorUnauthorized && (
+        <ToastMessage
+          message="Sessão expirada. Faça login novamente."
+          status="ERROR"
+          onHide={() => setShowToastErrorUnauthorized(false)}
+        />
+      )}
+      {showToastErrorAllFields && (
+        <ToastMessage
+          message="Por favor, preencha todos os campos."
+          status="ERROR"
+          onHide={() => setShowToastErrorAllFields(false)}
+        />
+      )}
+      {showToastErrorOrigin && (
+        <ToastMessage
+          message="Endereço de origem não encontrado."
+          status="ERROR"
+          onHide={() => setShowToastErrorOrigin(false)}
+        />
+      )}
+      {showToastErrorDestination && (
+        <ToastMessage
+          message="Endereço de destino não encontrado."
+          status="ERROR"
+          onHide={() => setShowToastErrorDestination(false)}
+        />
+      )}
+      {showToastNext && (
+        <ToastMessage
+          message="Os endereços devem estar a pelo menos 50 metros de distância."
+          status="ERROR"
+          onHide={() => setShowToastNext(false)}
+        />
+      )}
+      {showToastSameAddress && (
+        <ToastMessage
+          message="Os endereços de partida e destino são iguais."
+          status="ERROR"
+          onHide={() => setShowToastSameAddress(false)}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }

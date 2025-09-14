@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     padding: 20,
+    marginBottom: -20
   },
   bottomSheetTitle: {
     fontSize: 22,
@@ -95,8 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
     paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
   },
   detailLabel: {
     fontSize: 16,
@@ -166,8 +165,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   paymentMethodItemPressed: {
     backgroundColor: "#f5f5f5",

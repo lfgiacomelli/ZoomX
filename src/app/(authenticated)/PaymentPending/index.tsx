@@ -246,7 +246,6 @@ export default function PaymentPending() {
             await Clipboard.setStringAsync(pixCopy);
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
-            // throw new Error('Erro ao copiar PIX'); // Simulando erro para teste
         } catch (err) {
             console.error("Erro ao copiar PIX:", err);
             setShowToastError(true);
@@ -255,7 +254,7 @@ export default function PaymentPending() {
     }, [pixCopy]);
     return (
         <>
-            <Header disableNavigation />
+            <Header  />
             <SafeAreaView style={styles.container}>
                 <View style={styles.content}>
                     <Text style={styles.title}>Pagamento via PIX</Text>

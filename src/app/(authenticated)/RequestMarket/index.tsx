@@ -7,7 +7,7 @@ import styles from "./styles";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { Modalize } from "react-native-modalize";
 
 import Header from "@components/Header";
 
@@ -18,7 +18,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 
 import loadingBoxAnimation from "@animations/loading_box.json";
-import { getLocalISOString } from "@utils/getDateTime";
+import { mostrarDataHoraAtual } from "@utils/getDateTime";
 
 
 type Coordinates = {
@@ -130,7 +130,7 @@ export default function RequestMarket() {
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const modalizeRef = useRef<Modalize>(null);
   const router = useRouter();
   const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
@@ -207,7 +207,7 @@ export default function RequestMarket() {
       setShowInputs(false);
       setTempo(tempo);
 
-      bottomSheetRef.current?.expand();
+      modalizeRef.current?.open();
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitToCoordinates(coords, {
@@ -259,7 +259,7 @@ export default function RequestMarket() {
             sol_valor: price,
             sol_servico: "Compras",
             usu_codigo: Number(user.id),
-            sol_data: getLocalISOString(),
+            sol_data: mostrarDataHoraAtual(),
             sol_formapagamento: formaPagamento,
             sol_observacoes: `Itens a comprar: ${observacoes}\nValor estimado de compras: R$ ${parseFloat(valorEstimado) || 0}`,
           }),
@@ -293,7 +293,7 @@ export default function RequestMarket() {
   const handleEdit = () => {
     setIsEditing(true);
     setShowInputs(true);
-    bottomSheetRef.current?.close();
+    modalizeRef.current?.close();
   };
 
   const handleSaveEdit = async () => {
@@ -430,7 +430,7 @@ export default function RequestMarket() {
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity
             style={styles.floatingButton}
-            onPress={() => bottomSheetRef.current?.expand()}
+            onPress={() => modalizeRef.current?.open()}
           >
             <Text style={styles.floatingButtonText}>Ver detalhes</Text>
             <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
@@ -446,17 +446,12 @@ export default function RequestMarket() {
         )}
       </View>
 
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.handleIndicator}
-        detached={true}
+      <Modalize
+        ref={modalizeRef}
+        snapPoint={400}
+        adjustToContentHeight
       >
-        <BottomSheetView style={styles.bottomSheetContent}>
+        <View style={styles.bottomSheetContent}>
           {distance !== null && price !== null && (
             <>
               <View style={styles.headerRow}>
@@ -565,8 +560,8 @@ export default function RequestMarket() {
               </TouchableOpacity>
             </>
           )}
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </Modalize>
     </KeyboardAvoidingView>
   );
 }
