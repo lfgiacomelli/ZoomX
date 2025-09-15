@@ -93,6 +93,19 @@ export default function EditProfile() {
         throw new Error("Falha ao atualizar informações");
       }
       setModalVisible(true);
+
+      const storageName = await AsyncStorage.getItem("name");
+      const storageEmail = await AsyncStorage.getItem("email");
+
+      if (storageEmail !== email || storageName !== name) {
+        if (storageEmail !== email) {
+          await AsyncStorage.setItem("email", email);
+        }
+        if (storageName !== name) {
+          await AsyncStorage.setItem("name", name);
+        }
+      }
+
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert("Erro", error.message || "Erro desconhecido");
