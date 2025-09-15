@@ -1,6 +1,8 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal, ScrollView } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { useAuth } from "@contexts/useAuth";
 
 import styles from "./styles";
 
@@ -15,6 +17,7 @@ import { useRouter } from "expo-router";
 import infoAnimation from "@animations/info_animation.json";
 
 export default function EditProfile() {
+  const { user, updateUser } = useAuth();
   const fontLoaded = useRighteousFont();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -84,7 +87,7 @@ export default function EditProfile() {
             usu_email: email,
             usu_telefone: phone,
             usu_senha: password,
-            usu_cpf: cpf
+            usu_cpf: cpf,
           }),
         }
       );
@@ -92,18 +95,17 @@ export default function EditProfile() {
       if (!response.ok) {
         throw new Error("Falha ao atualizar informações");
       }
+
       setModalVisible(true);
 
-      const storageName = await AsyncStorage.getItem("name");
-      const storageEmail = await AsyncStorage.getItem("email");
-
-      if (storageEmail !== email || storageName !== name) {
-        if (storageEmail !== email) {
-          await AsyncStorage.setItem("email", email);
-        }
-        if (storageName !== name) {
-          await AsyncStorage.setItem("name", name);
-        }
+      if (user) {
+        await updateUser({
+          nome: name,
+          email: email,
+          telefone: phone,
+          cpf: cpf,
+        });
+        console.log("Dados do usuário atualizados no AsyncStorage e contexto");
       }
 
     } catch (error) {
@@ -115,6 +117,9 @@ export default function EditProfile() {
     } finally {
       setLoading(false);
     }
+
+
+
   };
 
   return (

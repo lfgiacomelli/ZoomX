@@ -7,7 +7,7 @@ type User = {
   email: string;
   telefone: string;
   criado_em: string;
-  cpf?: string; 
+  cpf?: string;
 };
 
 type AuthContextProps = {
@@ -16,6 +16,7 @@ type AuthContextProps = {
   loading: boolean;
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
@@ -80,8 +81,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await AsyncStorage.clear();
   };
 
+  const updateUser = async (updates: Partial<User>) => {
+    if (!user) return;
+
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+
+    for (const key in updates) {
+      const value = updates[key as keyof User];
+      if (value !== undefined) {
+        await AsyncStorage.setItem(key, String(value));
+      }
+    }
+  };
+
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser }}>
+
       {children}
     </AuthContext.Provider>
   );
