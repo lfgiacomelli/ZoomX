@@ -106,9 +106,8 @@ export default function MyPaymentsApproveds() {
   return (
     <>
       <Header />
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>Meus Pagamentos</Text>
-      </View>
+
+      <Text style={styles.title}>Histórico de Pagamentos PIX</Text>
 
       {loading ? (
         <View style={styles.loadingContainer}>

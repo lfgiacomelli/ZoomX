@@ -12,6 +12,7 @@ import { router } from "expo-router";
 
 import loadingAnimation from "@animations/loading_motorcycle.json";
 import errorAnimation from "@animations/error_animation.json";
+import { useAuth } from "@contexts/useAuth";
 
 interface Atividade {
   via_codigo: string;
@@ -35,6 +36,7 @@ interface Section {
 }
 
 export default function Travels() {
+  const { user, token } = useAuth();
   const fontLoaded = useRighteousFont();
   const animationRef = useRef(null);
   const [data, setData] = useState<Atividade[]>([]);
@@ -81,8 +83,7 @@ export default function Travels() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const usuarioId = await AsyncStorage.getItem("id");
-      const token = await AsyncStorage.getItem("token");
+      const usuarioId = user?.id;
       if (!usuarioId) throw new Error("ID do usuário não encontrado");
 
       const route = `${baseURL}/api/viagens/${usuarioId}`;

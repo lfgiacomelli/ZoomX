@@ -254,11 +254,11 @@ export default function PaymentPending() {
     }, [pixCopy]);
     return (
         <>
-            <Header  />
+            <Header disableNavigation />
             <SafeAreaView style={styles.container}>
                 <View style={styles.content}>
                     <Text style={styles.title}>Pagamento via PIX</Text>
-                    
+
                     <Text style={styles.title}>
                         {params.price ? `R$ ${parseFloat(params.price).toFixed(2)}` : "R$ 0,00"}
                     </Text>

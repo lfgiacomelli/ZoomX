@@ -30,7 +30,8 @@ export default function PendingRequest() {
 
   const [showToastCancel, setShowToastCancel] = useState(false);
   const [solicitacao, setSolicitacao] = useState<SolicitacaoProps | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingCancel, setLoadingCancel] = useState(false)
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(90);
   const [cancelDisabled, setCancelDisabled] = useState(false);
@@ -225,7 +226,7 @@ export default function PendingRequest() {
 
   const handleCancel = async () => {
     try {
-      setLoading(true);
+      setLoadingCancel(true);
       const token = await AsyncStorage.getItem("token");
       if (!token) {
         showToastWithMessage("Usuário não autenticado", "ERROR");
@@ -258,7 +259,7 @@ export default function PendingRequest() {
         "ERROR"
       );
     } finally {
-      setLoading(false);
+      setLoadingCancel(false);
     }
   };
 
@@ -335,7 +336,6 @@ export default function PendingRequest() {
       <Header disableNavigation />
 
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.card}>
           <Image
             source={require("@images/atendente.png")}
             style={styles.atendenteImage}
@@ -427,7 +427,7 @@ export default function PendingRequest() {
             disabled={cancelDisabled}
           >
             <Text style={styles.actionButtonText}>
-              {loading ? (
+              {loadingCancel ? (
                 <ActivityIndicator
                   size="small"
                   color="#FFF"
@@ -441,7 +441,6 @@ export default function PendingRequest() {
 
             </Text>
           </TouchableOpacity>
-        </View>
         <Modal
           animationType="fade"
           transparent={true}

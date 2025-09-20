@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, FlatList } from "react-native";
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, TouchableWithoutFeedback } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
@@ -22,6 +22,7 @@ import loadingMotorcycleAnimation from "@animations/loading_motorcycle.json";
 import ToastMessage from "@components/ToastMessage";
 import { mostrarDataHoraAtual } from "@utils/getDateTime";
 import { useBatteryLevel } from "expo-battery";
+import LoadingRota from "@components/CalculandoRota";
 
 
 type Coordinates = {
@@ -536,21 +537,16 @@ export default function RequestTravel() {
               placeholderTextColor="#969696"
 
             />
-            <View style={styles.row}>{renderLupa()}</View>
+            <View style={styles.row}>{!isLoading ? renderLupa() : null}</View>
           </View>
         </View>
         {isLoading && (
-          <View style={styles.loadingContainer}>
-            <LottieView
-              ref={animationRef}
-              source={loadingMotorcycleAnimation}
-              autoPlay
-              loop
-              style={{ width: 50, height: 50 }}
-            />
-            <Text style={styles.loadingText}>Calculando rota...</Text>
-          </View>
+          <LoadingRota
+            isLoading={isLoading}
+            loadingMotorcycleAnimation={loadingMotorcycleAnimation}
+          />
         )}
+
 
         <View style={styles.mapContainer}>
           <MapView
@@ -595,69 +591,71 @@ export default function RequestTravel() {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
-        <Modalize
-          ref={modalizeRef}
-          snapPoint={400}
-          adjustToContentHeight
-          useNativeDriver={true}
-          withHandle={true}
-          panGestureEnabled={true}
-        >
-          <View style={styles.bottomSheetContent}>
+      </KeyboardAvoidingView>
+      <Modalize
+        ref={modalizeRef}
+        snapPoint={400}
+        adjustToContentHeight
+        useNativeDriver={true}
+        withHandle={true}
+        panGestureEnabled={true}
+      >
+        <View style={styles.bottomSheetContent}>
 
-            {distance !== null && price !== null && (
-              <>
-                <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Origem:</Text>
-                  <Text style={styles.detailValue}>{startAddress}</Text>
-                </View>
+          {distance !== null && price !== null && (
+            <>
+              <Text style={styles.bottomSheetTitle}>Detalhes da Corrida</Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Origem:</Text>
+                <Text style={styles.detailValue}>{startAddress}</Text>
+              </View>
 
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Destino:</Text>
-                  <Text style={styles.detailValue}>{endAddress}</Text>
-                </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Destino:</Text>
+                <Text style={styles.detailValue}>{endAddress}</Text>
+              </View>
 
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Distância:</Text>
-                  <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Tempo Estimado:</Text>
-                  <Text style={styles.detailValue}>
-                    {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Preço:</Text>
-                  <Text style={[styles.detailValue, styles.priceText]}>
-                    R$ {price.toFixed(2)}
-                  </Text>
-                </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Distância:</Text>
+                <Text style={styles.detailValue}>{distance.toFixed(2)} km</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Tempo Estimado:</Text>
+                <Text style={styles.detailValue}>
+                  {tempo ? `${Math.ceil(tempo)} min` : "Calculando..."}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Preço:</Text>
+                <Text style={[styles.detailValue, styles.priceText]}>
+                  R$ {price.toFixed(2)}
+                </Text>
+              </View>
 
-                <View style={styles.paymentMethodContainer}>
-                  <Text style={styles.paymentMethodLabel}>
-                    Forma de Pagamento:
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.paymentMethodButton}
-                    onPress={() => setModalVisible(true)}
-                  >
-                    <Text style={styles.paymentMethodButtonText}>
-                      {formaPagamento}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#666" />
-                  </TouchableOpacity>
-                </View>
-
-                <Modal
-                  animationType="slide"
-                  transparent={true}
-                  visible={modalVisible}
-                  onRequestClose={() => setModalVisible(false)}
+              <View style={styles.paymentMethodContainer}>
+                <Text style={styles.paymentMethodLabel}>
+                  Forma de Pagamento:
+                </Text>
+                <TouchableOpacity
+                  style={styles.paymentMethodButton}
+                  onPress={() => setModalVisible(true)}
                 >
+                  <Text style={styles.paymentMethodButtonText}>
+                    {formaPagamento}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+              >
+                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
                   <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
+                    <Pressable style={styles.modalContainer} onPress={() => { }}>
                       <Text style={styles.modalTitle}>
                         Selecione a forma de pagamento
                       </Text>
@@ -677,9 +675,7 @@ export default function RequestTravel() {
                             <Ionicons
                               name={method.icon as any}
                               size={24}
-                              color={
-                                formaPagamento === method.name ? "#000" : "#666"
-                              }
+                              color={formaPagamento === method.name ? "#000" : "#666"}
                             />
                             <Text
                               style={[
@@ -703,28 +699,28 @@ export default function RequestTravel() {
                       >
                         <Text style={styles.modalCloseButtonText}>Fechar</Text>
                       </TouchableOpacity>
-                    </View>
+                    </Pressable>
                   </View>
-                </Modal>
+                </TouchableWithoutFeedback>
+              </Modal>
 
-                <TouchableOpacity
-                  style={styles.solicitarButton}
-                  onPress={handleSolicitar}
-                  disabled={isLoading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.solicitarButtonText}>
-                      Solicitar Corrida
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </Modalize>
-      </KeyboardAvoidingView>
+              <TouchableOpacity
+                style={styles.solicitarButton}
+                onPress={handleSolicitar}
+                disabled={isLoading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.solicitarButtonText}>
+                    Solicitar Corrida
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </Modalize>
       {showToastError && (
         <ToastMessage
           message="Não foi possível processar a solicitação."

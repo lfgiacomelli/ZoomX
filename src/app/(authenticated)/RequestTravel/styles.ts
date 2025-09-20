@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     padding: 20,
-    marginBottom: -20
+    paddingBottom: 40
   },
   bottomSheetTitle: {
     fontSize: 22,
@@ -92,6 +92,8 @@ const styles = StyleSheet.create({
     fontFamily: "Righteous",
   },
   detailRow: {
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,

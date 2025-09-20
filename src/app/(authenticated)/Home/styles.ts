@@ -48,14 +48,8 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -73,8 +67,6 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#eee",
   },
   map: {
     width: "100%",
@@ -84,29 +76,6 @@ const styles = StyleSheet.create({
   adsSection: {
     marginBottom: 24,
   },
-  // solicitarButton: {
-  //   width: 200,
-  //   position: "absolute",
-  //   bottom: 100,
-  //   right: 20,
-  //   backgroundColor: "#000",
-  //   borderRadius: 50,
-  //   padding: 16,
-  //   alignItems: "center",
-  //   justifyContent: "center",
-  //   shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 2 },
-  //   shadowOpacity: 0.2,
-  //   shadowRadius: 4,
-  //   elevation: 4,
-  //   flexDirection: "row",
-  // },
-  // solicitarButtonText: {
-  //   color: "#fff",
-  //   fontFamily: "Righteous",
-  //   fontSize: 16,
-  //   marginTop: 4,
-  // },
   profileButton: {
     backgroundColor: "#000",
     borderRadius: 50,

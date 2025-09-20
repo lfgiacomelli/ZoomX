@@ -85,10 +85,10 @@ const styles = StyleSheet.create({
   boxButton: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
     marginHorizontal: 5,
-    borderRadius: 12,
+    borderRadius: 4,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 4,
     gap: 8,
   },
   logoutText: {
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 4,
     alignItems: "center",
     justifyContent: "center",
   },

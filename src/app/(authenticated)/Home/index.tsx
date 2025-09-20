@@ -11,6 +11,7 @@ import { mostrarDataHoraAtual } from "@utils/getDateTime";
 import styles from "./styles";
 
 import Header from "@components/Header";
+import Geolocation from "@components/Geolocation";
 import LastActivity from "@components/LastActivity";
 import Services from "@components/Services";
 import PendingTravel from "@components/PendingTravel";
@@ -19,6 +20,7 @@ import AvaliarViagem from "@components/AvaliarViagem";
 import { useAuth } from "@contexts/useAuth";
 import useRighteousFont from "@hooks/useFont/Righteous";
 import { registerPushToken } from "@utils/registerPushToken";
+import Benefits from "@components/Benefits";
 
 export default function Home() {
     const router = useRouter();
@@ -28,35 +30,12 @@ export default function Home() {
     const userFirstName = user?.nome?.split(" ")[0] || "Usuário";
 
     const [statusLeitor, setStatusLeitor] = useState(false);
-    const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isMobileData, setIsMobileData] = useState(false);
     const [photo, setPhoto] = useState<string | null>(null);
 
     const hasInitialized = useRef(false);
 
-    const startWatchingLocation = useCallback(async () => {
-        try {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== "granted") {
-                setErrorMsg("Permissão negada para acessar localização");
-                return;
-            }
-
-            await Location.watchPositionAsync(
-                {
-                    accuracy: Location.Accuracy.High,
-                    timeInterval: 5000,
-                    distanceInterval: 10,
-                },
-                (newLocation) => {
-                    setLocation(newLocation.coords);
-                }
-            );
-        } catch (err) {
-            console.error("Erro ao obter localização:", err);
-        }
-    }, []);
 
     const handleNotificationResponse = useCallback((response: Notifications.NotificationResponse) => {
         const { via_codigo } = response.notification.request.content.data;
@@ -87,7 +66,6 @@ export default function Home() {
     useEffect(() => {
         if (hasInitialized.current) return;
 
-        startWatchingLocation();
         checkScreenReader();
 
         AsyncStorage.getItem("userPhoto").then(setPhoto);
@@ -104,7 +82,7 @@ export default function Home() {
             netInfoUnsubscribe();
         };
 
-    }, [startWatchingLocation, checkScreenReader, handleNotificationResponse]);
+    }, [checkScreenReader, handleNotificationResponse]);
 
     if (!fontLoaded) {
         return (
@@ -148,37 +126,9 @@ export default function Home() {
                 <Services />
                 <AvaliarViagem />
                 <PendingTravel />
+                <Benefits />
                 <LastActivity />
-
-                {location && (
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Sua Localização</Text>
-                        </View>
-                        <View style={styles.mapContainer}>
-                            <MapView
-                                style={styles.map}
-                                initialRegion={{
-                                    latitude: location.latitude,
-                                    longitude: location.longitude,
-                                    latitudeDelta: 0.01,
-                                    longitudeDelta: 0.01,
-                                }}
-                                showsUserLocation={true}
-                                showsMyLocationButton={false}
-                                toolbarEnabled={false}
-                            >
-                                <Marker
-                                    coordinate={{
-                                        latitude: location.latitude,
-                                        longitude: location.longitude,
-                                    }}
-                                    title="Sua localização"
-                                />
-                            </MapView>
-                        </View>
-                    </View>
-                )}
+                {/* <Geolocation /> */}
             </ScrollView>
         </>
     );

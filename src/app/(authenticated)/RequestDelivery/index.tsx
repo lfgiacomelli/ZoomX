@@ -124,7 +124,6 @@ export default function RequestDelivery() {
 
   const batteryLevel = useBatteryLevel();
   const batteryPercentage = batteryLevel ? batteryLevel * 100 : 100;
-
   const [startAddress, setStartAddress] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
   const [endAddress, setEndAddress] = useState("");
@@ -244,7 +243,8 @@ export default function RequestDelivery() {
       setDistance(distanceKm);
       setPrice(calculatedPrice);
       setShowInputs(false);
-      setTempo(tempo);
+      const minutos = distanceKm * 2;
+      setTempo(minutos);
 
       modalizeRef.current?.open();
 
@@ -359,7 +359,7 @@ export default function RequestDelivery() {
               sol_destino: endAddress,
               sol_distancia: distancia,
               sol_valor: valor,
-              sol_servico: "Mototáxi",
+              sol_servico: "Entrega",
               sol_largura: Number(largura) || 0,
               sol_altura: Number(altura) || 0,
               sol_comprimento: Number(comprimento) || 0,
@@ -721,7 +721,7 @@ export default function RequestDelivery() {
                 onPress={handleSolicitar}
                 disabled={isLoading}
               >
-                {isLoading ? (
+                {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.solicitarButtonText}>

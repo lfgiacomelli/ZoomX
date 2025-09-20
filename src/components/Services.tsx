@@ -3,7 +3,15 @@ import React from "react";
 import { useRouter } from "expo-router";
 export default function Services() {
   const router = useRouter();
-  const hora = new Date().getHours();
+  const hora = parseInt(
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "numeric",
+      hour12: false,
+    }).format(new Date())
+  );
+
+
   const isNight = hora < 6 || hora >= 18;
   const services = [
     {
