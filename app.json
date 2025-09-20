@@ -23,6 +23,7 @@
       },
       "useNextNotificationsApi": true,
       "package": "com.fourdevs.zoomx",
+      "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO",
@@ -42,8 +43,7 @@
       "expo-router",
       "expo-font",
       "expo-asset",
-      "expo-audio",
-      "expo-video",
+      "expo-av",
       [
         "expo-notifications",
         {
