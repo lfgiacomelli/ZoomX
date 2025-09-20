@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard, Pressable, ScrollView, Modal } from "react-native";
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, Keyboard, Pressable, ScrollView, Modal, TouchableWithoutFeedback } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 
 
@@ -21,6 +21,7 @@ import { mostrarDataHoraAtual } from "@utils/getDateTime";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ToastMessage from "@components/ToastMessage";
 import { useBatteryLevel } from "expo-battery";
+import LoadingRota from "@components/CalculandoRota";
 
 type Coordinates = {
   latitude: number;
@@ -461,139 +462,182 @@ export default function RequestDelivery() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <Header />
-      <StatusBar barStyle="light-content" />
+    <>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      >
+        <Header />
+        <StatusBar barStyle="light-content" />
 
-      {showInputs && (
-        <View style={styles.form}>
-          <View style={styles.inputColumn}>
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço de retirada (ex: Rua A, 123)"
-              value={startAddress}
-              onChangeText={setStartAddress}
-              clearButtonMode="while-editing"
-              returnKeyType="next"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço de entrega (ex: Av. B, 456)"
-              value={endAddress}
-              onChangeText={setEndAddress}
-              clearButtonMode="while-editing"
-              returnKeyType="done"
-            />
-            <View style={styles.row}>
+        {showInputs && (
+          <View style={styles.form}>
+            <View style={styles.inputColumn}>
               <TextInput
-                style={[styles.input, { flex: 1, marginRight: 5 }]}
-                placeholder="Peso (kg)"
-                value={peso}
-                onChangeText={setPeso}
-                keyboardType="numeric"
+                style={styles.input}
+                placeholder="Endereço de retirada (ex: Rua A, 123)"
+                value={startAddress}
+                onChangeText={setStartAddress}
+                clearButtonMode="while-editing"
+                returnKeyType="next"
               />
               <TextInput
-                style={[styles.input, { flex: 1, marginLeft: 5 }]}
-                placeholder="Comprimento (cm)"
-                value={comprimento}
-                onChangeText={setComprimento}
-                keyboardType="numeric"
+                style={styles.input}
+                placeholder="Endereço de entrega (ex: Av. B, 456)"
+                value={endAddress}
+                onChangeText={setEndAddress}
+                clearButtonMode="while-editing"
+                returnKeyType="done"
               />
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginRight: 5 }]}
+                  placeholder="Peso (kg)"
+                  value={peso}
+                  onChangeText={setPeso}
+                  keyboardType="numeric"
+                />
+                <TextInput
+                  style={[styles.input, { flex: 1, marginLeft: 5 }]}
+                  placeholder="Comprimento (cm)"
+                  value={comprimento}
+                  onChangeText={setComprimento}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginRight: 5 }]}
+                  placeholder="Altura (cm)"
+                  value={altura}
+                  onChangeText={setAltura}
+                  keyboardType="numeric"
+                />
+                <TextInput
+                  style={[styles.input, { flex: 1, marginLeft: 5 }]}
+                  placeholder="Largura (cm)"
+                  value={largura}
+                  onChangeText={setLargura}
+                  keyboardType="numeric"
+                />
+              </View>
+              {isEditing && (
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSaveEdit}
+                >
+                  <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, { flex: 1, marginRight: 5 }]}
-                placeholder="Altura (cm)"
-                value={altura}
-                onChangeText={setAltura}
-                keyboardType="numeric"
-              />
-              <TextInput
-                style={[styles.input, { flex: 1, marginLeft: 5 }]}
-                placeholder="Largura (cm)"
-                value={largura}
-                onChangeText={setLargura}
-                keyboardType="numeric"
-              />
-            </View>
-            {isEditing && (
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSaveEdit}
-              >
-                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-              </TouchableOpacity>
-            )}
           </View>
-        </View>
-      )}
+        )}
 
-      {isLoading && (
-        <View style={styles.loadingContainer}>
-          <LottieView
-            source={loadingBoxAnimation}
-            ref={animationRef}
-            autoPlay
-            loop
-            style={{ width: 50, height: 50 }}
-          />
-          <Text style={styles.loadingText}>Calculando rota...</Text>
-        </View>
-      )}
+        {isLoading && (
+          <LoadingRota isLoading={isLoading} loadingMotorcycleAnimation={loadingBoxAnimation} />
+        )}
 
-      <View style={styles.mapContainer}>
-        <MapView
-          ref={mapRef}
-          style={styles.map}
-          region={region}
-          onRegionChangeComplete={setRegion}
-          showsUserLocation
-          showsMyLocationButton
-        >
-          {markers.map((marker, idx) => (
-            <Marker key={idx} coordinate={marker}>
-              <Image
-                source={
-                  idx === 0
-                    ? require("@images/partida.png")
-                    : require("@images/destino.png")
-                }
-                style={{ width: 40, height: 40 }}
-                resizeMode="contain"
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            region={region}
+            onRegionChangeComplete={setRegion}
+            showsUserLocation
+            showsMyLocationButton
+          >
+            {markers.map((marker, idx) => (
+              <Marker key={idx} coordinate={marker}>
+                <Image
+                  source={
+                    idx === 0
+                      ? require("@images/partida.png")
+                      : require("@images/destino.png")
+                  }
+                  style={{ width: 40, height: 40 }}
+                  resizeMode="contain"
+                />
+              </Marker>
+            ))}
+            {routeCoords.length > 0 && (
+              <Polyline
+                coordinates={routeCoords}
+                strokeColor="#000"
+                strokeWidth={4}
               />
-            </Marker>
-          ))}
-          {routeCoords.length > 0 && (
-            <Polyline
-              coordinates={routeCoords}
-              strokeColor="#000"
-              strokeWidth={4}
-            />
+            )}
+          </MapView>
+          {routeCoords.length > 0 && !isBottomSheetActive && (
+            <TouchableOpacity
+              style={styles.floatingButton}
+              onPress={() => modalizeRef.current?.open()}
+            >
+              <Text style={styles.floatingButtonText}>Ver detalhes</Text>
+              <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
+            </TouchableOpacity>
           )}
-        </MapView>
-        {routeCoords.length > 0 && !isBottomSheetActive && (
-          <TouchableOpacity
-            style={styles.floatingButton}
-            onPress={() => modalizeRef.current?.open()}
-          >
-            <Text style={styles.floatingButtonText}>Ver detalhes</Text>
-            <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        {!isBottomSheetActive && !startAddress && !endAddress && (
-          <TouchableOpacity
-            style={styles.comeBack}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-        )}
-      </View>
+          {!isBottomSheetActive && !startAddress && !endAddress && (
+            <TouchableOpacity
+              style={styles.comeBack}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
 
+
+        {showToastError && (
+          <ToastMessage
+            message="Não foi possível processar a solicitação."
+            status="ERROR"
+            onHide={() => setShowToastError(false)}
+          />
+        )}
+        {showToastErrorUnauthorized && (
+          <ToastMessage
+            message="Sessão expirada. Faça login novamente."
+            status="ERROR"
+            onHide={() => setShowToastErrorUnauthorized(false)}
+          />
+        )}
+        {showToastErrorAllFields && (
+          <ToastMessage
+            message="Por favor, preencha todos os campos."
+            status="ERROR"
+            onHide={() => setShowToastErrorAllFields(false)}
+          />
+        )}
+        {showToastErrorOrigin && (
+          <ToastMessage
+            message="Endereço de origem não encontrado."
+            status="ERROR"
+            onHide={() => setShowToastErrorOrigin(false)}
+          />
+        )}
+        {showToastErrorDestination && (
+          <ToastMessage
+            message="Endereço de destino não encontrado."
+            status="ERROR"
+            onHide={() => setShowToastErrorDestination(false)}
+          />
+        )}
+        {showToastNext && (
+          <ToastMessage
+            message="Os endereços devem estar a pelo menos 50 metros de distância."
+            status="ERROR"
+            onHide={() => setShowToastNext(false)}
+          />
+        )}
+        {showToastSameAddress && (
+          <ToastMessage
+            message="Os endereços de partida e destino são iguais."
+            status="ERROR"
+            onHide={() => setShowToastSameAddress(false)}
+          />
+        )}
+      </KeyboardAvoidingView>
       <Modalize
         ref={modalizeRef}
         snapPoint={400}
@@ -665,55 +709,58 @@ export default function RequestDelivery() {
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
               >
-                <View style={styles.modalOverlay}>
-                  <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>
-                      Selecione a forma de pagamento
-                    </Text>
+                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
 
-                    <ScrollView style={styles.paymentMethodsList}>
-                      {paymentMethods.map((method) => (
-                        <Pressable
-                          key={method.id}
-                          style={({ pressed }) => [
-                            styles.paymentMethodItem,
-                            pressed && styles.paymentMethodItemPressed,
-                            formaPagamento === method.name &&
-                            styles.paymentMethodItemSelected,
-                          ]}
-                          onPress={() => handlePaymentMethodSelect(method.name)}
-                        >
-                          <Ionicons
-                            name={method.icon as any}
-                            size={24}
-                            color={
-                              formaPagamento === method.name ? "#000" : "#666"
-                            }
-                          />
-                          <Text
-                            style={[
-                              styles.paymentMethodText,
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                      <Text style={styles.modalTitle}>
+                        Selecione a forma de pagamento
+                      </Text>
+
+                      <ScrollView style={styles.paymentMethodsList}>
+                        {paymentMethods.map((method) => (
+                          <Pressable
+                            key={method.id}
+                            style={({ pressed }) => [
+                              styles.paymentMethodItem,
+                              pressed && styles.paymentMethodItemPressed,
                               formaPagamento === method.name &&
-                              styles.paymentMethodTextSelected,
+                              styles.paymentMethodItemSelected,
                             ]}
+                            onPress={() => handlePaymentMethodSelect(method.name)}
                           >
-                            {method.name}
-                          </Text>
-                          {formaPagamento === method.name && (
-                            <Ionicons name="checkmark" size={20} color="#000" />
-                          )}
-                        </Pressable>
-                      ))}
-                    </ScrollView>
+                            <Ionicons
+                              name={method.icon as any}
+                              size={24}
+                              color={
+                                formaPagamento === method.name ? "#000" : "#666"
+                              }
+                            />
+                            <Text
+                              style={[
+                                styles.paymentMethodText,
+                                formaPagamento === method.name &&
+                                styles.paymentMethodTextSelected,
+                              ]}
+                            >
+                              {method.name}
+                            </Text>
+                            {formaPagamento === method.name && (
+                              <Ionicons name="checkmark" size={20} color="#000" />
+                            )}
+                          </Pressable>
+                        ))}
+                      </ScrollView>
 
-                    <TouchableOpacity
-                      style={styles.modalCloseButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <Text style={styles.modalCloseButtonText}>Fechar</Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.modalCloseButton}
+                        onPress={() => setModalVisible(false)}
+                      >
+                        <Text style={styles.modalCloseButtonText}>Fechar</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
+                </TouchableWithoutFeedback>
               </Modal>
 
               <TouchableOpacity
@@ -733,55 +780,6 @@ export default function RequestDelivery() {
           )}
         </View>
       </Modalize>
-      {showToastError && (
-        <ToastMessage
-          message="Não foi possível processar a solicitação."
-          status="ERROR"
-          onHide={() => setShowToastError(false)}
-        />
-      )}
-      {showToastErrorUnauthorized && (
-        <ToastMessage
-          message="Sessão expirada. Faça login novamente."
-          status="ERROR"
-          onHide={() => setShowToastErrorUnauthorized(false)}
-        />
-      )}
-      {showToastErrorAllFields && (
-        <ToastMessage
-          message="Por favor, preencha todos os campos."
-          status="ERROR"
-          onHide={() => setShowToastErrorAllFields(false)}
-        />
-      )}
-      {showToastErrorOrigin && (
-        <ToastMessage
-          message="Endereço de origem não encontrado."
-          status="ERROR"
-          onHide={() => setShowToastErrorOrigin(false)}
-        />
-      )}
-      {showToastErrorDestination && (
-        <ToastMessage
-          message="Endereço de destino não encontrado."
-          status="ERROR"
-          onHide={() => setShowToastErrorDestination(false)}
-        />
-      )}
-      {showToastNext && (
-        <ToastMessage
-          message="Os endereços devem estar a pelo menos 50 metros de distância."
-          status="ERROR"
-          onHide={() => setShowToastNext(false)}
-        />
-      )}
-      {showToastSameAddress && (
-        <ToastMessage
-          message="Os endereços de partida e destino são iguais."
-          status="ERROR"
-          onHide={() => setShowToastSameAddress(false)}
-        />
-      )}
-    </KeyboardAvoidingView>
+    </>
   );
 }

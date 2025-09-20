@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 20,
     color: "#000",
     fontFamily: "Righteous",
   },

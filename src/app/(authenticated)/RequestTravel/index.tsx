@@ -4,8 +4,6 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
 
-import LottieView from "lottie-react-native";
-
 import { Modalize } from "react-native-modalize";
 
 import { MenuProvider } from 'react-native-popup-menu';
