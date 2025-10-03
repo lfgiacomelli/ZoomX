@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal, ScrollView, TouchableWithoutFeedback } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -206,28 +206,33 @@ export default function EditProfile() {
         </TouchableOpacity>
       </ScrollView>
       <Modal visible={modalVisible} transparent={true} animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <LottieView
-              source={infoAnimation}
-              autoPlay
-              loop={false}
-              ref={animationRef}
-              style={{ width: 100, height: 100, alignSelf: "center" }} />
-            <Text style={styles.modalText}>
-              Informações atualizadas com sucesso!
-            </Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => {
-                setModalVisible(false);
-                router.push("/Profile");
-              }}
-            >
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalBackground}>
+            <TouchableWithoutFeedback onPress={() => { }}>
+              <View style={styles.modalContainer}>
+                <LottieView
+                  source={infoAnimation}
+                  autoPlay
+                  loop={false}
+                  ref={animationRef}
+                  style={{ width: 100, height: 100, alignSelf: "center" }}
+                />
+                <Text style={styles.modalText}>
+                  Informações atualizadas com sucesso!
+                </Text>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push("/Profile");
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>OK</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </>
   );

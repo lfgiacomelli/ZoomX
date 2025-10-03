@@ -15,6 +15,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   intro: {
+    textAlign: "justify",
     fontFamily: 'Inter-Regular',
     fontSize: 18,
     color: '#333',
