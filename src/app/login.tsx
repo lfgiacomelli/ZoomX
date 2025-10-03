@@ -4,7 +4,6 @@ import {
   TextInput,
   StyleSheet,
   Text,
-  ActivityIndicator,
   TouchableOpacity,
   Image,
   ScrollView,
@@ -19,37 +18,37 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "@hooks/useFont/Righteous";
 import { useAuth } from "@contexts/useAuth";
 import ToastMessage from "@components/ToastMessage";
+import LottieView from "lottie-react-native";
+
+import dots from "@animations/dots_animation.json";
+import MessagesLogin from "@components/MessagesLogin";
 
 const API_BASE_URL = "https://backend-turma-a-2025.onrender.com";
 
 export default function Login() {
   const { login } = useAuth();
-  const [showToastError, setShowToastError] = useState(false);
-  const [showToastErrorLogin, setShowToastErrorLogin] = useState(false);
+  const router = useRouter();
+  const fontLoaded = useRighteousFont();
+
   const [usu_email, setEmail] = useState("");
   const [usu_senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const fontLoaded = useRighteousFont();
+  const [showToastError, setShowToastError] = useState(false);
+  const [showToastErrorLogin, setShowToastErrorLogin] = useState(false);
   const [passwordVisibility, setPasswordVisibility] = useState(true);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
+  if (!fontLoaded) return null;
+
   const togglePasswordVisibility = () => {
     setPasswordVisibility(!passwordVisibility);
   };
 
-  const handleFocus = (field: string) => {
-    setFocusedField(field);
-  };
-
-  const handleBlur = () => {
-    setFocusedField(null);
-  };
-
-  if (!fontLoaded) return null;
+  const handleFocus = (field: string) => setFocusedField(field);
+  const handleBlur = () => setFocusedField(null);
 
   const handleLogin = async () => {
     if (!usu_email.trim() || !usu_senha.trim()) {
@@ -58,6 +57,7 @@ export default function Login() {
     }
 
     setLoading(true);
+
     try {
       const response = await axios.post(`${API_BASE_URL}/api/login`, {
         usu_email,
@@ -73,9 +73,8 @@ export default function Login() {
       }
 
       await login(data.usuario, data.token);
-
       router.replace("/(authenticated)/Home");
-    } catch (error: any) {
+    } catch (error) {
       setShowToastError(true);
     } finally {
       setLoading(false);
@@ -89,100 +88,103 @@ export default function Login() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <StatusBar backgroundColor="white" barStyle="dark-content" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+
+      {loading ? (
         <ImageBackground
           source={require("@images/background_2.png")}
-          style={styles.container}
+          style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
         >
-          <View style={styles.logo}>
-            <Image
-              source={require("@images/logo.png")}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          <Text style={styles.title}>Faça login:</Text>
-          <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
-
-          <View
-            style={[
-              styles.inputWrapper,
-              focusedField === "email" && styles.inputWrapperFocused,
-            ]}
-          >
-            <Feather
-              name="mail"
-              size={20}
-              color={focusedField === "email" ? "#FFD700" : "#fff"}
-            />
-            <TextInput
-              ref={emailInputRef}
-              placeholder="E-mail"
-              placeholderTextColor="#aaa"
-              style={styles.input}
-              value={usu_email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              onFocus={() => handleFocus("email")}
-              onBlur={handleBlur}
-            />
-          </View>
-
-          <View
-            style={[
-              styles.inputWrapper,
-              focusedField === "password" && styles.inputWrapperFocused,
-            ]}
-          >
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color={focusedField === "password" ? "#FFD700" : "#fff"}
-            />
-            <TextInput
-              ref={passwordInputRef}
-              placeholder="Senha"
-              placeholderTextColor="#aaa"
-              style={styles.input}
-              value={usu_senha}
-              onChangeText={setSenha}
-              secureTextEntry={passwordVisibility}
-              onFocus={() => handleFocus("password")}
-              onBlur={handleBlur}
-            />
-            <Ionicons
-              name={passwordVisibility ? "eye" : "eye-off-outline"}
-              size={24}
-              color={focusedField === "password" ? "#FFD700" : "#fff"}
-              onPress={togglePasswordVisibility}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("/signup")}>
-            <Text style={styles.linkText}>
-              Ainda não tem uma conta? Cadastre-se!
-            </Text>
-          </TouchableOpacity>
+          <LottieView source={dots} autoPlay loop style={{ width: 200, height: 200 }} />
+          <MessagesLogin loading={loading} />
         </ImageBackground>
-      </ScrollView>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <ImageBackground
+            source={require("@images/background_2.png")}
+            style={styles.container}
+          >
+            <View style={styles.logo}>
+              <Image
+                source={require("@images/logo.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={styles.title}>Faça login:</Text>
+            <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+
+            <View
+              style={[
+                styles.inputWrapper,
+                focusedField === "email" && styles.inputWrapperFocused,
+              ]}
+            >
+              <Feather
+                name="mail"
+                size={20}
+                color={focusedField === "email" ? "#FFD700" : "#fff"}
+              />
+              <TextInput
+                ref={emailInputRef}
+                placeholder="E-mail"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+                value={usu_email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onFocus={() => handleFocus("email")}
+                onBlur={handleBlur}
+              />
+            </View>
+
+            <View
+              style={[
+                styles.inputWrapper,
+                focusedField === "password" && styles.inputWrapperFocused,
+              ]}
+            >
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                color={focusedField === "password" ? "#FFD700" : "#fff"}
+              />
+              <TextInput
+                ref={passwordInputRef}
+                placeholder="Senha"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+                value={usu_senha}
+                onChangeText={setSenha}
+                secureTextEntry={passwordVisibility}
+                onFocus={() => handleFocus("password")}
+                onBlur={handleBlur}
+              />
+              <Ionicons
+                name={passwordVisibility ? "eye" : "eye-off-outline"}
+                size={24}
+                color={focusedField === "password" ? "#FFD700" : "#fff"}
+                onPress={togglePasswordVisibility}
+              />
+            </View>
+
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Entrar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/signup")}>
+              <Text style={styles.linkText}>
+                Ainda não tem uma conta? Cadastre-se!
+              </Text>
+            </TouchableOpacity>
+          </ImageBackground>
+        </ScrollView>
+      )}
 
       {showToastError && (
         <ToastMessage
@@ -191,6 +193,7 @@ export default function Login() {
           onHide={() => setShowToastError(false)}
         />
       )}
+
       {showToastErrorLogin && (
         <ToastMessage
           message="Por favor, preencha todos os campos."
@@ -239,16 +242,33 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   inputWrapperFocused: { borderColor: "#FFD700", backgroundColor: "#222" },
-  input: { flex: 1, color: "#fff", fontFamily: "Righteous", marginLeft: 10, minHeight: 20 },
+  input: {
+    flex: 1,
+    color: "#fff",
+    fontFamily: "Righteous",
+    marginLeft: 10,
+    minHeight: 20,
+  },
   button: {
+    height: 50,
     backgroundColor: "#fff",
-    paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 15,
     justifyContent: "center",
     minHeight: 50,
   },
-  buttonText: { color: "#000", fontFamily: "Righteous", fontSize: 16, textAlign: "center" },
-  linkText: { color: "#fff", textAlign: "center", textDecorationLine: "underline", fontFamily: "Righteous", marginTop: 10 },
+  buttonText: {
+    color: "#000",
+    fontFamily: "Righteous",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  linkText: {
+    color: "#fff",
+    textAlign: "center",
+    textDecorationLine: "underline",
+    fontFamily: "Righteous",
+    marginTop: 10,
+  },
 });

@@ -18,6 +18,10 @@ import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
 import useRighteousFont from "@hooks/useFont/Righteous";
 import { useAuth } from "@contexts/useAuth";
 import ToastMessage from "@components/ToastMessage";
+import LottieView from "lottie-react-native";
+import MessagesLogin from "@components/MessagesLogin";
+
+import dots from '@animations/dots_animation.json';
 
 export default function SignUp() {
   const fontLoaded = useRighteousFont();
@@ -140,132 +144,142 @@ export default function SignUp() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <StatusBar backgroundColor={"#000"} barStyle="light-content" />
-        <ScrollView
-          contentContainerStyle={[styles.scrollContainer, { flexGrow: 1, justifyContent: "center" }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <ImageBackground source={require("@images/background.png")} style={styles.container}>
-            <View style={styles.logo}>
-              <Image source={require("@images/logo.png")} style={styles.logoImage} resizeMode="contain" />
-            </View>
-            <Text style={styles.title}>Crie sua conta:</Text>
-            <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
-
-            <View style={[
-              styles.inputWrapper,
-              focusedField === 'usu_nome' && styles.inputWrapperFocused
-            ]}>
-              <FontAwesome name="user" size={20} color={focusedField === 'usu_nome' ? "#FFD700" : "#fff"} />
-              <TextInput
-                ref={inputRefs.usu_nome}
-                placeholder="Insira seu Nome Completo"
-                placeholderTextColor="#aaa"
-                onChangeText={(text) => handleChange("usu_nome", text)}
-                style={styles.input}
-                value={form.usu_nome}
-                onFocus={() => handleFocus('usu_nome')}
-                onBlur={handleBlur}
-              />
-            </View>
-
-            <View style={[
-              styles.inputWrapper,
-              focusedField === 'usu_email' && styles.inputWrapperFocused
-            ]}>
-              <Feather name="mail" size={20} color={focusedField === 'usu_email' ? "#FFD700" : "#fff"} />
-              <TextInput
-                ref={inputRefs.usu_email}
-                placeholder="Insira seu E-mail"
-                placeholderTextColor="#aaa"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                onChangeText={(text) => handleChange("usu_email", text)}
-                style={styles.input}
-                value={form.usu_email}
-                onFocus={() => handleFocus('usu_email')}
-                onBlur={handleBlur}
-              />
-            </View>
-
-            <View style={[
-              styles.inputWrapper,
-              focusedField === 'usu_telefone' && styles.inputWrapperFocused
-            ]}>
-              <Feather name="phone" size={20} color={focusedField === 'usu_telefone' ? "#FFD700" : "#fff"} />
-              <TextInput
-                ref={inputRefs.usu_telefone}
-                placeholder="Insira seu Telefone"
-                placeholderTextColor="#aaa"
-                keyboardType="phone-pad"
-                value={form.usu_telefone}
-                onChangeText={(text) => handleChange("usu_telefone", formatarTelefone(text))}
-                style={styles.input}
-                onFocus={() => handleFocus('usu_telefone')}
-                onBlur={handleBlur}
-              />
-            </View>
-
-            <View style={[
-              styles.inputWrapper,
-              focusedField === 'usu_cpf' && styles.inputWrapperFocused
-            ]}>
-              <Feather name="file-text" size={20} color={focusedField === 'usu_cpf' ? "#FFD700" : "#fff"} />
-              <TextInput
-                ref={inputRefs.usu_cpf}
-                placeholder="Insira seu CPF (apenas números)"
-                placeholderTextColor="#aaa"
-                keyboardType="numeric"
-                maxLength={11}
-                onChangeText={(text) => handleChange("usu_cpf", text)}
-                style={styles.input}
-                value={form.usu_cpf}
-                onFocus={() => handleFocus('usu_cpf')}
-                onBlur={handleBlur}
-              />
-            </View>
-
-            <View style={[
-              styles.inputWrapper,
-              focusedField === 'usu_senha' && styles.inputWrapperFocused
-            ]}>
-              <Ionicons 
-                name="lock-closed-outline" 
-                size={20} 
-                color={focusedField === 'usu_senha' ? "#FFD700" : "#fff"} 
-              />
-              <TextInput
-                ref={inputRefs.usu_senha}
-                placeholder="Insira sua Senha (mínimo 6 caracteres)"
-                placeholderTextColor="#aaa"
-                secureTextEntry={passwordVisibility}
-                onChangeText={(text) => handleChange("usu_senha", text)}
-                style={styles.input}
-                value={form.usu_senha}
-                onFocus={() => handleFocus('usu_senha')}
-                onBlur={handleBlur}
-              />
-              <Ionicons
-                name={passwordVisibility ? "eye" : "eye-off-outline"}
-                size={24}
-                color={focusedField === 'usu_senha' ? "#FFD700" : "#fff"}
-                onPress={togglePasswordVisibility}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.buttonText}>Criar Conta</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => router.push("/login")}>
-              <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
-            </TouchableOpacity>
+        {isLoading ? (
+          <ImageBackground
+            source={require("@images/background.png")}
+            style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+          >
+            <LottieView source={dots} autoPlay loop style={{ width: 200, height: 200 }} />
+            <MessagesLogin loading={isLoading} />
           </ImageBackground>
-        </ScrollView>
+        ) : (
+          <ScrollView
+            contentContainerStyle={[styles.scrollContainer, { flexGrow: 1, justifyContent: "center" }]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <ImageBackground source={require("@images/background.png")} style={styles.container}>
+              <View style={styles.logo}>
+                <Image source={require("@images/logo.png")} style={styles.logoImage} resizeMode="contain" />
+              </View>
+              <Text style={styles.title}>Crie sua conta:</Text>
+              <Text style={styles.subtitle}>Peça corridas ainda hoje!</Text>
+
+              <View style={[
+                styles.inputWrapper,
+                focusedField === 'usu_nome' && styles.inputWrapperFocused
+              ]}>
+                <FontAwesome name="user" size={20} color={focusedField === 'usu_nome' ? "#FFD700" : "#fff"} />
+                <TextInput
+                  ref={inputRefs.usu_nome}
+                  placeholder="Insira seu Nome Completo"
+                  placeholderTextColor="#aaa"
+                  onChangeText={(text) => handleChange("usu_nome", text)}
+                  style={styles.input}
+                  value={form.usu_nome}
+                  onFocus={() => handleFocus('usu_nome')}
+                  onBlur={handleBlur}
+                />
+              </View>
+
+              <View style={[
+                styles.inputWrapper,
+                focusedField === 'usu_email' && styles.inputWrapperFocused
+              ]}>
+                <Feather name="mail" size={20} color={focusedField === 'usu_email' ? "#FFD700" : "#fff"} />
+                <TextInput
+                  ref={inputRefs.usu_email}
+                  placeholder="Insira seu E-mail"
+                  placeholderTextColor="#aaa"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onChangeText={(text) => handleChange("usu_email", text)}
+                  style={styles.input}
+                  value={form.usu_email}
+                  onFocus={() => handleFocus('usu_email')}
+                  onBlur={handleBlur}
+                />
+              </View>
+
+              <View style={[
+                styles.inputWrapper,
+                focusedField === 'usu_telefone' && styles.inputWrapperFocused
+              ]}>
+                <Feather name="phone" size={20} color={focusedField === 'usu_telefone' ? "#FFD700" : "#fff"} />
+                <TextInput
+                  ref={inputRefs.usu_telefone}
+                  placeholder="Insira seu Telefone"
+                  placeholderTextColor="#aaa"
+                  keyboardType="phone-pad"
+                  value={form.usu_telefone}
+                  onChangeText={(text) => handleChange("usu_telefone", formatarTelefone(text))}
+                  style={styles.input}
+                  onFocus={() => handleFocus('usu_telefone')}
+                  onBlur={handleBlur}
+                />
+              </View>
+
+              <View style={[
+                styles.inputWrapper,
+                focusedField === 'usu_cpf' && styles.inputWrapperFocused
+              ]}>
+                <Feather name="file-text" size={20} color={focusedField === 'usu_cpf' ? "#FFD700" : "#fff"} />
+                <TextInput
+                  ref={inputRefs.usu_cpf}
+                  placeholder="Insira seu CPF (apenas números)"
+                  placeholderTextColor="#aaa"
+                  keyboardType="numeric"
+                  maxLength={11}
+                  onChangeText={(text) => handleChange("usu_cpf", text)}
+                  style={styles.input}
+                  value={form.usu_cpf}
+                  onFocus={() => handleFocus('usu_cpf')}
+                  onBlur={handleBlur}
+                />
+              </View>
+
+              <View style={[
+                styles.inputWrapper,
+                focusedField === 'usu_senha' && styles.inputWrapperFocused
+              ]}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={focusedField === 'usu_senha' ? "#FFD700" : "#fff"}
+                />
+                <TextInput
+                  ref={inputRefs.usu_senha}
+                  placeholder="Insira sua Senha (mínimo 6 caracteres)"
+                  placeholderTextColor="#aaa"
+                  secureTextEntry={passwordVisibility}
+                  onChangeText={(text) => handleChange("usu_senha", text)}
+                  style={styles.input}
+                  value={form.usu_senha}
+                  onFocus={() => handleFocus('usu_senha')}
+                  onBlur={handleBlur}
+                />
+                <Ionicons
+                  name={passwordVisibility ? "eye" : "eye-off-outline"}
+                  size={24}
+                  color={focusedField === 'usu_senha' ? "#FFD700" : "#fff"}
+                  onPress={togglePasswordVisibility}
+                />
+              </View>
+
+              <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <Text style={styles.buttonText}>Criar Conta</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => router.push("/login")}>
+                <Text style={styles.linkText}>Já possui conta? Faça login!</Text>
+              </TouchableOpacity>
+            </ImageBackground>
+          </ScrollView>
+        )}
       </KeyboardAvoidingView>
 
       {showToastAllFields && (

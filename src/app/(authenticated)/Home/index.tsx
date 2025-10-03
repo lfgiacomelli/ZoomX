@@ -97,6 +97,28 @@ export default function Home() {
         );
     }
 
+
+    const loadPhoto = () => {
+        if (photo) {
+            return (
+                <Image source={{ uri: photo }} style={styles.profileImage} />
+            );
+        } else {
+            return (
+                <Image source={require("@images/userPhotoDefault.png")} style={styles.profileImage} />
+
+            )
+        }
+    }
+
+    function verifyMobileData() {
+        if (isMobileData) {
+            return (
+                <Text style={styles.welcomeSubtitle}>Você está usando dados móveis</Text>
+            )
+        }
+    }
+
     return (
         <>
             <StatusBar backgroundColor="#fff" barStyle="dark-content" />
@@ -111,24 +133,16 @@ export default function Home() {
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                         <Text style={styles.welcomeTitle}>Olá, {userFirstName}!</Text>
                         <TouchableOpacity style={styles.profileButton} onPress={() => router.push("/Profile")}>
-                            {photo ? (
-                                <Image source={{ uri: photo }} style={styles.profileImage} />
-                            ) : (
-                                <Image source={require("@images/userPhotoDefault.png")} style={styles.profileImage} />
-                            )}
+                            {loadPhoto()}
                         </TouchableOpacity>
                     </View>
-
-                    {isMobileData && (
-                        <Text style={styles.welcomeSubtitle}>Você está usando dados móveis</Text>
-                    )}
+                    {verifyMobileData()}
                 </View>
                 <Services />
                 <AvaliarViagem />
                 <PendingTravel />
                 <Benefits />
                 <LastActivity />
-                {/* <Geolocation /> */}
             </ScrollView>
         </>
     );
