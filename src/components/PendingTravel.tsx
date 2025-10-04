@@ -5,12 +5,9 @@ import {
   StyleSheet,
   Animated,
   Easing,
-  Platform,
   TouchableOpacity,
-  ActivityIndicator,
-  Linking,
+  Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useAuth } from "@contexts/useAuth";
 
@@ -18,7 +15,6 @@ type Viagem = {
   via_codigo: number;
   via_origem: string;
   via_destino: string;
-  via_data: string;
   via_status: string;
   via_valor?: string;
   via_formapagamento?: string;
@@ -35,30 +31,26 @@ const ProgressBar = ({ duration = 3000 }: { duration?: number }) => {
 
   useEffect(() => {
     progressAnim.setValue(0);
-
     const animation = Animated.loop(
       Animated.timing(progressAnim, {
         toValue: 1,
         duration,
-        delay: 0,
         easing: Easing.linear,
         useNativeDriver: false,
       })
     );
-
     animation.start();
-
     return () => animation.stop();
-  }, [duration, progressAnim]);
+  }, [duration]);
 
-  const progressWidth = progressAnim.interpolate({
+  const width = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
 
   return (
-    <View style={styles.progressBarContainer}>
-      <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
+    <View style={styles.progressContainer}>
+      <Animated.View style={[styles.progressFill, { width }]} />
     </View>
   );
 };
@@ -67,8 +59,8 @@ export default function PendingTravel() {
   const router = useRouter();
   const { user, token } = useAuth();
   const [data, setData] = useState<Viagem | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const baseURL = "https://backend-turma-a-2025.onrender.com";
 
@@ -80,42 +72,28 @@ export default function PendingTravel() {
       const id = user?.id;
       if (!id) throw new Error("ID do usuário não encontrado");
 
-      const response = await fetch(
-        `${baseURL}/api/viagens/andamento/${id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${baseURL}/api/viagens/andamento/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (!response.ok){
-        return;
-      }
+      if (!response.ok) throw new Error("Erro ao buscar viagem em andamento");
 
       const json = await response.json();
-
-      if (json.sucesso && json.viagem) {
-        setData(json.viagem);
-      } else {
-        setData(null);
-      }
+      if (json.sucesso && json.viagem) setData(json.viagem);
+      else setData(null);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-        console.error("Erro:", err.message);
-      } else {
-        setError("Erro ao carregar dados");
-        console.error("Erro desconhecido");
-      }
+      if (err instanceof Error) setError(err.message);
+      else setError("Erro desconhecido");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchInfoFuncionario = async (solicitacaoId: number) => {
+  const fetchFuncionario = async (solicitacaoId: number) => {
     try {
       const response = await fetch(
         `${baseURL}/api/viagens/solicitacao/${solicitacaoId}/funcionario`,
@@ -128,36 +106,25 @@ export default function PendingTravel() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(
-          `Erro ao buscar funcionário: ${response.status} ${response.statusText}`
-        );
-      }
+      if (!response.ok)
+        throw new Error(`Erro ao buscar funcionário: ${response.status}`);
 
       const json = await response.json();
-
       if (json.sucesso && json.funcionario) {
         setData((prev) =>
           prev
             ? {
-              ...prev,
-              fun_nome: json.funcionario.fun_nome,
-              fun_telefone: json.funcionario.fun_telefone,
-              mot_modelo: json.funcionario.mot_modelo,
-              mot_placa: json.funcionario.mot_placa,
-            }
+                ...prev,
+                fun_nome: json.funcionario.fun_nome,
+                fun_telefone: json.funcionario.fun_telefone,
+                mot_modelo: json.funcionario.mot_modelo,
+                mot_placa: json.funcionario.mot_placa,
+              }
             : prev
         );
       }
-    } catch (error) {
-      console.error("Erro ao buscar informações do funcionário:", error);
-    }
-  };
-
-  const handleLigarFuncionario = () => {
-    const telefone = data?.fun_telefone;
-    if (telefone) {
-      Linking.openURL(`tel:${telefone}`);
+    } catch (err) {
+      console.error("Erro ao buscar informações do funcionário:", err);
     }
   };
 
@@ -167,101 +134,76 @@ export default function PendingTravel() {
 
   useEffect(() => {
     if (data?.sol_codigo && data.via_status === "em andamento") {
-      fetchInfoFuncionario(data.sol_codigo);
+      fetchFuncionario(data.sol_codigo);
     }
   }, [data]);
 
-  if (loading) {
-    return (
-      <View />
+  if (loading) return null;
 
-    );
-  }
-
-  if (error) {
+  if (error)
     return (
-      <View style={styles.errorContainer}>
+      <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={fetchData}
-        >
-          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+          <Text style={styles.retryText}>Tentar novamente</Text>
         </TouchableOpacity>
       </View>
     );
-  }
 
-  if (!data || data.via_status !== "em andamento") {
-    return null;
-  }
+  if (!data || data.via_status !== "em andamento") return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>VIAGEM EM ANDAMENTO</Text>
-        <View style={styles.statusIndicator}>
-          <View style={styles.activeDot} />
-          <Text style={styles.statusText}>ATIVO</Text>
+    <View style={styles.card}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Viagem em andamento</Text>
+        <View style={styles.statusPill}>
+          <View style={styles.statusDot} />
+          <Text style={styles.statusText}>Ativa</Text>
         </View>
       </View>
 
-      <View style={styles.card}>
-        <ProgressBar duration={3500} />
+      <ProgressBar duration={3500} />
 
-        <View style={styles.infoContainer}>
-          <InfoRow label="Origem" value={data.via_origem} />
-          <InfoRow label="Destino" value={data.via_destino} />
-          <InfoRow label="Status" value={data.via_status.toUpperCase()} isStatus />
+      <View style={styles.infoSection}>
+        <Info label="Origem" value={data.via_origem} />
+        <Info label="Destino" value={data.via_destino} />
+        <Info label="Status" value={data.via_status.toUpperCase()} highlight />
 
-          <View style={styles.divider} />
+        <View style={styles.line} />
 
-          <InfoRow label="Mototaxista" value={data.fun_nome || "---"} />
-          <InfoRow label="Modelo" value={data.mot_modelo || "---"} />
-          <InfoRow label="Placa" value={data.mot_placa || "---"} />
-          <TouchableOpacity
-            onPress={handleLigarFuncionario}
-            style={styles.callButton}
-            accessibilityRole="button"
-            accessibilityLabel="Ligar para o mototaxista"
-          >
-            <Text style={styles.callButtonText}>LIGAR PARA O MOTOTAXISTA</Text>
-          </TouchableOpacity>
-
-        </View>
-
-        <TouchableOpacity
-          onPress={() => router.push(`/TravelDetails/${data.via_codigo}`)}
-          style={styles.detailsButton}
-          accessibilityRole="button"
-          accessibilityLabel="Ver detalhes da viagem"
-        >
-          <Text style={styles.detailsButtonText}>VER DETALHES COMPLETOS</Text>
-        </TouchableOpacity>
+        <Info label="Mototaxista" value={data.fun_nome || "---"} />
+        <Info label="Modelo" value={data.mot_modelo || "---"} />
+        <Info label="Placa" value={data.mot_placa || "---"} />
       </View>
+
+      <TouchableOpacity
+        onPress={() => router.push(`/TravelDetails/${data.via_codigo}`)}
+        style={styles.detailsBtn}
+      >
+        <Text style={styles.detailsText}>Ver detalhes</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
-const InfoRow = ({
+const Info = ({
   label,
   value,
-  isStatus = false,
+  highlight = false,
 }: {
   label: string;
   value: string;
-  isStatus?: boolean;
+  highlight?: boolean;
 }) => (
   <View style={styles.infoRow}>
-    <Text style={styles.label}>{label}</Text>
+    <Text style={styles.infoLabel}>{label}</Text>
     <Text
       style={[
-        styles.value,
-        isStatus && styles.statusValue,
-        value === "---" && styles.unavailableValue
+        styles.infoValue,
+        highlight && { color: "#FFA000" },
+        value === "---" && { color: "#999", fontStyle: "italic" },
       ]}
       numberOfLines={1}
-      ellipsizeMode="tail"
     >
       {value}
     </Text>
@@ -269,40 +211,43 @@ const InfoRow = ({
 );
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorContainer: {
-    padding: 20,
+  centered: {
     alignItems: "center",
     justifyContent: "center",
+    padding: 20,
   },
   errorText: {
-    color: "#D32F2F",
     fontFamily: "Righteous",
+    color: "#D32F2F",
     fontSize: 14,
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: "center",
   },
   retryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
     backgroundColor: "#FFA000",
-    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
-  retryButtonText: {
-    color: "#FFFFFF",
+  retryText: {
     fontFamily: "Righteous",
+    color: "#fff",
     fontSize: 14,
   },
-  header: {
+  card: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 12,
+  },
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -311,114 +256,74 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Righteous",
     fontSize: 16,
-    color: "#212121",
-    letterSpacing: 0.8,
+    color: "#111",
   },
-  statusIndicator: {
+  statusPill: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#E8F5E9",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 20,
   },
-  activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#4CAF50",
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#34C759",
     marginRight: 6,
   },
   statusText: {
     fontFamily: "Righteous",
     fontSize: 12,
-    color: "#4CAF50",
-    letterSpacing: 0.5,
+    color: "#34C759",
   },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    overflow: "hidden",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  progressBarContainer: {
+  progressContainer: {
     height: 4,
-    width: "100%",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F0F0F0",
+    borderRadius: 2,
+    overflow: "hidden",
+    marginBottom: 10,
   },
-  progressBar: {
+  progressFill: {
     height: "100%",
     backgroundColor: "#FFA000",
+    borderRadius: 2,
   },
-  infoContainer: {
-    padding: 20,
+  infoSection: {
+    marginTop: 6,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 14,
-    alignItems: "flex-start",
+    marginBottom: 6,
   },
-  label: {
+  infoLabel: {
     fontFamily: "Righteous",
-    color: "#757575",
+    color: "#777",
     fontSize: 13,
-    letterSpacing: 0.4,
     flex: 1,
   },
-  value: {
+  infoValue: {
     fontFamily: "Righteous",
-    color: "#212121",
-    fontSize: 14,
+    color: "#111",
+    fontSize: 13,
     textAlign: "right",
     flex: 1,
-    paddingLeft: 16,
   },
-  statusValue: {
-    color: "#FFA000",
-  },
-  unavailableValue: {
-    color: "#9E9E9E",
-    fontStyle: "italic",
-  },
-  divider: {
+  line: {
     height: 1,
-    backgroundColor: "#EEEEEE",
-    marginVertical: 12,
+    backgroundColor: "#F2F2F2",
+    marginVertical: 8,
   },
-  detailsButton: {
-    padding: 16,
-    backgroundColor: "#FFF8E1",
-    borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
+  detailsBtn: {
+    marginTop: 8,
+    alignItems: "center",
   },
-  detailsButtonText: {
-    color: "#FFA000",
+  detailsText: {
     fontFamily: "Righteous",
+    color: "#FFA000",
     fontSize: 14,
-    letterSpacing: 0.5,
-    textAlign: "center",
+    textDecorationLine: "underline",
   },
-  callButton: {
-  backgroundColor: "#FFA000",
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  borderRadius: 10,
-  alignItems: "center",
-  justifyContent: "center",
-  marginTop: 10,
-},
-callButtonText: {
-  color: "#FFFFFF",
-  fontFamily: "Righteous",
-  fontSize: 14,
-  letterSpacing: 0.6,
-},
-
 });

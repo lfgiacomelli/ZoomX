@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+    height: "100%"
   },
   bottomSheetBackground: {
     borderWidth: 2,

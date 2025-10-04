@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image, ScrollView, Modal } from "react-native";
+import { View, Text, Vibration, ActivityIndicator, TouchableOpacity, Image, ScrollView, Modal, Platform } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -113,8 +113,13 @@ export default function PendingRequest() {
       setSolicitacao(data);
 
       if (data.sol_status === "aceita") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
+        if (Platform.OS === "android") {
+          Vibration.vibrate(300);
+        } else {
+          Vibration.vibrate([0, 100, 50, 100]); 
+        }
         if (intervalRef.current) clearInterval(intervalRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
 
@@ -184,7 +189,8 @@ export default function PendingRequest() {
                 },
               },
               trigger: null,
-            });
+            }
+            );
 
           }, 3000);
         } catch (error) {
@@ -336,111 +342,111 @@ export default function PendingRequest() {
       <Header disableNavigation />
 
       <ScrollView contentContainerStyle={styles.container}>
-          <Image
-            source={require("@images/atendente.png")}
-            style={styles.atendenteImage}
+        <Image
+          source={require("@images/atendente.png")}
+          style={styles.atendenteImage}
+        />
+        <Text style={styles.message}>
+          Sua solicitação está sendo analisada. Aguarde a confirmação do
+          atendente.
+        </Text>
+        <View style={styles.timerContainer}>
+          <Text style={styles.timerLabel}>Tempo para cancelamento:</Text>
+          <LottieView
+            source={timerAnimation}
+            autoPlay
+            loop
+            style={{ width: 50, height: 50, marginBottom: 10 }}
           />
-          <Text style={styles.message}>
-            Sua solicitação está sendo analisada. Aguarde a confirmação do
-            atendente.
-          </Text>
-          <View style={styles.timerContainer}>
-            <Text style={styles.timerLabel}>Tempo para cancelamento:</Text>
-            <LottieView
-              source={timerAnimation}
-              autoPlay
-              loop
-              style={{ width: 50, height: 50, marginBottom: 10 }}
-            />
-            <Text
-              style={[styles.timerValue, timeLeft < 60 && styles.warningTime]}
-            >
-              {formatTime(timeLeft)}
-            </Text>
-          </View>
-
-          <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Origem:</Text>
-              <Text style={styles.detailValue}>{solicitacao.sol_origem}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Destino:</Text>
-              <Text style={styles.detailValue}>{solicitacao.sol_destino}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Distância:</Text>
-              <Text style={styles.detailValue}>
-                {solicitacao.sol_distancia} km
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Preço:</Text>
-              <Text style={styles.detailValue}>R$ {solicitacao.sol_valor}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Serviço:</Text>
-              <Text style={styles.detailValue}>{solicitacao.sol_servico}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Status:</Text>
-              <Text
-                style={[
-                  styles.detailValue,
-                  solicitacao.sol_status === "Pendente"
-                    ? styles.pendingStatus
-                    : styles.acceptedStatus,
-                  solicitacao.sol_status === "recusada" ? styles.refusedStatus : null,
-                ]}
-              >
-                {formatFirstLetter(solicitacao.sol_status)}
-              </Text>
-
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Data:</Text>
-              <Text style={styles.detailValue}>
-                {solicitacao.sol_data}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Pagamento:</Text>
-              <Text style={styles.detailValue}>
-                {solicitacao.sol_formapagamento}
-              </Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              cancelDisabled && styles.disabledButton,
-            ]}
-            onPress={handleCancel}
-            disabled={cancelDisabled}
+          <Text
+            style={[styles.timerValue, timeLeft < 60 && styles.warningTime]}
           >
-            <Text style={styles.actionButtonText}>
-              {loadingCancel ? (
-                <ActivityIndicator
-                  size="small"
-                  color="#FFF"
-                  style={{ marginLeft: 10 }}
-                />
-              ) : (
-                <Text style={styles.actionButtonText}>
-                  {cancelDisabled ? "Tempo esgotado" : "Cancelar Solicitação"}
-                </Text>
-              )}
+            {formatTime(timeLeft)}
+          </Text>
+        </View>
 
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Origem:</Text>
+            <Text style={styles.detailValue}>{solicitacao.sol_origem}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Destino:</Text>
+            <Text style={styles.detailValue}>{solicitacao.sol_destino}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Distância:</Text>
+            <Text style={styles.detailValue}>
+              {solicitacao.sol_distancia} km
             </Text>
-          </TouchableOpacity>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Preço:</Text>
+            <Text style={styles.detailValue}>R$ {solicitacao.sol_valor}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Serviço:</Text>
+            <Text style={styles.detailValue}>{solicitacao.sol_servico}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Status:</Text>
+            <Text
+              style={[
+                styles.detailValue,
+                solicitacao.sol_status === "Pendente"
+                  ? styles.pendingStatus
+                  : styles.acceptedStatus,
+                solicitacao.sol_status === "recusada" ? styles.refusedStatus : null,
+              ]}
+            >
+              {formatFirstLetter(solicitacao.sol_status)}
+            </Text>
+
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Data:</Text>
+            <Text style={styles.detailValue}>
+              {solicitacao.sol_data}
+            </Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Pagamento:</Text>
+            <Text style={styles.detailValue}>
+              {solicitacao.sol_formapagamento}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            cancelDisabled && styles.disabledButton,
+          ]}
+          onPress={handleCancel}
+          disabled={cancelDisabled}
+        >
+          <Text style={styles.actionButtonText}>
+            {loadingCancel ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFF"
+                style={{ marginLeft: 10 }}
+              />
+            ) : (
+              <Text style={styles.actionButtonText}>
+                {cancelDisabled ? "Tempo esgotado" : "Cancelar Solicitação"}
+              </Text>
+            )}
+
+          </Text>
+        </TouchableOpacity>
         <Modal
           animationType="fade"
           transparent={true}

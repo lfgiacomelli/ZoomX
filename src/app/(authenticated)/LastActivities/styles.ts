@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     sectionHeader: {
     backgroundColor: '#f5f5f5',
     paddingVertical: 8,
+    width:"100%",
     paddingHorizontal: 15,
     marginTop: 15,
     marginBottom: 5,

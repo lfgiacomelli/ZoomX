@@ -137,67 +137,31 @@ export default function Profile() {
             <Text style={styles.userEmail}>{user?.email || ""}</Text>
           </View>
         </View>
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={styles.boxButton}
-            onPress={() => router.push("/Configuration")}
-          >
-            <Octicons name="gear" size={20} color="black" />
-            <Text style={styles.boxText}>Configurações</Text>
-          </TouchableOpacity>
+        <View style={styles.col}>
+          <Pressable onPress={() => router.push("/UpdateInfo")} style={styles.pressable}>
+            <Ionicons name="pencil-sharp" size={24} color="#007BFF" />
+            <Text style={styles.pressableTitle}>Editar suas informações</Text>
+          </Pressable>
 
-          <TouchableOpacity
-            style={styles.boxButton}
-            onPress={() => Linking.openURL("https://wa.me/")}
-          >
-            <Entypo name="phone" size={20} color="black" />
-            <Text style={styles.boxText}>Contato</Text>
-          </TouchableOpacity>
-        </View>
+          <Pressable onPress={() => router.push("/Guidelines")} style={styles.pressable}>
+            <Ionicons name="document" size={24} color="#28A745" />
+            <Text style={styles.pressableTitle}>Diretrizes</Text>
+          </Pressable>
 
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={styles.boxButton}
-            onPress={() => router.push("/LastActivities")}
-          >
-            <Image
-              source={require("@images/motorcycle.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.iconText}>Viagens</Text>
-          </TouchableOpacity>
+          <Pressable onPress={() => router.push("/Configuration")} style={styles.pressable}>
+            <Ionicons name="settings" size={24} color="#6C757D" />
+            <Text style={styles.pressableTitle}>Configurações</Text>
+          </Pressable>
 
-          <TouchableOpacity
-            style={styles.boxButton}
-            onPress={() => router.push("/Guidelines")}
-          >
-            <Image source={require("@images/list.png")} style={styles.icon} />
-            <Text style={styles.iconText}>Diretrizes</Text>
-          </TouchableOpacity>
-        </View>
+          <Pressable onPress={() => router.push("/MyReviews")} style={styles.pressable}>
+            <Ionicons name="star" size={24} color="#FFC107" />
+            <Text style={styles.pressableTitle}>Minhas avaliações</Text>
+          </Pressable>
 
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={styles.boxButton}
-            onPress={() => router.push("/MyReviews")}
-          >
-            <Image
-              source={require("@images/avaliacao_icon.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.iconText}>Avaliações</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.boxButton}
-            onPress={() => router.push("/UpdateInfo")}
-          >
-            <Image
-              source={require("@images/updateicon.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.iconText}>Informações</Text>
-          </TouchableOpacity>
+          <Pressable onPress={() => router.push("/AboutApp")} style={[styles.pressable, styles.lastPressable]}>
+            <Ionicons name="apps" size={24} color="#17A2B8" />
+            <Text style={styles.pressableTitle}>Veja sobre o aplicativo</Text>
+          </Pressable>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={openLogoutSheet}>

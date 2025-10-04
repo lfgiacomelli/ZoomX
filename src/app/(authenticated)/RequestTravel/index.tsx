@@ -152,7 +152,6 @@ export default function RequestTravel() {
   const router = useRouter();
   const { user, token } = useAuth();
   const [isBottomSheetActive, setIsBottomSheetActive] = useState(false);
-  const animationRef = useRef(null);
   const [suggestedAddress, setSuggestedAddress] = useState("");
   const [tempo, setTempo] = useState<number | null>(null);
   const [statusLeitor, setStatusLeitor] = useState(false);
@@ -489,107 +488,105 @@ export default function RequestTravel() {
 
 
   return (
-    <MenuProvider>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-      >
-        <Header />
-        <StatusBar barStyle="light-content" />
-        <View style={styles.form}>
-          <View style={styles.inputColumn}>
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço de partida (ex: Rua A, 123)"
-              value={startAddress}
-              onChangeText={setStartAddress}
-              clearButtonMode="while-editing"
-              returnKeyType="next"
-              autoFocus
-              placeholderTextColor="#969696"
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+    >
+      <Header />
+      <StatusBar barStyle="light-content" />
+      <View style={styles.form}>
+        <View style={styles.inputColumn}>
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de partida (ex: Rua A, 123)"
+            value={startAddress}
+            onChangeText={setStartAddress}
+            clearButtonMode="while-editing"
+            returnKeyType="next"
+            autoFocus
+            placeholderTextColor="#969696"
 
-            />
-            {suggestedAddress && !startAddress.trim() && (
-              <TouchableOpacity
-                style={styles.suggestionBox}
-                onPress={handleUseSuggested}
-              >
-                <View style={styles.column}>
-                  <Text style={styles.suggestionTitle}>
-                    Usar esse endereço novamente:
-                  </Text>
-                  <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
-                </View>
-                <Ionicons name="arrow-up-outline" size={24} color="#000" />
-              </TouchableOpacity>
-            )}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço de destino (ex: Av. B, 456)"
-              value={endAddress}
-              onChangeText={setEndAddress}
-              clearButtonMode="while-editing"
-              returnKeyType="done"
-              placeholderTextColor="#969696"
-
-            />
-            <View style={styles.row}>{!isLoading ? renderLupa() : null}</View>
-          </View>
-        </View>
-        {isLoading && (
-          <LoadingRota
-            isLoading={isLoading}
-            loadingMotorcycleAnimation={loadingMotorcycleAnimation}
           />
-        )}
-
-
-        <View style={styles.mapContainer}>
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            showsUserLocation
-            showsMyLocationButton
-          >
-            {markers.map((marker, idx) => (
-              <Marker key={idx} coordinate={marker}>
-                <Image
-                  source={
-                    idx === 0
-                      ? require("@images/partida.png")
-                      : require("@images/destino.png")
-                  }
-                  style={{ width: 40, height: 40 }}
-                  resizeMode="contain"
-                />
-              </Marker>
-            ))}
-            {routeCoords.length > 0 && (
-              <Polyline
-                coordinates={routeCoords}
-                strokeColor="#000"
-                strokeWidth={4}
-              />
-            )}
-          </MapView>
-          {routeCoords.length > 0 && !isBottomSheetActive && (
+          {suggestedAddress && !startAddress.trim() && (
             <TouchableOpacity
-              style={styles.floatingButton}
-              onPress={() => modalizeRef.current?.open()}
+              style={styles.suggestionBox}
+              onPress={handleUseSuggested}
             >
-              <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
-              <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
+              <View style={styles.column}>
+                <Text style={styles.suggestionTitle}>
+                  Usar esse endereço novamente:
+                </Text>
+                <Text style={styles.suggestionAddress}>{suggestedAddress}</Text>
+              </View>
+              <Ionicons name="arrow-up-outline" size={24} color="#000" />
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.comeBack} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de destino (ex: Av. B, 456)"
+            value={endAddress}
+            onChangeText={setEndAddress}
+            clearButtonMode="while-editing"
+            returnKeyType="done"
+            placeholderTextColor="#969696"
+
+          />
+          <View style={styles.row}>{!isLoading ? renderLupa() : null}</View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
+      {isLoading && (
+        <LoadingRota
+          isLoading={isLoading}
+          loadingMotorcycleAnimation={loadingMotorcycleAnimation}
+        />
+      )}
+
+
+      <View style={styles.mapContainer}>
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          showsUserLocation
+          showsMyLocationButton
+        >
+          {markers.map((marker, idx) => (
+            <Marker key={idx} coordinate={marker}>
+              <Image
+                source={
+                  idx === 0
+                    ? require("@images/partida.png")
+                    : require("@images/destino.png")
+                }
+                style={{ width: 40, height: 40 }}
+                resizeMode="contain"
+              />
+            </Marker>
+          ))}
+          {routeCoords.length > 0 && (
+            <Polyline
+              coordinates={routeCoords}
+              strokeColor="#000"
+              strokeWidth={4}
+            />
+          )}
+        </MapView>
+        {routeCoords.length > 0 && !isBottomSheetActive && (
+          <TouchableOpacity
+            style={styles.floatingButton}
+            onPress={() => modalizeRef.current?.open()}
+          >
+            <Text style={styles.floatingButtonText}>Continuar solicitando</Text>
+            <MaterialIcons name="keyboard-arrow-up" size={24} color="white" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.comeBack} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
       <Modalize
         ref={modalizeRef}
         snapPoint={400}
@@ -768,7 +765,7 @@ export default function RequestTravel() {
           onHide={() => setShowToastSameAddress(false)}
         />
       )}
+    </KeyboardAvoidingView>
 
-    </MenuProvider>
   );
 }

@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, LayoutAnimation, Platform, UIManager, SectionList } from "react-native";
+import { View, Text, Image, TouchableOpacity, LayoutAnimation, SectionList } from "react-native";
 import { useEffect, useState, useRef } from "react";
 import LottieView from "lottie-react-native";
 import styles from "./styles";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@components/Header";
 import useRighteousFont from "@hooks/useFont/Righteous";

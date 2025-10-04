@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
   },
-   icon: {
+  icon: {
     width: 40,
     height: 40,
     marginBottom: 4,
@@ -230,6 +230,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
+  col: {
+    marginTop: 20,
+    flex: 1
+  },
+  pressable: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    gap: 16,
+  },
+  lastPressable: {
+    borderBottomWidth: 0,
+  },
+  pressableTitle: {
+    fontFamily: "Righteous",
+    fontSize: 18,
+    color: "#333",
+  },
+
 });
 
 export default styles;

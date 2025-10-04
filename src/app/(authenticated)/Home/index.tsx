@@ -138,9 +138,9 @@ export default function Home() {
                     </View>
                     {verifyMobileData()}
                 </View>
+                <PendingTravel />
                 <Services />
                 <AvaliarViagem />
-                <PendingTravel />
                 <Benefits />
                 <LastActivity />
             </ScrollView>

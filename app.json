@@ -53,7 +53,8 @@
             "./src/assets/sound/notificacao.wav"
           ]
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "extra": {
       "router": {
