@@ -7,16 +7,16 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
-  Modal,
   ScrollView
 } from 'react-native';
 import styles from './styles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import LottieView from 'lottie-react-native';
 import Header from "@components/Header";
 
 import reviewsAnimation from '@animations/reviews_animation.json';
+import { BottomSheet } from '@components/BottomSheet';
+
 const StarRating = ({ rating, setRating }: { rating: number; setRating: (value: number) => void }) => {
   return (
     <View style={styles.starsContainer}>
@@ -37,8 +37,9 @@ export default function AvaliarViagem() {
   const [rating, setRating] = useState<number>(0);
   const [comentario, setComentario] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const animationRef = useRef(null);
+
+  // Ref do BottomSheet
+  const bottomSheetRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchUsuCodigo = async () => {
@@ -79,7 +80,8 @@ export default function AvaliarViagem() {
       });
 
       if (response.ok) {
-        setShowModal(true);
+        // Abrir o BottomSheet quando a avaliação for enviada
+        bottomSheetRef.current?.open();
       } else {
         const errorData = await response.json();
         Alert.alert('Erro', errorData.message || 'Erro ao enviar avaliação');
@@ -92,8 +94,10 @@ export default function AvaliarViagem() {
   };
 
   const fecharModal = () => {
-    setShowModal(false);
-    router.replace('/Home');
+    bottomSheetRef.current?.close();
+    setTimeout(() => {
+      router.replace('/(authenticated)/Home');
+    }, 300);
   };
 
   if (!usu_codigo) {
@@ -144,21 +148,17 @@ export default function AvaliarViagem() {
             <Text style={styles.buttonText}>ENVIAR AVALIAÇÃO</Text>
           )}
         </TouchableOpacity>
-
-        <Modal visible={showModal} transparent animationType="fade" onRequestClose={fecharModal}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <LottieView ref={animationRef} source={reviewsAnimation} autoPlay loop style={{ width: 300, height: 200 }} />
-              <Text style={styles.modalText}>
-                Muito obrigado por avaliar a viagem!{'\n'}Assim conseguimos melhorar nossos serviços.
-              </Text>
-              <TouchableOpacity style={styles.modalButton} onPress={fecharModal}>
-                <Text style={styles.modalButtonText}>Ok</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </ScrollView>
+
+      <BottomSheet
+        ref={bottomSheetRef}
+        title="Avaliação feita!"
+        text="Muito obrigado por avaliar a viagem! Assim conseguimos melhorar nossos serviços."
+        animation={reviewsAnimation}
+        action={fecharModal}
+        buttonTitle="Ir para o Início"
+        panGestureEnabled={false}
+      />
     </>
   );
 }

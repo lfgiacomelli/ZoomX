@@ -22,6 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ToastMessage from "@components/ToastMessage";
 import { useBatteryLevel } from "expo-battery";
 import LoadingRota from "@components/CalculandoRota";
+import AnimatedRoute from "@components/AnimatedRoute";
 
 type Coordinates = {
   latitude: number;
@@ -461,6 +462,14 @@ export default function RequestDelivery() {
     Keyboard.dismiss();
   }
 
+  function verifyIDX(idx: number) {
+    if (idx === 0) {
+      return require("@images/partida.png")
+    } else {
+      return require("@images/destino.png")
+    }
+  }
+
   return (
     <>
       <KeyboardAvoidingView
@@ -550,22 +559,14 @@ export default function RequestDelivery() {
             {markers.map((marker, idx) => (
               <Marker key={idx} coordinate={marker}>
                 <Image
-                  source={
-                    idx === 0
-                      ? require("@images/partida.png")
-                      : require("@images/destino.png")
-                  }
+                  source={verifyIDX(idx)}
                   style={{ width: 40, height: 40 }}
                   resizeMode="contain"
                 />
               </Marker>
             ))}
             {routeCoords.length > 0 && (
-              <Polyline
-                coordinates={routeCoords}
-                strokeColor="#000"
-                strokeWidth={4}
-              />
+              <AnimatedRoute routeCoords={routeCoords} />
             )}
           </MapView>
           {routeCoords.length > 0 && !isBottomSheetActive && (
@@ -710,7 +711,6 @@ export default function RequestDelivery() {
                 onRequestClose={() => setModalVisible(false)}
               >
                 <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-
                   <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
                       <Text style={styles.modalTitle}>

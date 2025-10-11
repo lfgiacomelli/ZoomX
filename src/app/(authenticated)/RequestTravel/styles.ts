@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     padding: 20,
-    paddingBottom: 40
+    paddingBottom: 20
   },
   bottomSheetTitle: {
     fontSize: 22,

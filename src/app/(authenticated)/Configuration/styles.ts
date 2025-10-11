@@ -53,22 +53,7 @@ const styles = StyleSheet.create({
     color: "#000",
     marginLeft: 8,
   },
-  deactivateButton: {
-    height: 45,
-    backgroundColor: "#007BFF",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 4,
-    marginTop: 20,
-    gap: 8,
-    elevation: 3,
-  },
-  deactivateText: {
-    fontFamily: "Righteous",
-    fontSize: 20,
-    color: "#fff",
-  },
+  
   logoutButton: {
     backgroundColor: "#DB2E05",
     flexDirection: "row",
@@ -119,6 +104,7 @@ const styles = StyleSheet.create({
     color: "#000",
     textAlign: "center",
   },
+  
 });
 
 export default styles;

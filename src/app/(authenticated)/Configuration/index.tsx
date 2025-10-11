@@ -1,5 +1,5 @@
 import { View, Text, StatusBar, Switch, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./styles";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -12,6 +12,11 @@ import Header from "@components/Header";
 import useRighteousFont from "@hooks/useFont/Righteous";
 
 import { FontAwesome6, MaterialCommunityIcons, Entypo, EvilIcons } from "@expo/vector-icons";
+import { Modalize } from "react-native-modalize";
+
+import locationAnimation from "@animations/location_animation.json";
+import notificationAnimation from "@animations/notification_animation.json";
+import { BottomSheet } from "@components/BottomSheet";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -19,6 +24,8 @@ export default function SettingsScreen() {
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const bottomSheetRef = useRef<Modalize>(null);
+  const bottomSheetNotificationRef = useRef<Modalize>(null);
 
   useEffect(() => {
     checkPermissions();
@@ -39,14 +46,7 @@ export default function SettingsScreen() {
 
   const toggleNotifications = async () => {
     if (notificationsEnabled) {
-      Alert.alert(
-        "Permissão de Notificações",
-        "Para desativar as notificações, vá até as configurações do aplicativo.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Abrir Configurações", onPress: openAppSettings },
-        ]
-      );
+      bottomSheetNotificationRef.current?.open();
     } else {
       const { status } = await Notifications.requestPermissionsAsync();
       setNotificationsEnabled(status === "granted");
@@ -55,14 +55,7 @@ export default function SettingsScreen() {
 
   const toggleLocation = async () => {
     if (locationEnabled) {
-      Alert.alert(
-        "Permissão de Localização",
-        "Para desativar a localização, vá até as configurações do aplicativo.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Abrir Configurações", onPress: openAppSettings },
-        ]
-      );
+      bottomSheetRef.current?.open();
     } else {
       const { status } = await Location.requestForegroundPermissionsAsync();
       setLocationEnabled(status === "granted");
@@ -127,6 +120,22 @@ export default function SettingsScreen() {
           <Text style={styles.logoutText}>Encerrar Sessão</Text>
         </TouchableOpacity>
       </ScrollView>
+      <BottomSheet
+        ref={bottomSheetRef}
+        title="Desativar Localização"
+        text="Para desativar a permissão de localização, vá até as configurações do aplicativo."
+        action={openAppSettings}
+        animation={locationAnimation}
+        buttonTitle="Ir para Configurações"
+      />
+      <BottomSheet
+        ref={bottomSheetNotificationRef}
+        title="Desativar Notificações"
+        text="Para desativar a permissão de notificações, vá até as configurações do aplicativo."
+        action={openAppSettings}
+        animation={notificationAnimation}
+        buttonTitle="Ir para Configurações"
+      />
     </>
   );
 }

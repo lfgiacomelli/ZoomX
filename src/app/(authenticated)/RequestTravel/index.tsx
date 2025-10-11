@@ -1,13 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar, TouchableOpacity, Image, ScrollView, AccessibilityInfo, Modal, Pressable, Keyboard, TouchableWithoutFeedback, Animated } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "./styles";
 
 import { Modalize } from "react-native-modalize";
-
-import { MenuProvider } from 'react-native-popup-menu';
-
 
 import Header from "@components/Header";
 
@@ -21,6 +18,7 @@ import ToastMessage from "@components/ToastMessage";
 import { mostrarDataHoraAtual } from "@utils/getDateTime";
 import { useBatteryLevel } from "expo-battery";
 import LoadingRota from "@components/CalculandoRota";
+import AnimatedRoute from "@components/AnimatedRoute";
 
 
 type Coordinates = {
@@ -157,6 +155,9 @@ export default function RequestTravel() {
   const [statusLeitor, setStatusLeitor] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+
+  const [animatedCoords, setAnimatedCoords] = useState<Coordinates[]>([]);
+  const animation = useRef(new Animated.Value(0)).current;
 
   const initialRegion = {
     latitude: -21.8756,
@@ -473,7 +474,7 @@ export default function RequestTravel() {
 
         >
           <Text style={[styles.lupaText, isPressed && styles.lupaTextPressed]}>
-            Ver trajeto
+            {distance !== null ? "Refazer trajeto" : "Ver trajeto"}
           </Text>
           <Ionicons
             name="search"
@@ -485,6 +486,32 @@ export default function RequestTravel() {
     }
     return null;
   };
+
+  function verifyIDX(idx: number) {
+    if (idx === 0) {
+      return require("@images/partida.png");
+    }
+    return require("@images/destino.png");
+  }
+
+  useEffect(() => {
+    if (routeCoords.length === 0) return;
+
+    Animated.loop(
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: false,
+      })
+    ).start();
+
+    const listener = animation.addListener(({ value }) => {
+      const count = Math.floor(value * routeCoords.length);
+      setAnimatedCoords(routeCoords.slice(0, count));
+    });
+
+    return () => animation.removeListener(listener);
+  }, [routeCoords]);
 
 
   return (
@@ -506,7 +533,6 @@ export default function RequestTravel() {
             returnKeyType="next"
             autoFocus
             placeholderTextColor="#969696"
-
           />
           {suggestedAddress && !startAddress.trim() && (
             <TouchableOpacity
@@ -531,7 +557,6 @@ export default function RequestTravel() {
             clearButtonMode="while-editing"
             returnKeyType="done"
             placeholderTextColor="#969696"
-
           />
           <View style={styles.row}>{!isLoading ? renderLupa() : null}</View>
         </View>
@@ -554,25 +579,18 @@ export default function RequestTravel() {
           showsMyLocationButton
         >
           {markers.map((marker, idx) => (
-            <Marker key={idx} coordinate={marker}>
+            <Marker key={idx} coordinate={marker} title={idx === 0 ? "Início" : "Destino"} description={idx === 0 ? startAddress : endAddress}>
               <Image
-                source={
-                  idx === 0
-                    ? require("@images/partida.png")
-                    : require("@images/destino.png")
-                }
+                source={verifyIDX(idx)}
                 style={{ width: 40, height: 40 }}
                 resizeMode="contain"
               />
             </Marker>
           ))}
           {routeCoords.length > 0 && (
-            <Polyline
-              coordinates={routeCoords}
-              strokeColor="#000"
-              strokeWidth={4}
-            />
+            <AnimatedRoute routeCoords={routeCoords} />
           )}
+
         </MapView>
         {routeCoords.length > 0 && !isBottomSheetActive && (
           <TouchableOpacity

@@ -106,7 +106,6 @@ export default function Home() {
         } else {
             return (
                 <Image source={require("@images/userPhotoDefault.png")} style={styles.profileImage} />
-
             )
         }
     }
@@ -139,8 +138,8 @@ export default function Home() {
                     {verifyMobileData()}
                 </View>
                 <PendingTravel />
-                <Services />
                 <AvaliarViagem />
+                <Services />
                 <Benefits />
                 <LastActivity />
             </ScrollView>
