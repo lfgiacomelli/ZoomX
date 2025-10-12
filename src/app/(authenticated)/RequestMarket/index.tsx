@@ -488,10 +488,7 @@ export default function RequestMarket() {
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Valor estimado:</Text>
                 <Text style={styles.detailValue}>
-                  R${" "}
-                  {parseFloat(valorEstimado)
-                    ? parseFloat(valorEstimado).toFixed(2)
-                    : "0,00"}
+                  R${" "} {parseFloat(valorEstimado) ? parseFloat(valorEstimado).toFixed(2) : "0,00"}
                 </Text>
               </View>
 

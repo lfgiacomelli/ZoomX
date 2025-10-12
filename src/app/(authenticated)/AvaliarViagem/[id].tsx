@@ -80,7 +80,6 @@ export default function AvaliarViagem() {
       });
 
       if (response.ok) {
-        // Abrir o BottomSheet quando a avaliação for enviada
         bottomSheetRef.current?.open();
       } else {
         const errorData = await response.json();

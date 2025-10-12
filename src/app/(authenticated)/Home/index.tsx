@@ -87,12 +87,7 @@ export default function Home() {
     if (!fontLoaded) {
         return (
             <View style={styles.loadingContainer}>
-                <Image
-                    source={require("@images/logo.png")}
-                    style={styles.loadingLogo}
-                />
-                <Text style={styles.loadingText}>Preparando tudo para você...</Text>
-                <ActivityIndicator size={50} color="#000" />
+                <ActivityIndicator size={30} color="#000" />
             </View>
         );
     }
