@@ -140,15 +140,7 @@ export default function PendingTravel() {
 
   if (loading) return null;
 
-  if (error)
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
-          <Text style={styles.retryText}>Tentar novamente</Text>
-        </TouchableOpacity>
-      </View>
-    );
+  if (error) return null;
 
   if (!data || data.via_status !== "em andamento") return null;
 

@@ -16,7 +16,7 @@ export default function AnimatedRoute({ routeCoords }: { routeCoords: Coordinate
     Animated.loop(
       Animated.timing(animation, {
         toValue: 1,
-        duration: 4000, 
+        duration: 2000, 
         easing: Easing.inOut(Easing.ease), 
         useNativeDriver: false,
       })

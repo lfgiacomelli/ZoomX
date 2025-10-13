@@ -251,6 +251,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#333",
   },
+  distance: {
+    fontFamily: "Righteous",
+    fontSize: 12,
+    marginTop: 4,
+  }
 
 });
 

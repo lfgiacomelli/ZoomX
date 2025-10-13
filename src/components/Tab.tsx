@@ -8,12 +8,12 @@ const Tab = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const routes: { path: string; icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
-    { path: '/LastActivities', icon: 'file-tray-sharp', text: 'Atividades' },
+  const routes: { path: string; icon: string; text: string }[] = [
+    { path: '/LastActivities', icon: 'file-tray', text: 'Atividades' },
     { path: '/MyPaymentsApproveds', icon: 'cash', text: 'Pagamentos' },
-    { path: '/Home', icon: 'home-outline', text: 'Início' },
-    { path: '/Profile', icon: 'person-outline', text: 'Perfil' },
-    { path: '/Configuration', icon: 'settings-outline', text: 'Configurações' },
+    { path: '/Home', icon: 'home', text: 'Início' },
+    { path: '/Profile', icon: 'person', text: 'Perfil' },
+    { path: '/Configuration', icon: 'settings', text: 'Configurações' },
   ];
 
   useEffect(() => {
@@ -33,6 +33,8 @@ const Tab = () => {
     <View style={styles.container}>
       {routes.map((route, index) => {
         const isActive = pathname.startsWith(route.path);
+        // Define o nome do ícone: se ativo, versão "cheia"; se não, "outline"
+        const iconName = isActive ? route.icon : `${route.icon}-outline`;
 
         return (
           <Pressable
@@ -49,7 +51,7 @@ const Tab = () => {
             ]}
           >
             <Ionicons
-              name={route.icon}
+              name={iconName as keyof typeof Ionicons.glyphMap}
               size={24}
               color={isActive ? '#000' : '#999'}
               accessibilityElementsHidden={true}

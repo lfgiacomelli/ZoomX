@@ -30,7 +30,6 @@ export default function Home() {
     const userFirstName = user?.nome?.split(" ")[0] || "Usuário";
 
     const [statusLeitor, setStatusLeitor] = useState(false);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isMobileData, setIsMobileData] = useState(false);
     const [photo, setPhoto] = useState<string | null>(null);
 

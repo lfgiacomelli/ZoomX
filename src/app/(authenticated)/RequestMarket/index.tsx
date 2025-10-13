@@ -19,6 +19,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 import loadingBoxAnimation from "@animations/loading_box.json";
 import { mostrarDataHoraAtual } from "@utils/getDateTime";
+import AnimatedRoute from "@components/AnimatedRoute";
 
 
 type Coordinates = {
@@ -301,6 +302,13 @@ export default function RequestMarket() {
     await calcularRota();
   };
 
+  function verifyIDX(idx: number) {
+    if (idx === 0) {
+      return require("@images/partida.png");
+    }
+    return require("@images/destino.png");
+  }
+
   useEffect(() => {
     if (isEditing) return;
 
@@ -406,24 +414,16 @@ export default function RequestMarket() {
           showsMyLocationButton
         >
           {markers.map((marker, idx) => (
-            <Marker key={idx} coordinate={marker}>
+            <Marker key={idx} coordinate={marker} title={idx === 0 ? "Início" : "Destino"} description={idx === 0 ? supermarketAddress : endAddress}>
               <Image
-                source={
-                  idx === 0
-                    ? require("@images/partida.png")
-                    : require("@images/destino.png")
-                }
+                source={verifyIDX(idx)}
                 style={{ width: 40, height: 40 }}
                 resizeMode="contain"
               />
             </Marker>
           ))}
           {routeCoords.length > 0 && (
-            <Polyline
-              coordinates={routeCoords}
-              strokeColor="#000"
-              strokeWidth={4}
-            />
+            <AnimatedRoute routeCoords={routeCoords} />
           )}
 
         </MapView>
