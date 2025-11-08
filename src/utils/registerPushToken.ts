@@ -32,7 +32,7 @@ export const registerPushToken = async (user: any, token: string) => {
 
     // 👉 Importante: definir projectId do seu app no Expo (pego do app.json / eas.json)
     const tokenObject = await Notifications.getExpoPushTokenAsync({
-      projectId: "SEU_PROJECT_ID_DO_EXPO_AQUI"
+      projectId: "9046af95-c23e-4a4b-9205-25e2b7e5d3cf"
     });
 
     const expoPushToken = tokenObject.data;
