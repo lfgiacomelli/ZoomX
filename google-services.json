@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "171901677173",
-    "project_id": "zoomx-90b08",
-    "storage_bucket": "zoomx-90b08.firebasestorage.app"
+    "project_number": "726410119409",
+    "project_id": "zoomxbeta",
+    "storage_bucket": "zoomxbeta.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:171901677173:android:37cf67dd534f69e87a523c",
+        "mobilesdk_app_id": "1:726410119409:android:97838f18e73b5f1497c150",
         "android_client_info": {
           "package_name": "com.fourdevs.zoomx"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDbQdGWrRaZWuwkZCGJzH_U8JL-LvvDxMs"
+          "current_key": "AIzaSyD22wphUG_mI3_4jvhoeIPEmmWXkS0Nahc"
         }
       ],
       "services": {

@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.4fordevs.zoomx"
+      "bundleIdentifier": "com.fourdevs.zoomx"
     },
     "android": {
       "adaptiveIcon": {
